@@ -7,7 +7,6 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   release:
-    if: github.repository_owner == 'vtbag'
     permissions:
       contents: write
       pull-requests: write
