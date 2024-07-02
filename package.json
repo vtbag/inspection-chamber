@@ -9,7 +9,8 @@
   "scripts": {
     "bundle": "bin/bundle",
     "build": "tsc",
-    "dev": "esbuild src/index.ts --bundle --sourcemap --target=ESnext --outfile=lib/index.js --watch"
+    "dev": "esbuild src/index.ts --bundle --sourcemap --target=ESnext --outfile=lib/index.js --watch",
+    "test": "bin/test"
   },
   "repository": {
     "type": "git",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@types/dom-view-transitions": "^1.0.4",
+    "changeset": "^0.2.6",
     "esbuild": "^0.23.0",
     "typescript": "^5.5.3"
   }
