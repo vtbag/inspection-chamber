@@ -1,4 +1,4 @@
-When Chrome introduced the (same-document) View Transition API, the Astro project was an early adopter and [astro-vtbot](github.com/martrapp/astro-vtbot), *the Bag of Tricks for Astro's View Transitions*, provided many technical demos, reusable components and a wealth of information about View Transitions.
+When Chrome introduced the (same-document) View Transition API, the Astro project was an early adopter and [astro-vtbot](https://github.com/martrapp/astro-vtbot), *the Bag of Tricks for Astro's View Transitions*, provided many technical demos, reusable components and a wealth of information about View Transitions.
 
 # @vtbag/*
 
