@@ -7,7 +7,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   release:
-     if: github.repository == 'vtbag/inspection-chamber'
+    if: github.repository == 'vtbag/inspection-chamber'
     permissions:
       contents: write
       pull-requests: write
