@@ -1,0 +1,38 @@
+{
+  "name": "@vtbag/inspection-chamber",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "description": "The Inspection Chamber gives you all the knobs and dials to interactively to put your view transitions through its paces.",
+  "files": [
+    "lib/*.js"
+  ],
+  "scripts": {
+    "bundle": "bin/bundle",
+    "build": "tsc",
+    "dev": "esbuild src/index.ts --bundle --sourcemap --target=ESnext --outfile=lib/index.js --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vtbag/test-chamber.git"
+  },
+  "keywords": [
+    "view",
+    "transitions",
+    "VT"
+  ],
+  "author": "vtbag",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vtbag/test-chamber/issues"
+  },
+  "homepage": "https://github.com/vtbag/test-chamber#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/martrapp"
+  },
+  "devDependencies": {
+    "@types/dom-view-transitions": "^1.0.4",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.3"
+  }
+}

@@ -1,0 +1,5 @@
+#! /bin/sh
+
+rm -f src/bench.txt
+cp ../astro-vtbot-website/dist/bench/index.html src/bench.txt
+npx esbuild src/index.ts --bundle --sourcemap --target=ESnext --outfile=lib/index.js
