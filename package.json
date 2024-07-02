@@ -10,7 +10,9 @@
     "bundle": "bin/bundle",
     "build": "tsc",
     "dev": "esbuild src/index.ts --bundle --sourcemap --target=ESnext --outfile=lib/index.js --watch",
-    "test": "bin/test"
+    "test": "bin/test",
+    "changeset": "changeset",
+    "release": "changeset publish"
   },
   "repository": {
     "type": "git",
@@ -32,8 +34,8 @@
     "url": "https://github.com/sponsors/martrapp"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.7",
     "@types/dom-view-transitions": "^1.0.4",
-    "changeset": "^0.2.6",
     "esbuild": "^0.23.0",
     "typescript": "^5.5.3"
   }
