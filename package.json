@@ -4,7 +4,7 @@
   "main": "lib/index.js",
   "description": "The Inspection Chamber gives you all the knobs and dials to interactively to put your view transitions through its paces.",
   "files": [
-    "lib/*.js"
+    "lib"
   ],
   "scripts": {
     "dev": "bin/bundle dev",
@@ -41,8 +41,5 @@
     "globals": "^15.8.0",
     "prettier": "^3.3.2",
     "typescript": "^5.5.3"
-  },
-  "dependencies": {
-    "typescript-eslint": "^7.16.0"
   }
 }
