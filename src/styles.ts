@@ -1,11 +1,18 @@
-export function setStyles(styles: string, suffix = '', prepend = false) {
-	const id = 'vtbot-adopted-sheet' + (suffix ? '-' + suffix : '');
-	const doc = top!.__vtbag.inspectionChamber!.frameDocument!;
+export function setStyles(
+	styles: string,
+	suffix = '',
+	doc = top!.__vtbag.inspectionChamber!.frameDocument!,
+	prepend = false
+) {
+	const id = 'vtbag-adopted-sheet' + (suffix ? '-' + suffix : '');
 	doc.getElementById(id)?.remove();
 	doc.documentElement.offsetHeight;
-	styles && doc.head.insertAdjacentHTML(prepend ? 'afterbegin' : 'beforeend', `<style id="${id}">${styles}</style>`);
+	styles &&
+		doc.head.insertAdjacentHTML(
+			prepend ? 'afterbegin' : 'beforeend',
+			`<style id="${id}">${styles}</style>`
+		);
 }
-
 
 export function addFrames(show: boolean) {
 	show ? frame() : unframe();
@@ -24,13 +31,19 @@ function frame() {
 	border: 3px dashed darkolivegreen;
 }
 ::view-transition-group(*),
-[data-vtbot-transition-name] {
+[data-vtbag-transition-name] {
 	border: 1px dotted darkgoldenrod;
+}
+::view-transition-group(*),
+::view-transition-image-pair(*),
+::view-transition-old(*),
+::view-transition-new(*),
+[data-vtbag-transition-name] {
+	cursor: help;
 }
 :root::view-transition {
 	position: absolute;
 	inset: 0;
 }
-`
-	);
+`);
 }

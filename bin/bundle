@@ -1,5 +1,17 @@
 #! /bin/sh
 
-rm -f src/bench.txt
-cp ../astro-vtbot-website/dist/bench/index.html src/bench.txt
-npx esbuild src/index.ts --bundle --sourcemap --target=ESnext --outfile=lib/index.js
+rm src/bench.ts
+if [ "$1" = "dev" ]; then
+  OPTS="--sourcemap --watch"
+  ln -s bench-dev.ts src/bench.ts
+else
+  (cd lib && rm *.js.map)
+  ln -s bench-prod.ts src/bench.ts
+  OPTS="--minify"
+  if [ "$1" = "full" ]; then
+    rm -f src/bench.txt
+    (cd ../astro-vtbot-website && npm run build)
+    cp ../astro-vtbot-website/dist/vtbag/bench/index.html src/bench.txt
+  fi
+fi
+npx esbuild src/index.ts --bundle $OPTS --target=ESnext --outfile=lib/index.js

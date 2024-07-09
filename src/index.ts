@@ -1,22 +1,30 @@
-//@ts-ignore
-//import bench from "./bench.txt";
+import { bench } from './bench';
 
-import { setTransitionNames } from "./stylesheets";
-import { initDragging } from "./dragging";
-import { showReopener } from "./reopener";
-import { Modus } from "./types";
-import { addFrames } from "./styles";
-import { message } from "./panel/messages";
-import { exitViewTransition, mayViewTransition } from "./panel/transition";
-import { initSlowMotion, sloMoPlay } from "./panel/slow-motion";
-import { controlledPlay, initController } from "./panel/full-control";
-import { forceAnimations, retrieveViewTransitionAnimations, unleashAllAnimations } from "./animations";
-import { initNames, updateImageVisibility, updateNames } from "./panel/names";
-import { initFilter } from "./panel/filter";
+import { setTransitionNames } from './stylesheets';
+import { initDragging } from './dragging';
+import { showReopener } from './reopener';
+import { Modus } from './types';
+import { addFrames } from './styles';
+import { message } from './panel/messages';
+import { clearVtActive, exitViewTransition, mayViewTransition, setVtActive, vtActive } from './panel/transition';
+import { initSlowMotion, setupSlowMotionPlay } from './panel/slow-motion';
+import { controlledPlay, initController } from './panel/full-control';
+import {
+	forceAnimations,
+	retrieveViewTransitionAnimations,
+	unleashAllAnimations,
+} from './animations';
+import { initNames, updateImageVisibility, updateNames } from './panel/names';
+import { initFilter } from './panel/filter';
+import { twinClick } from './twin';
+
+const titleLogo = "🐌";
 
 top!.__vtbag ??= {};
 top!.__vtbag.inspectionChamber ??= {};
 const inspectionChamber = top!.__vtbag.inspectionChamber!;
+
+let firstModusInteraction = true;
 
 if (top === self) {
 	addEventListener('pageshow', () => {
@@ -26,16 +34,33 @@ if (top === self) {
 	initSpecimen();
 }
 
-
 function initSpecimen() {
-	self.addEventListener('pageswap', (e) => pageSwap());
+	const frameDocument = inspectionChamber.frameDocument = self.document;
+
+	self.addEventListener('pageswap', () => pageSwap());
 	self.addEventListener('pagereveal', (e) => {
 		inspectionChamber.viewTransition = e.viewTransition;
-		inspectionChamber.frameDocument = self.document;
 		pageReveal();
 	});
-}
+	monkeyPatchStartViewTransition();
 
+	function monkeyPatchStartViewTransition() {
+		const originalStartViewTransition = frameDocument.startViewTransition;
+		// todo: add level 2 options
+		frameDocument.startViewTransition = (cb: () => void | Promise<void>) => {
+			pageSwap();
+			const viewTransition = (inspectionChamber.viewTransition = originalStartViewTransition.call(
+				frameDocument,
+				async () => {
+					await Promise.resolve();
+					await cb();
+					pageReveal();
+				}
+			));
+			return viewTransition;
+		};
+	}
+}
 
 function pageSwap() {
 	inspectionChamber.glow?.cancel();
@@ -44,243 +69,217 @@ function pageSwap() {
 
 function pageReveal() {
 	if (inspectionChamber.viewTransition) {
-		forceAnimations(top!.document.querySelector<HTMLIFrameElement>('#vtbot-main-frame')!.contentDocument!);
+		forceAnimations();
 		updateCallbackDone();
 	}
-	inspectionChamber.frameDocument!.addEventListener('click', innerClick);
 }
 
-
-
 function updateCallbackDone() {
+	setVtActive();
 	const root = top!.document.documentElement;
-	root.classList.add('vtbot-vt-active');
-	const frameDocument = inspectionChamber.frameDocument!;
 	const viewTransition = inspectionChamber.viewTransition!;
 	const modusFunction: Record<Modus, () => void> = {
 		bypass: () => { },
-		'slow-motion': sloMoPlay,
+		'slow-motion': setupSlowMotionPlay,
 		control: controlledPlay,
 		compare: () => { },
 	};
-	const modus = root.dataset.vtbotModus as Modus;
+
+	const modus = root.dataset.vtbagModus as Modus;
 
 	viewTransition.ready.then(async () => {
 		if (modus && modus !== 'bypass') {
-			const canvas = top!.document.querySelector<HTMLCanvasElement>("#canvas")!;
-			canvas.style.zIndex = "1000";
+			const canvas = top!.document.querySelector<HTMLCanvasElement>('#canvas')!;
+			canvas.style.zIndex = '1000';
+
 			canvas.style.cursor = 'wait';
-			await retrieveViewTransitionAnimations(frameDocument);
-			addFrames(top!.document.querySelector<HTMLInputElement>('#vtbot-ui-styled')!.checked);
+			await retrieveViewTransitionAnimations();
+			addFrames(top!.document.querySelector<HTMLInputElement>('#vtbag-ui-styled')!.checked);
+			inspectionChamber.twin!.ownerDocument.addEventListener('click', twinClick);
+
 			modusFunction[modus]();
 		}
-		top!.history.pushState(history.state, '', self.location.href);
+		console.log('self.location.href :>> ', self.location.href);
+		top!.history.replaceState(history.state, '', self.location.href);
+		top!.document.title = titleLogo + " " + self.document.title;
 	});
 
 	viewTransition!.finished.finally(() => {
+		clearVtActive();
 		inspectionChamber.viewTransition = undefined;
-		root.classList.remove('vtbot-vt-active');
+		!top!.document.querySelector('#vtbag-twin--view-transition')?.remove();
+
 		unleashAllAnimations();
 		inspectionChamber.animations = undefined;
 		inspectionChamber.longestAnimation = undefined;
+		addFrames(top!.document.querySelector<HTMLInputElement>('#vtbag-ui-styled')!.checked);
 		updateNames(setTransitionNames());
 		updateImageVisibility();
-		top!.document.querySelector<HTMLSpanElement>("#vtbot-ui-slo-mo-progress")!.innerText = "";
+		top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-slo-mo-progress')!.innerText = '';
+		!root.dataset.vtbagModus && top!.document.querySelector<HTMLLIElement>('#vtbag-ui-modi li input')?.click();
 	});
 }
 
-
-
-
-
-
-
 function setBackgroundAccent() {
 	const root = top!.document.documentElement;
-	root.style.setProperty("--vtbot-background-accent", root.style.colorScheme === 'dark' ? "#4E545D" : "#c6d1d7");
+	root.style.setProperty(
+		'--vtbag-background-accent',
+		root.style.colorScheme === 'dark' ? '#4E545D' : '#c6d1d7'
+	);
 }
 
-
-
-
 async function initPanel() {
+
+	if (top!.document.querySelector('#vtbag-ui-panel')) return;
+
 	const root = top!.document.documentElement;
-	if (sessionStorage.getItem('vtbot-ui-closed') === 'true') {
+	if (sessionStorage.getItem('vtbag-ui-closed') === 'true') {
 		showReopener();
 		return;
 	}
 	const colorScheme = top!.getComputedStyle(root).colorScheme;
 	const docTitle = top!.document.title;
+	const icon = top!.document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.outerHTML ?? "";
 
-	const page = (await (await fetch("/bench/")).text()).replace(
-		// const page = bench.replace(
-		'<iframe id="vtbot-main-frame" src="/"></iframe>',
-		`<iframe id="vtbot-main-frame" style="opacity: 0" src="${location.href}"></iframe>`
-	);
+	const page = (await bench).replace(
+		'<iframe id="vtbag-main-frame" src="/"></iframe>',
+		`<iframe id="vtbag-main-frame" style="opacity: 0;" src="${location.href}"></iframe>`).replace('<title></title>', `<title>${titleLogo} ${docTitle}</title>`).replace(`<link rel="icon"/>`, icon);
+
 	top!.addEventListener('resize', setOrientation);
 	setOrientation();
 	root.innerHTML = page;
 	root.style.colorScheme = colorScheme;
 	setBackgroundAccent();
 
-
-	root.dataset.vtbotModus = '';
-	const mainFrame = top!.document.querySelector<HTMLIFrameElement>('#vtbot-main-frame')!;
+	root.dataset.vtbagModus = '';
+	const mainFrame = top!.document.querySelector<HTMLIFrameElement>('#vtbag-main-frame')!;
 	await new Promise((r) => (mainFrame.onload = r));
 
 	if (!top!.document.startViewTransition) {
-		top!.document.querySelector('#vtbot-ui-messages')!.innerHTML = `
-			<h4>You are &hellip;</h4>
-			<p>&hellip; in the <b>Engine Room</b><img style="width:4em; float:right" src="/favicon.svg" /> deep down at the bottom of <b>The Bag!</b></p>
-			<p>I'm sorry!</p><p>Native view transitions are required to make the Test Chamber work, but they are not supported by this browser.</p>
+		top!.document.querySelector('#vtbag-ui-messages')!.innerHTML = `
+			<p>I'm sorry!</p><p>Native view transitions are required to make the 🔬 Inspection Chamber work, but they are not supported by this browser.</p>
 			<p>Sadly have to give up.</p>`;
 		top!.document
-			.querySelectorAll('#vtbot-ui-modi, #vtbot-ui-filter, #vtbot-ui-names, #vtbot-ui-info')
+			.querySelectorAll('#vtbag-ui-modi, #vtbag-ui-filter, #vtbag-ui-names, #vtbag-ui-info')
 			.forEach((e) => e.remove());
 		return;
 	}
-	top!.document.title = '⛑️ ' + docTitle;
-	const frameDocument = top!.__vtbag.inspectionChamber!.frameDocument = mainFrame.contentDocument!;
+	const frameDocument = (top!.__vtbag.inspectionChamber!.frameDocument =
+		mainFrame.contentDocument!);
 
-	const originalStartViewTransition = frameDocument.startViewTransition;
-	frameDocument.startViewTransition = (cb: () => void | Promise<void>) => {
-		pageSwap();
-		inspectionChamber.frameDocument = frameDocument;
-		const viewTransition = inspectionChamber.viewTransition = originalStartViewTransition.call(frameDocument, async () => {
-			await Promise.resolve();
-			await cb();
-			pageReveal();
-		});
-		return viewTransition;
-	};
 	updateNames(setTransitionNames());
-	initPanelHandlers(mainFrame);
+	initPanelHandlers();
 	initDragging(top!.document.querySelector('#divider')!, (e: MouseEvent | TouchEvent) => {
 		const clientX = (e instanceof TouchEvent ? e.touches[0]?.clientX : e.clientX) ?? 0;
 		const clientY = (e instanceof TouchEvent ? e.touches[0]?.clientY : e.clientY) ?? 0;
 
-		if (root.classList.contains('vtbot-ui-column')) {
-			root.style.setProperty(
-				'--vtbot-panel-width',
-				`calc(max(188px, 100vw - ${Math.max(100, clientX + 1)}px))`
-			);
+		if (root.classList.contains('vtbag-ui-column')) {
+			if (root.classList.contains('vtbag-ui-tl'))
+				root.style.setProperty(
+					'--vtbag-panel-width',
+					`calc(max(200px, ${Math.min(innerWidth - 100, clientX)}px))`
+				);
+			else
+				root.style.setProperty(
+					'--vtbag-panel-width',
+					`calc(max(200px, 100vw - ${Math.max(100, clientX + 1)}px))`
+				);
 		} else {
-			root.style.setProperty(
-				'--vtbot-panel-height',
-				`calc(max(212px, 100vh - ${Math.max(100, clientY + 1)}px))`
-			);
+			if (root.classList.contains('vtbag-ui-tl'))
+				root.style.setProperty(
+					'--vtbag-panel-height',
+					`calc(max(212px, ${Math.min(innerHeight - 100, clientY)}px))`
+				);
+			else
+				root.style.setProperty(
+					'--vtbag-panel-height',
+					`calc(max(212px, 100vh - ${Math.max(100, clientY + 1)}px))`
+				);
 		}
 	});
 	mainFrame.animate([{ opacity: 0 }, { opacity: 1 }], {
 		duration: 50,
 		fill: 'forwards',
 	});
+	frameDocument!.addEventListener('click', innerClick);
 }
 
 function innerClick(e: MouseEvent) {
-	const target = e.target as HTMLElement;
-	if (!top!.document.documentElement.classList.contains('vtbot-vt-active')) {
-		if (e.defaultPrevented) return;
-		const vt = target.closest<HTMLElement>('[data-vtbot-transition-name]');
+	if (!vtActive() && !e.defaultPrevented) {
+		const target = e.target as HTMLElement;
+		const vt = target.closest<HTMLElement>('[data-vtbag-transition-name]');
 		if (vt) {
-			const name = vt.dataset.vtbotTransitionName;
-			top!.document.querySelectorAll<HTMLLIElement>('#vtbot-ui-names li').forEach((li) => {
+			const name = vt.dataset.vtbagTransitionName;
+			top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
 				if (li.innerText === name) {
 					li.click();
 				}
 			});
 		}
-	} else {
-		let entry: HTMLLIElement | undefined;
-		let size = Infinity;
-		target.ownerDocument
-			.querySelectorAll<HTMLElement>('#vtbot-twin--view-transition > vtbot-pseudo-twin > vtbot-pseudo-twin > vtbot-pseudo-twin')
-			.forEach((d) => {
-				const { clientX, clientY } = e;
-				const { top, bottom, left, right, width, height } = d.getBoundingClientRect();
-				const name = d.id.substring('vtbot-twin--view-transition-new-'.length);
-				const len = 'vtbot-twin--view-transition-'.length;
-				const pseudo = d.id.substring(len, len + 3);
-				if (
-					width * height < size &&
-					top <= clientY &&
-					clientY <= bottom &&
-					left <= clientX &&
-					clientX <= right
-				) {
-					let visible = true;
-					let me;
-					window.top!.document.querySelectorAll<HTMLLIElement>('#vtbot-ui-names li').forEach((li) => {
-						if (li.innerText === name) {
-							me = li;
-							if (li.classList.contains(`${pseudo}-hidden`)) visible = false;
-						}
-					});
-					if (visible) {
-						size = width * height;
-						entry = me;
-					}
-				}
-			});
-		entry?.click();
 	}
 }
 
 function setOrientation() {
 	const html = top!.document.documentElement;
-	if (
-		top!.matchMedia('(orientation: landscape)').matches !==
-		html.classList.contains('vtbot-ui-column')
-	)
-		switchOrientation();
+	const panelOrientation = localStorage.getItem('vtbag-ui-panel-orientation') ?? '';
+	if (panelOrientation) {
+		panelOrientation.split(' ').forEach((c) => html.classList.add(c));
+	} else {
+		if (top!.matchMedia('(orientation: landscape)').matches !==
+			html.classList.contains('vtbag-ui-column')
+		)
+			switchOrientation();
+	}
 }
 
 function switchOrientation() {
 	// changing the snapshot containing block size skips the transition
 	mayViewTransition(() => {
+		const classes = top!.document.documentElement.classList;
 		exitViewTransition();
-		top!.document.documentElement.classList.toggle('vtbot-ui-column');
+		classes.toggle('vtbag-ui-column');
+		if (classes.contains('vtbag-ui-column')) {
+			classes.toggle('vtbag-ui-tl');
+		}
+		localStorage.setItem('vtbag-ui-panel-orientation', [...classes].filter((c) => c.startsWith('vtbag-ui-')).join(' '));
 	}, 'switch orientation');
 }
 
+function initPanelHandlers() {
+	top!.document.querySelector('#vtbag-ui-turn')!.addEventListener('click', switchOrientation);
 
-
-function initPanelHandlers(frame: HTMLIFrameElement) {
-	top!.document.querySelector('#vtbot-ui-turn')!.addEventListener('click', switchOrientation);
-
-	top!.document.querySelector('#vtbot-ui-light-dark')!.addEventListener('click', () => {
+	top!.document.querySelector('#vtbag-ui-light-dark')!.addEventListener('click', () => {
 		const rootStyle = top!.document.documentElement.style;
-		top!.document.querySelector<HTMLIFrameElement>('#vtbot-main-frame')!.contentDocument!.documentElement.style.colorScheme = (rootStyle.colorScheme = rootStyle.colorScheme === 'dark' ? 'light' : 'dark');
+		top!.document.querySelector<HTMLIFrameElement>(
+			'#vtbag-main-frame'
+		)!.contentDocument!.documentElement.style.colorScheme = rootStyle.colorScheme =
+			rootStyle.colorScheme === 'dark' ? 'light' : 'dark';
 		setBackgroundAccent();
 	});
-	top!.document.querySelector('#vtbot-ui-close')!.addEventListener('click', () => {
-		top!.sessionStorage.setItem('vtbot-ui-closed', "true");
-		//top!.sessionStorage.removeItem("vtbot-ui-reopener");
+	top!.document.querySelector('#vtbag-ui-close')!.addEventListener('click', () => {
+		top!.sessionStorage.setItem('vtbag-ui-closed', 'true');
 		top!.location.reload();
 	});
-	top!.document.querySelector('#vtbot-ui-modi ul')!.addEventListener('change', updateModus);
+	top!.document.querySelector('#vtbag-ui-modi ul')!.addEventListener('change', updateModus);
 
 	initFilter();
 	initNames();
 	top!.document
-		.querySelector('#vtbot-ui-styled')
-		?.addEventListener('change', (e) =>
-			addFrames((e.target as HTMLInputElement).checked)
-		);
+		.querySelector('#vtbag-ui-styled')
+		?.addEventListener('change', (e) => addFrames((e.target as HTMLInputElement).checked));
 
 	initSlowMotion();
 	initController();
 	top!.document
-		.querySelectorAll('#vtbot-ui-control-exit, #vtbot-ui-control-play')
+		.querySelectorAll('#vtbag-ui-control-exit, #vtbag-ui-control-play')
 		.forEach((e) => e.addEventListener('click', exitViewTransition));
-
 
 	top!.addEventListener('keyup', function (e) {
 		if (e.key === 'Escape') {
-			if (top!.document.documentElement.classList.contains('vtbot-vt-active')) {
+			if (vtActive()) {
 				exitViewTransition();
 			} else {
-				top!.sessionStorage.setItem('vtbot-ui-closed', 'true');
+				top!.sessionStorage.setItem('vtbag-ui-closed', 'true');
 				top!.location.reload();
 			}
 		}
@@ -288,36 +287,36 @@ function initPanelHandlers(frame: HTMLIFrameElement) {
 }
 
 
-
-let firstModusInteraction = true;
-
 function updateModus() {
 	const root = top!.document.documentElement;
-	const checked = top!.document.querySelector<HTMLInputElement>('#vtbot-ui-modi ul input:checked');
+	const checked = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-modi ul input:checked');
 	if (checked) {
-		const modus = checked.id.replace('vtbot-m-', '') as Modus;
-		if (modus !== root.dataset.vtbotModus) {
+		const modus = checked.id.replace('vtbag-m-', '') as Modus;
+		if (modus !== root.dataset.vtbagModus) {
 			mayViewTransition(() => {
-				root.dataset.vtbotModus = modus;
+				root.dataset.vtbagModus = modus;
 				exitViewTransition();
-				if (modus !== 'compare')
-					top!.document.querySelector<HTMLInputElement>('#vtbot-ui-filter ul input')!.click();
+
+				top!.document.querySelector<HTMLInputElement>('#vtbag-ui-filter ul input')!.click();
 				if (modus === 'slow-motion') {
-					attachFrameToggle('#vtbot-ui-slow-motion');
+					attachFrameToggle('#vtbag-ui-slow-motion');
 				}
 				if (modus === 'control') {
-					attachFrameToggle('#vtbot-ui-control');
+					attachFrameToggle('#vtbag-ui-control');
 				}
-				top!.document.querySelector<HTMLInputElement>('#vtbot-ui-messages')!.innerHTML =
+				if (modus === 'bypass') {
+					attachFrameToggle('#vtbag-ui-modi');
+				}
+				top!.document.querySelector<HTMLInputElement>('#vtbag-ui-messages')!.innerHTML =
 					message[modus];
 
 				if (firstModusInteraction) {
 					firstModusInteraction = false;
 					top!.document
-						.querySelector('#vtbot-ui-panel')
+						.querySelector('#vtbag-ui-panel')
 						?.insertAdjacentElement(
 							'afterbegin',
-							top!.document.querySelector<HTMLInputElement>('#vtbot-ui-modi')!
+							top!.document.querySelector<HTMLInputElement>('#vtbag-ui-modi')!
 						);
 				}
 			}, 'update-modus');
@@ -326,8 +325,7 @@ function updateModus() {
 }
 
 function attachFrameToggle(divId: string) {
-	const styled = top!.document.querySelector('#vtbot-ui-styled')?.parentElement;
+	const styled = top!.document.querySelector('#vtbag-ui-styled')?.parentElement;
 	const div = top!.document.querySelector(divId);
-	if (styled && div && styled.parentElement !== div)
-		div.insertAdjacentElement('beforeend', styled);
+	if (styled && div && styled.parentElement !== div) div.insertAdjacentElement('beforeend', styled);
 }

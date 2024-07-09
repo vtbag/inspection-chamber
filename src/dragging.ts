@@ -1,10 +1,12 @@
-export function initDragging(draggable: HTMLElement, dragging: (e: MouseEvent | TouchEvent) => void) {
-
+export function initDragging(
+	draggable: HTMLElement,
+	dragging: (e: MouseEvent | TouchEvent) => void
+) {
 	const root = top!.document.documentElement;
-	const mainFrame = root.querySelector<HTMLIFrameElement>('#vtbot-main-frame');
 
 	const startDragging = (e: Event) => {
 		root.classList.add('dragging');
+		const mainFrame = root.querySelector<HTMLIFrameElement>('#vtbag-main-frame');
 		mainFrame && (mainFrame.style.pointerEvents = 'none');
 		e.preventDefault();
 	};
@@ -16,10 +18,10 @@ export function initDragging(draggable: HTMLElement, dragging: (e: MouseEvent | 
 	const stopDragging = () => {
 		if (root.classList.contains('dragging')) {
 			root.classList.remove('dragging');
-			root.querySelector<HTMLIFrameElement>('#vtbot-main-frame')!.style.pointerEvents = 'auto';
+			const mainFrame = root.querySelector<HTMLIFrameElement>('#vtbag-main-frame');
+			mainFrame && (mainFrame.style.pointerEvents = 'auto');
 		}
 	};
-
 
 	draggable.addEventListener('mousedown', startDragging);
 	draggable.addEventListener('touchstart', startDragging, { passive: false });
