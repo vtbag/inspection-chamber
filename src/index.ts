@@ -1,4 +1,5 @@
-import { bench } from './bench';
+//@ts-ignore
+import bench from './bench.txt';
 
 import { setTransitionNames } from './stylesheets';
 import { initDragging } from './dragging';
@@ -18,7 +19,7 @@ import { initNames, updateImageVisibility, updateNames } from './panel/names';
 import { initFilter } from './panel/filter';
 import { twinClick } from './twin';
 
-const titleLogo = "🐌";
+const titleLogo = "🔬";
 
 top!.__vtbag ??= {};
 top!.__vtbag.inspectionChamber ??= {};
@@ -27,9 +28,7 @@ const inspectionChamber = top!.__vtbag.inspectionChamber!;
 let firstModusInteraction = true;
 
 if (top === self) {
-	addEventListener('pageshow', () => {
-		setTimeout(initPanel, 500);
-	});
+	setTimeout(initPanel, 500);
 } else {
 	initSpecimen();
 }
@@ -94,7 +93,7 @@ function updateCallbackDone() {
 
 			canvas.style.cursor = 'wait';
 			await retrieveViewTransitionAnimations();
-			addFrames(top!.document.querySelector<HTMLInputElement>('#vtbag-ui-styled')!.checked);
+			addFrames(top!.document.querySelector<HTMLInputElement>('#vtbag-ui-framed')!.checked);
 			inspectionChamber.twin!.ownerDocument.addEventListener('click', twinClick);
 
 			modusFunction[modus]();
@@ -112,7 +111,7 @@ function updateCallbackDone() {
 		unleashAllAnimations();
 		inspectionChamber.animations = undefined;
 		inspectionChamber.longestAnimation = undefined;
-		addFrames(top!.document.querySelector<HTMLInputElement>('#vtbag-ui-styled')!.checked);
+		addFrames(top!.document.querySelector<HTMLInputElement>('#vtbag-ui-framed')!.checked);
 		updateNames(setTransitionNames());
 		updateImageVisibility();
 		top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-slo-mo-progress')!.innerText = '';
@@ -264,9 +263,12 @@ function initPanelHandlers() {
 
 	initFilter();
 	initNames();
-	top!.document
-		.querySelector('#vtbag-ui-styled')
-		?.addEventListener('change', (e) => addFrames((e.target as HTMLInputElement).checked));
+	const framed = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-framed')!;
+	framed.addEventListener('change', (e) => {
+		const framed = (e.target as HTMLInputElement).checked;
+		localStorage.setItem('vtbag-ui-framed', framed ? "X" : "");
+		addFrames(framed);
+	});
 
 	initSlowMotion();
 	initController();
@@ -325,7 +327,11 @@ function updateModus() {
 }
 
 function attachFrameToggle(divId: string) {
-	const styled = top!.document.querySelector('#vtbag-ui-styled')?.parentElement;
+	const framed = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-framed')!;
+	const parent = framed.parentElement;
 	const div = top!.document.querySelector(divId);
-	if (styled && div && styled.parentElement !== div) div.insertAdjacentElement('beforeend', styled);
+	framed.checked = !!localStorage.getItem('vtbag-ui-framed');
+	addFrames(framed.checked);
+
+	if (parent && div && parent.parentElement !== div) div.insertAdjacentElement('beforeend', parent);
 }

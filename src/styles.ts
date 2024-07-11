@@ -6,7 +6,6 @@ export function setStyles(
 ) {
 	const id = 'vtbag-adopted-sheet' + (suffix ? '-' + suffix : '');
 	doc.getElementById(id)?.remove();
-	doc.documentElement.offsetHeight;
 	styles &&
 		doc.head.insertAdjacentHTML(
 			prepend ? 'afterbegin' : 'beforeend',
