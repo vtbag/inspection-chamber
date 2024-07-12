@@ -23,15 +23,15 @@ function unframe() {
 function frame() {
 	setStyles(`
 ::view-transition-old(*) {
-	border: 3px dashed darkslateblue;
+	outline: 3px dashed darkslateblue;
 	border-radius: 5px;
 }
 ::view-transition-new(*) {
-	border: 3px dashed darkolivegreen;
+	outline: 3px dashed darkolivegreen;
 }
 ::view-transition-group(*),
 [data-vtbag-transition-name] {
-	border: 1px dotted darkgoldenrod;
+	outline: 2px dotted darkgoldenrod;
 }
 ::view-transition-group(*),
 ::view-transition-image-pair(*),

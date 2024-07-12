@@ -279,7 +279,7 @@ const glow = [
 		minWidth: '20px',
 		minHeight: '20px',
 		backgroundColor: 'darkslateblue',
-		opacity: '1',
+		opacity: '0.5',
 	},
 	{ boxShadow: '0 0 50px blue' },
 	{ boxShadow: '0 0  0px blue' },
@@ -310,6 +310,10 @@ export function highlightInFrame(name: string) {
 function glowPseudo(name: string) {
 	setStyles(
 		`
+		::view-transition-old(*),
+		::view-transition-new(*) {
+			opacity: 0;
+		}
 		::view-transition-old(${name}) {
 			box-shadow: 0 0 100px blue;
 			background-color: darkslateblue;

@@ -196,8 +196,8 @@ async function initPanel() {
 				);
 		}
 	});
-	mainFrame.animate([{ opacity: 0 }, { opacity: 1 }], {
-		duration: 50,
+	mainFrame.animate([{ opacity: 0, transform: "translateY(100vh)" }, { opacity: 1 }], {
+		duration: 500,
 		fill: 'forwards',
 	});
 	frameDocument!.addEventListener('click', innerClick);

@@ -27,8 +27,8 @@
 					<code>Side-by-side Comparison</code>.
 				</p>
 				<p>
-					<b>Examine</b> the defined transitions by clicking on there names or selecting the
-					highlight toggle, then <b>navigate</b> by clicking a link on your page.
+					<b>Examine</b> the defined transitions by clicking on the names or select the
+					highlight toggle. Then <b>navigate</b> by clicking a link on your page.
 				</p>
 				<p>
 					Selecting an element with a view transition name copies its selector to the clipboard,

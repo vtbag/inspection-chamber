@@ -1,4 +1,5 @@
 import { initDragging } from './dragging';
+import { src} from './pngs/chamber';
 
 export function showReopener() {
 	top!.addEventListener('resize', () => {
@@ -11,7 +12,10 @@ export function showReopener() {
 	);
 	top!.document.body.insertAdjacentHTML(
 		'beforeend',
-		`<div title="reopen the inspection chamber" id="vtbag-ui-reopen" style="position: fixed; z-index:1100; left: ${reopenerLeft}; top: ${reopenerTop}"><svg xmlns="http://www.w3.org/2000/svg"   width="2em" height="2em" viewBox="0 0 48 48"><g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M35 14c0-5.523-4.925-10-11-10S13 8.477 13 14m-6 2a2 2 0 0 1 2-2h30a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-9a2 2 0 0 1-2-2v0a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v0a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2zm3 14v14h28V30"/><path d="M20 26h8v6h-8z"/></g></svg><div>
+		`<div title="reopen the inspection chamber" id="vtbag-ui-reopen" style="position: fixed; z-index:1100; left: ${reopenerLeft}; top: ${reopenerTop}"><img style="  border-radius: 50%;
+  border: 8px dashed #8888;
+  mask-image: radial-gradient(ellipse at center, white 35%, transparent 71%);
+" src=${src} alt="" /><div>
 
 		<style>
 			#vtbag-ui-reopen g {
