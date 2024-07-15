@@ -42,7 +42,7 @@ export function setTransitionNames() {
 
 	function setName(el: HTMLElement, name: string) {
 		if (name == 'none') {
-			el.removeAttribute("data-vtbag-transition-name");
+			el.removeAttribute('data-vtbag-transition-name');
 		} else {
 			el.dataset.vtbagTransitionName = name;
 		}

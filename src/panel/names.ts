@@ -1,3 +1,4 @@
+import { listAnimations } from '../animations';
 import { setStyles } from '../styles';
 import { syncTwins } from '../twin';
 import { resetFilter, resetSelected } from './filter';
@@ -54,12 +55,12 @@ export function refreshNames() {
 			const text = name.innerText;
 			style.display =
 				(fragment === '' || text.includes(fragment)) &&
-					(filter === 'all' ||
-						(filter === 'both' && classes.contains('new') && classes.contains('old')) ||
-						(filter === 'old-only' && classes.contains('old') && !classes.contains('new')) ||
-						(filter === 'new-only' && classes.contains('new') && !classes.contains('old')) ||
-						(filter === 'old' && classes.contains('old')) ||
-						(filter === 'new' && classes.contains('new')))
+				(filter === 'all' ||
+					(filter === 'both' && classes.contains('new') && classes.contains('old')) ||
+					(filter === 'old-only' && classes.contains('old') && !classes.contains('new')) ||
+					(filter === 'new-only' && classes.contains('new') && !classes.contains('old')) ||
+					(filter === 'old' && classes.contains('old')) ||
+					(filter === 'new' && classes.contains('new')))
 					? 'list-item'
 					: 'none';
 		});
@@ -69,48 +70,53 @@ export function refreshNames() {
 export function updateNameVisibility() {
 	const inspectionChamber = top!.__vtbag.inspectionChamber!;
 	if (controllerChanged()) {
+		syncTwins();
+
 		inspectionChamber.updateNameVisibilityTimeout = undefined;
 		const twinDocument = inspectionChamber.twin!.ownerDocument;
 		const topDocument = top!.document;
 		const computedStyle = top!.getComputedStyle(topDocument.documentElement);
 		const column = topDocument.documentElement.classList.contains('vtbag-ui-column');
-		const panelWidth = column ? parseFloat(computedStyle.getPropertyValue('--vtbag-panel-width') || '0') : 0;
-		const panelHeight = column ? 0 : parseFloat(computedStyle.getPropertyValue('--vtbag-panel-height') || '0');
-		syncTwins();
+		const panelWidth = column
+			? parseFloat(computedStyle.getPropertyValue('--vtbag-panel-width') || '0')
+			: 0;
+		const panelHeight = column
+			? 0
+			: parseFloat(computedStyle.getPropertyValue('--vtbag-panel-height') || '0');
 		topDocument.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
 			const name = li.innerText;
 			const classes = li.classList;
 			classes[
 				classes.contains('old') &&
-					insideViewport(
-						twinDocument.querySelector(`#vtbag-twin--view-transition-old-${name}`),
-						panelWidth,
-						panelHeight
-					) === false
+				insideViewport(
+					twinDocument.querySelector(`#vtbag-twin--view-transition-old-${name}`),
+					panelWidth,
+					panelHeight
+				) === false
 					? 'add'
 					: 'remove'
 			]('old-invisible');
 			classes[
 				classes.contains('new') &&
-					insideViewport(
-						twinDocument.querySelector(`#vtbag-twin--view-transition-new-${name}`),
-						panelWidth,
-						panelHeight
-					) === false
+				insideViewport(
+					twinDocument.querySelector(`#vtbag-twin--view-transition-new-${name}`),
+					panelWidth,
+					panelHeight
+				) === false
 					? 'add'
 					: 'remove'
 			]('new-invisible');
 			classes[
 				(!classes.contains('old') || classes.contains('old-invisible')) &&
-					(!classes.contains('new') || classes.contains('new-invisible'))
+				(!classes.contains('new') || classes.contains('new-invisible'))
 					? 'add'
 					: 'remove'
 			]('invisible');
 		});
-	}
-	if (vtActive()) {
-		inspectionChamber.updateNameVisibilityTimeout
-			= top!.setTimeout(updateNameVisibility, 500);
+
+		if (vtActive()) {
+			inspectionChamber.updateNameVisibilityTimeout = top!.setTimeout(updateNameVisibility, 1000);
+		}
 	}
 }
 
@@ -148,7 +154,7 @@ function highlightNames(name: string) {
 	const control =
 		top!.document.documentElement.dataset.vtbagModus === 'control' &&
 		top!.document.querySelector<HTMLElement>('#vtbag-ui-names h4')!.innerText ===
-		'Animation Groups';
+			'Animation Groups';
 	const lis = top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li');
 	let selected: HTMLLIElement | undefined;
 	lis.forEach((li) => {
@@ -194,7 +200,7 @@ function writeSelectorToClipboard(elem?: Element | null) {
 		const name = elem && (elem as HTMLElement).dataset.vtbagTransitionName;
 
 		top!.document.querySelector<HTMLInputElement>('#vtbag-ui-info')!.innerHTML = `<h4>Info</h4>
-						<p>DevTools selector '<b><code>:root</code></b>' copied to clipboard. Paste to DevTools console, then expand the <code>&lt;html></code> element and its <code>::view-transition</code> pseudo element.</p>${name && "<p>Look for the <code>::view-transition-group("+name+")</code> pseudo element and its children.</p>"}`;
+						<p>DevTools selector '<b><code>:root</code></b>' copied to clipboard. Paste to DevTools console, then expand the <code>&lt;html></code> element and its <code>::view-transition</code> pseudo element.</p>${name && '<p>Look for the <code>::view-transition-group(' + name + ')</code> pseudo element and its children.</p>'}`;
 	}
 }
 
@@ -226,6 +232,27 @@ export function initNames() {
 	top!.document
 		.querySelector('#vtbag-ui-names button')!
 		.addEventListener('click', () => resetSelected());
+	top!.document
+		.querySelector<HTMLSpanElement>('#vtbag-ui-names-old')!
+		.addEventListener('click', () => {
+			top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
+				if (li.classList.contains('old')) {
+					li.classList.toggle('old-hidden');
+				}
+			});
+			updateImageVisibility();
+		});
+	top!.document
+		.querySelector<HTMLSpanElement>('#vtbag-ui-names-new')!
+		.addEventListener('click', () => {
+			top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
+				if (li.classList.contains('new')) {
+					li.classList.toggle('new-hidden');
+				}
+			});
+			updateImageVisibility();
+		});
+
 	top!.document.querySelector('#vtbag-ui-names ol')!.addEventListener('click', (e) => {
 		if (e.target instanceof HTMLElement) {
 			const targetLi = e.target.closest('li');
@@ -259,6 +286,7 @@ export function initNames() {
 						);
 
 						if (modus && modus !== 'bypass') writeSelectorToClipboard(elem);
+						listAnimations(name);
 					},
 					'names',
 					true

@@ -1,5 +1,4 @@
-export const endProps = [
-];
+export const endProps = [];
 const basicProps = [
 	'animation',
 	'direction',

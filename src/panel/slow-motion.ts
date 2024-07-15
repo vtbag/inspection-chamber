@@ -1,4 +1,4 @@
-import { vtActive } from "./transition";
+import { vtActive } from './transition';
 
 export function setupSlowMotionPlay() {
 	updateProgress();
@@ -6,14 +6,16 @@ export function setupSlowMotionPlay() {
 }
 
 function sloMoPlay() {
-	const rate = 1.0 / Math.max(0.000001, parseFloat(
-		top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-tsf')?.innerText ?? '1.0'
-	));
+	const rate =
+		1.0 /
+		Math.max(
+			0.000001,
+			parseFloat(top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-tsf')?.innerText ?? '1.0')
+		);
 	top!.__vtbag.inspectionChamber!.animations?.forEach((animation) => {
 		animation.playbackRate = rate;
 		animation.playState === 'paused' && animation.play();
-	}
-	);
+	});
 }
 
 export function initSlowMotion() {
@@ -39,4 +41,3 @@ function updateProgress() {
 		}
 	}
 }
-

@@ -13,15 +13,27 @@ export function setStyles(
 		);
 }
 
-export function addFrames(show: boolean) {
-	show ? frame() : unframe();
+export function addFrames(show: boolean, namedOnly: boolean) {
+	show ? frame(namedOnly) : unframe();
 }
 
 function unframe() {
 	setStyles('');
 }
-function frame() {
+function frame(namedOnly = false) {
 	setStyles(`
+	${
+		namedOnly
+			? `
+* {
+	pointer-events: none;
+}
+[data-vtbag-transition-name] {
+	pointer-events: auto;
+}`
+			: ''
+	}
+
 ::view-transition-old(*) {
 	outline: 3px dashed darkslateblue;
 	border-radius: 5px;

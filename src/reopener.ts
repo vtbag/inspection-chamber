@@ -1,5 +1,8 @@
 import { initDragging } from './dragging';
-import { src} from './pngs/chamber';
+import { src } from './pngs/chamber';
+
+export const STANDBY = 'vtbag-ui-standby';
+const REOPENER_POSITION = 'vtbag-ui-reopener-position';
 
 export function showReopener() {
 	top!.addEventListener('resize', () => {
@@ -7,15 +10,15 @@ export function showReopener() {
 		// For now just start a new session to make it visible again.
 	});
 	const { reopenerLeft, reopenerTop } = JSON.parse(
-		sessionStorage.getItem('vtbag-ui-reopener') ??
-		'{"reopenerLeft": "0px", "reopenerTop": "0px"}'
+		top!.sessionStorage.getItem(REOPENER_POSITION) ??
+			'{"reopenerLeft": "0px", "reopenerTop": "0px"}'
 	);
 	top!.document.body.insertAdjacentHTML(
 		'beforeend',
-		`<div title="reopen the inspection chamber" id="vtbag-ui-reopen" style="position: fixed; z-index:1100; left: ${reopenerLeft}; top: ${reopenerTop}"><img style="  border-radius: 50%;
+		`<div title="Reactivate the inspection chamber" id="vtbag-ui-reopen" style="position: fixed; z-index:1100; left: ${reopenerLeft}; top: ${reopenerTop}"><img style="  border-radius: 50%;
   border: 8px dashed #8888;
   mask-image: radial-gradient(ellipse at center, white 35%, transparent 71%);
-" src=${src} alt="" /><div>
+" src=${src} alt="Reactivate the inspection chamber" /><div>
 
 		<style>
 			#vtbag-ui-reopen g {
@@ -42,24 +45,23 @@ export function showReopener() {
 	reopener.addEventListener('click', () => {
 		setTimeout(() => (dragged = false), 100);
 		if (!dragged) {
-			sessionStorage.removeItem('vtbag-ui-closed');
+			top!.sessionStorage.removeItem(STANDBY);
 			top!.location.reload();
 		}
 	});
 	initDragging(reopener, (e: MouseEvent | TouchEvent) => {
-		reopener.style.left = `${(e instanceof TouchEvent ? e.touches[0]?.clientX - 16 : e.clientX - 16) ?? 0}px`;
-		reopener.style.top = `${(e instanceof TouchEvent ? e.touches[0]?.clientY - 16 : e.clientY - 16) ?? 0}px`;
+		reopener.style.left = `${(e instanceof TouchEvent ? e.touches[0]?.clientX - 36 : e.clientX - 36) ?? 0}px`;
+		reopener.style.top = `${(e instanceof TouchEvent ? e.touches[0]?.clientY - 36 : e.clientY - 36) ?? 0}px`;
 		dragged = true;
 		saveReopenerPosition(reopener);
 	});
 }
 function saveReopenerPosition(reopener: HTMLElement) {
-	sessionStorage.setItem(
-		'vtbag-ui-reopener',
+	top!.sessionStorage.setItem(
+		REOPENER_POSITION,
 		JSON.stringify({
 			reopenerLeft: reopener.style.left,
 			reopenerTop: reopener.style.top,
 		})
 	);
 }
-
