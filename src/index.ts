@@ -25,6 +25,7 @@ import { initNames, updateImageVisibility, updateNames } from './panel/names';
 import { initFilter } from './panel/filter';
 import { twinClick } from './twin';
 import { DEBUG } from './panel/debug';
+import { initInnerPanel, mightHideMode, plugInPanel } from './panel/inner';
 
 const ORIENTATION = 'vtbag-ui-panel-orientation';
 const FRAMED = 'vtbag-ui-framed';
@@ -46,10 +47,10 @@ if (top === self) {
 function initSpecimen() {
 	const frameDocument = (inspectionChamber.frameDocument = self.document);
 
+	self.addEventListener('pageswap', pageSwap, { once: true });
+	self.addEventListener('pagereveal', prePageReveal, { once: true });
 	if (!inspectionChamber.initialized) {
 		inspectionChamber.initialized = true;
-		self.addEventListener('pageswap', pageSwap, { once: true });
-		self.addEventListener('pagereveal', prePageReveal, { once: true });
 		monkeyPatchStartViewTransition();
 	}
 
@@ -58,15 +59,15 @@ function initSpecimen() {
 		// todo: add level 2 options
 		frameDocument.startViewTransition = (cb: () => void | Promise<void>) => {
 			pageSwap();
-			const viewTransition = (inspectionChamber.viewTransition = originalStartViewTransition.call(
+			inspectionChamber.viewTransition = originalStartViewTransition.call(
 				frameDocument,
 				async () => {
 					await Promise.resolve();
 					await cb();
 					pageReveal();
 				}
-			));
-			return viewTransition;
+			);
+			return inspectionChamber.viewTransition;
 		};
 	}
 }
@@ -86,11 +87,11 @@ function pageReveal() {
 	DEBUG && console.log('pageReveal');
 	if (inspectionChamber.viewTransition) {
 		forceAnimations();
-		updateCallbackDone();
+		beforeUpdateCallbackDone();
 	}
 }
 
-function updateCallbackDone() {
+function beforeUpdateCallbackDone() {
 	setVtActive();
 	const root = top!.document.documentElement;
 	const viewTransition = inspectionChamber.viewTransition!;
@@ -100,7 +101,6 @@ function updateCallbackDone() {
 		control: controlledPlay,
 		compare: () => {},
 	};
-
 	const modus = root.dataset.vtbagModus as Modus;
 
 	viewTransition.updateCallbackDone.catch(() => {});
@@ -147,6 +147,12 @@ function updateCallbackDone() {
 		top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-animations')!.innerText = '';
 		!root.dataset.vtbagModus &&
 			top!.document.querySelector<HTMLLIElement>('#vtbag-ui-modi li input')?.click();
+		setTimeout(() => {
+			const empty = top!.document.querySelector<HTMLDivElement>(
+				'#vtbag-ui-inner-panel:has( > div:nth-of-type(2):empty)'
+			);
+			empty && (empty.style.display = 'none');
+		}, 100);
 	});
 }
 
@@ -204,10 +210,8 @@ async function initPanel() {
 
 	updateNames(setTransitionNames());
 	initPanelHandlers();
-	initDragging(top!.document.querySelector('#divider')!, (e: MouseEvent | TouchEvent) => {
-		const clientX = (e instanceof TouchEvent ? e.touches[0]?.clientX : e.clientX) ?? 0;
-		const clientY = (e instanceof TouchEvent ? e.touches[0]?.clientY : e.clientY) ?? 0;
-
+	const divider = top!.document.querySelector<HTMLDivElement>('#divider')!;
+	initDragging(divider, (clientX, clientY) => {
 		if (root.classList.contains('vtbag-ui-column')) {
 			if (root.classList.contains('vtbag-ui-tl'))
 				root.style.setProperty(
@@ -305,6 +309,9 @@ function initPanelHandlers() {
 			rootStyle.colorScheme === 'dark' ? 'light' : 'dark';
 		setBackgroundAccent();
 	});
+
+	initInnerPanel();
+
 	top!.document.querySelector('#vtbag-ui-standby')!.addEventListener('click', () => {
 		top!.sessionStorage.setItem(STANDBY, 'true');
 		top!.location.reload();
@@ -364,10 +371,16 @@ function updateModus() {
 				if (modus === 'bypass') {
 					attachFrameToggle('#vtbag-ui-modi');
 				}
-				top!.document.querySelector<HTMLInputElement>('#vtbag-ui-messages')!.innerHTML =
-					message[modus];
+				const messages = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-messages')!;
+				messages.innerHTML = message[modus];
+				plugInPanel(messages);
 
-				if (firstModusInteraction) {
+				const modi = top!.document.querySelector<HTMLDivElement>('#vtbag-ui-modi')!;
+				if (
+					firstModusInteraction &&
+					modi.parentElement?.id === 'vtbag-ui-panel' &&
+					messages.parentElement?.id === 'vtbag-ui-panel'
+				) {
 					firstModusInteraction = false;
 					top!.document
 						.querySelector('#vtbag-ui-panel')
@@ -376,6 +389,7 @@ function updateModus() {
 							top!.document.querySelector<HTMLInputElement>('#vtbag-ui-modi')!
 						);
 				}
+				mightHideMode();
 			}, 'update-modus');
 		}
 	}

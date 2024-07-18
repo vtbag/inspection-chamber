@@ -49,9 +49,9 @@ export function showReopener() {
 			top!.location.reload();
 		}
 	});
-	initDragging(reopener, (e: MouseEvent | TouchEvent) => {
-		reopener.style.left = `${(e instanceof TouchEvent ? e.touches[0]?.clientX - 36 : e.clientX - 36) ?? 0}px`;
-		reopener.style.top = `${(e instanceof TouchEvent ? e.touches[0]?.clientY - 36 : e.clientY - 36) ?? 0}px`;
+	initDragging(reopener, (x, y) => {
+		reopener.style.left = `${x}px`;
+		reopener.style.top = `${y}px`;
 		dragged = true;
 		saveReopenerPosition(reopener);
 	});

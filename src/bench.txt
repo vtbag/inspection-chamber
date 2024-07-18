@@ -9,6 +9,7 @@
 <body>
 	<canvas id="canvas"></canvas> <iframe id="vtbag-main-frame" src="/"></iframe>
 	<div id="divider" class="divider"></div>
+
 	<button id="vtbag-ui-control-play">
 		<img
 			style="transform: scale(1.5)"
@@ -118,9 +119,13 @@
 			/>
 			<div style="view-transition-name: vtbag-checkbox-styled">
 				<input id="vtbag-ui-framed" type="checkbox" />
-				<label for="vtbag-ui-framed">Frame elements</label><br/>
+				<label for="vtbag-ui-framed">Frame elements</label><br />
 				<input id="vtbag-ui-named-only" type="checkbox" />
-				<label for="vtbag-ui-named-only" title="When selected, only elements with a view transition name &#10;can be clicked for identification or to start a view transition.&#10;This is helpful if named elements are hidden beneath others.">Named elements only</label>
+				<label
+					for="vtbag-ui-named-only"
+					title="When selected, only elements with a view transition name &#10;can be clicked for identification or to start a view transition.&#10;This is helpful if named elements are hidden beneath others."
+					>Named elements only</label
+				>
 			</div>
 		</div>
 		<div id="vtbag-ui-control" style="view-transition-name: vtbag-div-control">
@@ -139,8 +144,11 @@
 			<button id="vtbag-ui-control-exit">Exit</button>
 		</div>
 
-		<div title="Select names&#10;(During transition:&#10;Click colored patches to hides images)"
-					id="vtbag-ui-names" style="view-transition-name: vtbag-div-names">
+		<div
+			title="Select names&#10;(During transition:&#10;Click colored patches to hides images)"
+			id="vtbag-ui-names"
+			style="view-transition-name: vtbag-div-names"
+		>
 			<h4>Elements w/ View Transition Names</h4>
 			<div style="display: none; justify-content: space-between">
 				<span id="vtbag-ui-names-old" class="button">old</span
@@ -229,16 +237,60 @@
 	<button id="vtbag-ui-standby" title="Standby" style="view-transition-name: vtbag-button-standby">
 		🗕
 	</button>
+
+	<div
+		id="vtbag-ui-inner-panel"
+		style="
+			display: none;
+			position: fixed;
+			left: 25vw;
+			top: 25vh;
+			width: 50vw;
+			height: 50vh;
+			background-color: #0000;
+			padding: 0.5em;
+			scrollbar-gutter: unset;
+		"
+	>
+		<div
+			id="vtbag-ui-move"
+			style="
+				width: 100%;
+				height: 1ex;
+				background-image: repeating-linear-gradient(180deg, #aaa, #0000 2px, #666 2px, #0000 4px);
+				cursor: move;
+			"
+		></div>
+		<div style="width: calc(100% - 2ex); height: 3ex; position: absolute; left: 1ex">
+			<input type="range" id="vtbag-ui-opacity" style="height: 1ex; width:calc(100% - 5ex); padding: 0; margin: 0" value="97" min="20" />
+		</div>
+		<div
+			id="vtbag-ui-resize"
+			style="
+				width: 20px;
+				height: 3ex;
+				background-image: repeating-linear-gradient(
+					-35deg,
+					#aaa,
+					#0000 20px,
+					#666 20px,
+					#0000 40px
+				);
+				position: absolute;
+				right: 1ex;
+				cursor: nwse-resize;
+			"
+		></div>
+	</div>
+
 	<style>
-		#vtbag-ui :where(*, ::before, ::after) {
+		#vtbag-ui-inner-panel,
+		#vtbag-ui-panel,
+		#vtbag-ui-inner-panel *,
+		#vtbag-ui-panel :where(*, ::before, ::after) {
 			box-sizing: border-box;
 		}
-		#vtbag-ui * {
-			margin: 0;
-			padding: 0;
-		}
-
-		#vtbag-ui
+		#vtbag-ui-panel
 			:where(
 				article,
 				aside,
@@ -255,39 +307,33 @@
 			) {
 			display: block;
 		}
-		#vtbag-ui :where(ol, ul) {
-			list-style: none;
+		#vtbag-ui-inner-panel
+			:where(
+				article,
+				aside,
+				details,
+				figcaption,
+				figure,
+				footer,
+				header,
+				hgroup,
+				main,
+				menu,
+				nav,
+				section
+			) {
+			display: block;
 		}
 
-		#vtbag-ui img {
-			border-style: none;
-		}
-
-		#vtbag-ui :where(button, input, optgroup, select, textarea) {
-			font-family: inherit;
-			font-size: 100%;
-			line-height: 1.15;
-			margin: 0;
-		}
-/*
-		::-webkit-scrollbar {
-			background-color: #8888;
-			width: 8px;
-		}
-		::-webkit-scrollbar-thumb {
-			background-color: #888c
-		}
-		:root {
-			transition: color 1s;
-		}
-*/
 		img {
 			display: inline-block;
+			border-style: none;
 		}
 		button {
 			padding-left: 6px;
 			padding-right: 6px;
 		}
+		#vtbag-ui-inner-panel,
 		#vtbag-ui-panel {
 			--vtbag-name-border-width: 20px;
 		}
@@ -345,6 +391,26 @@
 			right: calc(100vw - var(--vtbag-panel-width) + 45px);
 		}
 
+		#vtbag-ui-panel > div > h4 {
+			cursor: zoom-in;
+		}
+		#vtbag-ui-inner-panel > div > h4 {
+			cursor: zoom-out;
+		}
+		#vtbag-ui-inner-panel > div {
+			padding: 6px;
+			margin: 0px;
+			border: 1px solid #888;
+		}
+		#vtbag-ui-inner-panel > div:nth-of-type(2) {
+			padding: 8px;
+			min-width: 100%;
+			min-height: calc(100% - 6ex);
+		}
+		#vtbag-ui-opacity {
+			transform: translate(8px, -5px);
+			accent-color: #888888;
+		}
 		#vtbag-ui-panel > div {
 			padding: 8px;
 			margin: 4px;
@@ -500,6 +566,7 @@
 			border: 1pt solid darkgoldenrod;
 		}
 
+		#vtbag-ui-inner-panel > div > *:first-child,
 		#vtbag-ui-panel > div > *:first-child {
 			margin-top: 0;
 		}
@@ -521,6 +588,7 @@
 			/*	bottom: calc(var(--vtbag-panel-height, 226px) - 14px);*/
 			bottom: 6px;
 		}
+		#vtbag-ui-inner-panel,
 		#vtbag-ui-panel {
 			background-color: #4861;
 			accent-color: darkolivegreen;
@@ -537,6 +605,7 @@
 			overflow: auto;
 			box-sizing: border-box;
 		}
+
 		:root.vtbag-ui-column {
 			#vtbag-ui-panel {
 				flex-direction: column;
@@ -658,7 +727,7 @@
 		}
 		#divider:hover,
 		:root.dragging #divider {
-			cursor: ns-resize;
+			cursor: row-resize;
 			background-color: darkolivegreen;
 		}
 		:root.vtbag-vt-active #divider:hover,
@@ -672,7 +741,7 @@
 		:root.vtbag-ui-column {
 			#divider:hover,
 			:root.dragging #divider {
-				cursor: ew-resize;
+				cursor: col-resize;
 			}
 		}
 
@@ -728,11 +797,11 @@
 				transform: translateX(calc(var(--vtbag-panel-width) * -1));
 			}
 		}
-		#vtbot-loading-indicator {
+		:root:has(#vtbot-ui-panel) #vtbot-loading-indicator {
 			display: none;
 		}
 		hr {
-			border-color: #888
+			border-color: #888;
 		}
 	</style>
 </body>

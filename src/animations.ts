@@ -1,4 +1,5 @@
 import { namesOfAnimation } from './panel/full-control';
+import { plugInPanel } from './panel/inner';
 import { updateNames } from './panel/names';
 import { vtActive } from './panel/transition';
 import { setStyles } from './styles';
@@ -90,7 +91,10 @@ export function unleashAllAnimations() {
 }
 
 export function listAnimations(name: string) {
-	const anim = top!.document.querySelector('#vtbag-ui-animations')!;
+	const row = (name: string, value: string) =>
+		value ? `<tr><td style="text-align:right">${name}</td><td>${value}</td><tr>` : '';
+
+	const anim = top!.document.querySelector<HTMLDivElement>('#vtbag-ui-animations')!;
 	anim.innerHTML = !vtActive()
 		? ''
 		: `<h4>Animations of ${name}:</h4>` +
@@ -98,6 +102,7 @@ export function listAnimations(name: string) {
 			animation('new') +
 			animation('group') +
 			animation('image-pair');
+	plugInPanel(anim);
 
 	function animation(pseudo: string) {
 		const inspectionChamber = top!.__vtbag.inspectionChamber!;
@@ -113,12 +118,12 @@ export function listAnimations(name: string) {
 		const iterationCounts = style.animationIterationCount.split(', ');
 		const timingFunctions = style.animationTimingFunction.replace(/\),/g, ')@').split('@ ');
 		const timelines =
-			'animationTimeline' in style && (style['animationTimeline'] as string).split(', ');
+			'animationTimeline' in style ? (style['animationTimeline'] as string).split(', ') : [];
 
 		const res: string[] = [];
 		animationNames.forEach((animationName, idx) => {
 			res.push(
-				`<details><summary>${pseudo}: ${animationName}(${delays[idx]}, ${durations[idx]})</summary>${details(idx, animationName)}</details>`
+				`<details><summary>${pseudo}: ${animationName}(${delays[idx % delays.length]}, ${durations[idx % durations.length]})</summary>${details(idx, animationName)}</details>`
 			);
 		});
 		return res.join('') + '<hr>';
@@ -126,12 +131,12 @@ export function listAnimations(name: string) {
 		function details(idx: number, animationName: string) {
 			return `
 <table>
-<tr><td style="text-align:right">${'direction:'}</td><td>${directions[idx]}</td><tr>
-<tr><td style="text-align:right">${'fill-mode:'}</td><td>${fillModes[idx]}</td><tr>
-<tr><td style="text-align:right">${'iteration-count:'}</td><td>${iterationCounts[idx]}</td><tr>
-<tr><td style="text-align:right">${'timing-function:'}</td><td>${timingFunctions[idx]}</td><tr>
-${timelines && `<tr><td style="text-align:right">${'timeline:'}</td><td>${timelines[idx]}</td><tr>`}
-<tr><td style="text-align:right">${'animates:'}</td><td>${keyframeProperties(animationName)}</td><tr>
+	${row('direction:', directions[idx % directions.length])}
+	${row('fill-mode:', fillModes[idx % fillModes.length])}
+	${row('iteration-count:', iterationCounts[idx % iterationCounts.length])}
+	${row('timing-function:', timingFunctions[idx % timingFunctions.length])}
+	${row('timeline:', timelines[idx % timelines.length])}
+	${row('animates:', keyframeProperties(animationName))}
 </table>`;
 
 			function keyframeProperties(name: string) {

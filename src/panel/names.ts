@@ -3,6 +3,7 @@ import { setStyles } from '../styles';
 import { syncTwins } from '../twin';
 import { resetFilter, resetSelected } from './filter';
 import { controllerChanged, updateControl } from './full-control';
+import { plugInPanel } from './inner';
 import { mayViewTransition, vtActive } from './transition';
 
 export let updateNameVisibilityTimeout: number | undefined;
@@ -187,11 +188,12 @@ function highlightNames(name: string) {
 }
 
 function writeSelectorToClipboard(elem?: Element | null) {
+	const info = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-info')!;
 	if (elem && !vtActive()) {
 		navigator.clipboard.writeText(
 			`inspect(top.document.querySelector("#vtbag-main-frame").contentDocument.querySelector("${deriveCSSSelector(elem)}"))`
 		);
-		top!.document.querySelector<HTMLInputElement>('#vtbag-ui-info')!.innerHTML = `<h4>Info</h4>
+		info.innerHTML = `<h4>Info</h4>
 						<p>DevTools selector '<b><code>${deriveCSSSelector(elem)}</code></b>' copied to clipboard. Paste to DevTools console to further inspect the element.</p>`;
 	} else {
 		navigator.clipboard.writeText(
@@ -199,9 +201,10 @@ function writeSelectorToClipboard(elem?: Element | null) {
 		);
 		const name = elem && (elem as HTMLElement).dataset.vtbagTransitionName;
 
-		top!.document.querySelector<HTMLInputElement>('#vtbag-ui-info')!.innerHTML = `<h4>Info</h4>
+		info.innerHTML = `<h4>Info</h4>
 						<p>DevTools selector '<b><code>:root</code></b>' copied to clipboard. Paste to DevTools console, then expand the <code>&lt;html></code> element and its <code>::view-transition</code> pseudo element.</p>${name && '<p>Look for the <code>::view-transition-group(' + name + ')</code> pseudo element and its children.</p>'}`;
 	}
+	plugInPanel(info);
 }
 
 function deriveCSSSelector(element?: Element, useIds = true) {
@@ -314,6 +317,7 @@ const glow = [
 ];
 
 export function highlightInFrame(name: string) {
+	return;
 	if (vtActive()) {
 		glowPseudo(name);
 	} else {
