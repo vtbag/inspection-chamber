@@ -25,6 +25,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: npm install -g npm
       - run: npm ci
+      - run: npm build
       - run: npm publish ${OPTIONS}
         env:
           OPTIONS: ${{ inputs.options }}
