@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: '18.x'
           registry-url: 'https://registry.npmjs.org'
+          scope: '@vtbag'
       - run: npm install -g npm
       - run: npm ci
       - run: npm run build
