@@ -317,7 +317,6 @@ const glow = [
 ];
 
 export function highlightInFrame(name: string) {
-	return;
 	if (vtActive()) {
 		glowPseudo(name);
 	} else {
