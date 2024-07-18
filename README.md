@@ -1,8 +1,10 @@
 # The Inspection Chamber
 
-The Test Chamber is your ultimate playground for experimenting with the View Transition API. Whether you're working with same-document or cross-document transitions, this test bench has got you covered.
+The Inspection Chamber is your ultimate playground for experimenting with the View Transition API. Whether you're working with same-document or cross-document transitions, this test bench has got you covered.
 
-With a comprehensive set of controls at your fingertips, you can interactively test and fine-tune your view transitions to perfection. Dive in and explore all the features the Test Chamber offers to elevate your web development projects!
+With a comprehensive set of controls at your fingertips, you can interactively test and fine-tune your view transitions to perfection. Dive in and explore all the features the Inspection Chamber offers to elevate your web development projects!
+
+See the Documentation at [https://vtbag.pages.dev](https://vtbag.pages.dev)!
 
 # @vtbag
 

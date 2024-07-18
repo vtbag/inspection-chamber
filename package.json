@@ -2,13 +2,13 @@
   "name": "@vtbag/inspection-chamber",
   "version": "1.0.0",
   "main": "lib/index.js",
-  "description": "The Inspection Chamber gives you all the knobs and dials to interactively put your view transitions through its paces.",
+  "description": "The Inspection Chamber gives you all the knobs and dials to interactively put your view transitions through their paces.",
   "files": [
-    "lib/*.js"
+    "lib/index.js"
   ],
   "scripts": {
     "dev": "bin/bundle dev",
-    "build": "bin/bundle full",
+    "build": "npm run format && bin/bundle",
     "format": "prettier --write src",
     "test": "bin/test",
     "changeset": "changeset",
@@ -16,19 +16,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vtbag/test-chamber.git"
+    "url": "git+https://github.com/vtbag/inspection-chamber.git"
   },
   "keywords": [
     "view",
     "transitions",
+    "view transition",
     "VT"
   ],
   "author": "vtbag",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/vtbag/test-chamber/issues"
+    "url": "https://github.com/vtbag/inspection-chamber/issues"
   },
-  "homepage": "https://github.com/vtbag/test-chamber#readme",
+  "homepage": "https://vtbag.pages.dev",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/martrapp"
