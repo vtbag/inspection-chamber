@@ -130,10 +130,7 @@ function beforeUpdateCallbackDone() {
 	viewTransition!.finished.finally(() => {
 		clearVtActive();
 		inspectionChamber.viewTransition = undefined;
-		const twin = top!.__vtbag.inspectionChamber?.frameDocument
-			?.querySelector('#vtbag-twin--view-transition')
-			?.remove();
-
+		inspectionChamber.frameDocument?.querySelector('#vtbag-twin--view-transition')?.remove();
 		unleashAllAnimations();
 		inspectionChamber.animations = undefined;
 		inspectionChamber.longestAnimation = undefined;
@@ -147,6 +144,7 @@ function beforeUpdateCallbackDone() {
 		top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-animations')!.innerText = '';
 		!root.dataset.vtbagModus &&
 			top!.document.querySelector<HTMLLIElement>('#vtbag-ui-modi li input')?.click();
+		inspectionChamber.frameDocument!.addEventListener('click', innerClick);
 		setTimeout(() => {
 			const empty = top!.document.querySelector<HTMLDivElement>(
 				'#vtbag-ui-inner-panel:has( > div:nth-of-type(2):empty)'
