@@ -33,7 +33,7 @@ const NAMED_ONLY = 'named_only';
 const titleLogo = '🔬';
 
 top!.__vtbag ??= {};
-top!.__vtbag.inspectionChamber ??= { initialized: false };
+top!.__vtbag.inspectionChamber ??= {};
 const inspectionChamber = top!.__vtbag.inspectionChamber!;
 
 let firstModusInteraction = true;
@@ -49,8 +49,8 @@ function initSpecimen() {
 
 	self.addEventListener('pageswap', pageSwap, { once: true });
 	self.addEventListener('pagereveal', prePageReveal, { once: true });
-	if (!inspectionChamber.initialized) {
-		inspectionChamber.initialized = true;
+	if (!frameDocument.head.dataset.vtbagStartViewTransitionPatched) {
+		frameDocument.head.dataset.vtbagStartViewTransitionPatched = 'true';
 		monkeyPatchStartViewTransition();
 	}
 

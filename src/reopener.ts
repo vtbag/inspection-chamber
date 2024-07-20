@@ -40,6 +40,10 @@ export function showReopener() {
 			</style>
 			`
 	);
+	initListeners();
+}
+
+function initListeners() {
 	const reopener = top!.document.querySelector<HTMLElement>('#vtbag-ui-reopen')!;
 	let dragged = false;
 	reopener.addEventListener('click', () => {

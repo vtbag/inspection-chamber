@@ -1,7 +1,6 @@
 export type Modus = 'bypass' | 'slow-motion' | 'control' | 'compare';
 
 export type InspectionChamber = {
-	initialized: boolean;
 	viewTransition?: ViewTransition | undefined;
 	frameDocument?: Document | undefined;
 	animations?: Animation[] | undefined;
