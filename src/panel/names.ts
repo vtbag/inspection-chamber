@@ -317,6 +317,8 @@ const glow = [
 ];
 
 export function highlightInFrame(name: string) {
+	const modus = top!.document.documentElement.dataset.vtbagModus;
+	if (!modus || modus === 'bypass') return;
 	if (vtActive()) {
 		glowPseudo(name);
 	} else if (!top!.__vtbag.inspectionChamber!.viewTransition) {

@@ -158,7 +158,7 @@ function setBackgroundAccent() {
 	const root = top!.document.documentElement;
 	root.style.setProperty(
 		'--vtbag-background-accent',
-		root.style.colorScheme === 'dark' ? '#4E545D' : '#c6d1d7'
+		root.style.colorScheme.startsWith('dark') ? '#4E545D' : '#c6d1d7'
 	);
 }
 
@@ -304,7 +304,7 @@ function initPanelHandlers() {
 		top!.document.querySelector<HTMLIFrameElement>(
 			'#vtbag-main-frame'
 		)!.contentDocument!.documentElement.style.colorScheme = rootStyle.colorScheme =
-			rootStyle.colorScheme === 'dark' ? 'light' : 'dark';
+			rootStyle.colorScheme.startsWith('dark') ? 'light' : 'dark';
 		setBackgroundAccent();
 	});
 

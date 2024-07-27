@@ -15,7 +15,7 @@ export function initInnerPanel() {
 		.addEventListener('click', reColor);
 
 	function reColor() {
-		const dark = top!.document.documentElement.style.colorScheme === 'dark';
+		const dark = top!.document.documentElement.style.colorScheme.startsWith('dark');
 		innerPanel.style.backgroundColor = dark ? '#000' : '#fff';
 		innerPanel.style.color = !dark ? '#000' : '#fff';
 	}
