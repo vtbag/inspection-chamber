@@ -319,7 +319,7 @@ const glow = [
 export function highlightInFrame(name: string) {
 	if (vtActive()) {
 		glowPseudo(name);
-	} else {
+	} else if (!top!.__vtbag.inspectionChamber!.viewTransition) {
 		const chamber = top!.__vtbag.inspectionChamber!;
 		const el = chamber.frameDocument!.querySelector<HTMLElement>(
 			`[data-vtbag-transition-name="${name}"]`
