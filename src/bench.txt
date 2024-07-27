@@ -34,14 +34,7 @@
 				for pasting into the console of the browser's Developer tools.
 			</p>
 			<p>
-				Active view transitions show an
-				<span style="color: darkgoldenrod"
-					>indicator (<img
-						style="transform: translateY(0.4em)"
-						src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMzYgMzYiPjxwYXRoIGZpbGw9ImRhcmtnb2xkZW5yb2QiIGQ9Ik0zMCA0SDZhMiAyIDAgMCAwLTIgMnYyNGEyIDIgMCAwIDAgMiAyaDI0YTIgMiAwIDAgMCAyLTJWNmEyIDIgMCAwIDAtMi0yTTIwIDdoMnYzaC0yWm0tNiAwaDJ2M2gtMlptLTQgMjJIOHYtM2gyWm0wLTE5SDhWN2gyWm02IDE5aC0ydi0zaDJabTYgMGgtMnYtM2gyWm0zLjE2LTEwLjE2bC05Ljc3IDQuMzZhMSAxIDAgMCAxLTEuMzktLjkydi04LjcxYTEgMSAwIDAgMSAxLjQxLS45MUwyNS4xNiAxN2ExIDEgMCAwIDEgMCAxLjg0TTI4IDI5aC0ydi0zaDJabTAtMTloLTJWN2gyWiIgY2xhc3M9ImNsci1pLXNvbGlkIGNsci1pLXNvbGlkLXBhdGgtMSIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMzZ2MzZIMHoiLz48L3N2Zz4=
-"
-					/>)</span
-				>
+				Active view transitions show a <i>play indicator</i> ([>])
 				in the top left corner of the viewport. Clicking it ends the transition.
 			</p>
 			<p>
@@ -495,6 +488,10 @@
 			flex-grow: 1;
 			list-style-type: none;
 		}
+		#vtbag-ui-panel li {
+			margin-bottom: 8px;
+		}
+
 		#vtbag-ui-names ol li {
 			cursor: pointer;
 			padding: 2pt 8pt;
@@ -581,9 +578,6 @@
 			padding-left: 0px;
 			margin: 8px 0 8px 0;
 			list-style-type: none;
-		}
-		#vtbag-ui-modi li {
-			margin-bottom: 8px;
 		}
 		:root:not(.vtbag-ui-column) #vtbag-ui-panel ~ button {
 			/*	bottom: calc(var(--vtbag-panel-height, 226px) - 14px);*/

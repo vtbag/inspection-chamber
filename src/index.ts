@@ -174,7 +174,8 @@ async function initPanel() {
 	const docTitle = top!.document.title;
 	const icon = top!.document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.outerHTML ?? '';
 
-	const page = bench.replace(
+	const page = bench
+		.replace(
 			'<iframe id="vtbag-main-frame" src="/"></iframe>',
 			`<iframe id="vtbag-main-frame" style="opacity: 0;" src="${location.href}"></iframe>`
 		)
