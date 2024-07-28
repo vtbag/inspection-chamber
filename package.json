@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "bin/bundle dev",
     "build": "npm run format && bin/bundle",
-    "format": "prettier --write src",
+    "format": "prettier --write src | grep -v 'unchanged)$'",
     "test": "bin/test",
     "changeset": "changeset",
     "release": "changeset publish"

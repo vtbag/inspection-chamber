@@ -334,7 +334,7 @@ export function highlightInFrame(name: string) {
 			});
 			const display = self.getComputedStyle(el).display;
 			glow[2]!.display = !display.includes('block') ? 'inline-block' : display;
-			chamber.glow = el.animate(glow, { duration: 500, iterations: 1 });
+			chamber.glow = el.animate(glow, { delay: 250, duration: 500, iterations: 1 });
 			setTimeout(() => (chamber.glow = undefined), 500);
 		}
 	}
