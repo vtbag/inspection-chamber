@@ -11,7 +11,7 @@ export function showReopener() {
 	});
 	const { reopenerLeft, reopenerTop } = JSON.parse(
 		top!.sessionStorage.getItem(REOPENER_POSITION) ??
-			'{"reopenerLeft": "0px", "reopenerTop": "0px"}'
+		'{"reopenerLeft": "0px", "reopenerTop": "0px"}'
 	);
 	top!.document.body.insertAdjacentHTML(
 		'beforeend',
@@ -46,19 +46,21 @@ export function showReopener() {
 function initListeners() {
 	const reopener = top!.document.querySelector<HTMLElement>('#vtbag-ui-reopen')!;
 	let dragged = false;
-	reopener.addEventListener('click', () => {
-		setTimeout(() => (dragged = false), 100);
-		if (!dragged) {
-			top!.sessionStorage.removeItem(STANDBY);
-			top!.location.reload();
-		}
-	});
+	reopener.addEventListener('click', open);
+	reopener.addEventListener('touchend', open);
 	initDragging(reopener, (x, y) => {
 		reopener.style.left = `${x}px`;
 		reopener.style.top = `${y}px`;
 		dragged = true;
 		saveReopenerPosition(reopener);
-	});
+	}, () => dragged = false);
+
+	function open() {
+		if (!dragged) {
+			top!.sessionStorage.removeItem(STANDBY);
+			top!.location.reload();
+		}
+	}
 }
 function saveReopenerPosition(reopener: HTMLElement) {
 	top!.sessionStorage.setItem(
