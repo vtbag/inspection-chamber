@@ -11,7 +11,7 @@ export function showReopener() {
 	});
 	const { reopenerLeft, reopenerTop } = JSON.parse(
 		top!.sessionStorage.getItem(REOPENER_POSITION) ??
-		'{"reopenerLeft": "0px", "reopenerTop": "0px"}'
+			'{"reopenerLeft": "0px", "reopenerTop": "0px"}'
 	);
 	top!.document.body.insertAdjacentHTML(
 		'beforeend',
@@ -45,18 +45,26 @@ export function showReopener() {
 
 function initListeners() {
 	const reopener = top!.document.querySelector<HTMLElement>('#vtbag-ui-reopen')!;
-	let dragged = false;
+	let dragged = { x: -1, y: -1 };
+	let startPosition = { x: -1, y: -1 };
 	reopener.addEventListener('click', open);
 	reopener.addEventListener('touchend', open);
-	initDragging(reopener, (x, y) => {
-		reopener.style.left = `${x}px`;
-		reopener.style.top = `${y}px`;
-		dragged = true;
-		saveReopenerPosition(reopener);
-	}, () => dragged = false);
+	initDragging(
+		reopener,
+		(x, y) => {
+			reopener.style.left = `${x}px`;
+			reopener.style.top = `${y}px`;
+			dragged = { x, y };
+			saveReopenerPosition(reopener);
+		},
+		(x, y) => ((dragged = { x: -1, y: -1 }), (startPosition = { x, y }))
+	);
 
 	function open() {
-		if (!dragged) {
+		if (
+			dragged.x === -1 ||
+			Math.pow(startPosition.x - dragged.x, 2) + Math.pow(startPosition.y - dragged.y, 2) <= 16
+		) {
 			top!.sessionStorage.removeItem(STANDBY);
 			top!.location.reload();
 		}

@@ -3,30 +3,32 @@ let dragged = null as EventTarget | null;
 export function initDragging(
 	draggable: HTMLElement,
 	dragging: (x: number, y: number) => void,
-	start?: () => void
+	start?: (x: number, y: number) => void
 ) {
 	const root = top!.document.documentElement;
 
 	let startX: number;
 	let startY: number;
-	const x = (e: TouchEvent | MouseEvent, delta = 0) =>
+	const xe = (e: TouchEvent | MouseEvent, delta = 0) =>
 		((e instanceof TouchEvent ? e.touches[0]?.clientX : e.clientX) ?? 0) - delta;
-	const y = (e: TouchEvent | MouseEvent, delta = 0) =>
+	const ye = (e: TouchEvent | MouseEvent, delta = 0) =>
 		((e instanceof TouchEvent ? e.touches[0]?.clientY : e.clientY) ?? 0) - delta;
 
 	const startDragging = (e: TouchEvent | MouseEvent, t: HTMLElement) => {
 		dragged = t;
-		startX = x(e) - t.getBoundingClientRect().x;
-		startY = y(e) - t.getBoundingClientRect().y;
+		const x = xe(e);
+		const y = ye(e);
+		startX = x - t.getBoundingClientRect().x;
+		startY = y - t.getBoundingClientRect().y;
 		root.classList.add('dragging');
 		const mainFrame = root.querySelector<HTMLIFrameElement>('#vtbag-main-frame');
 		mainFrame && (mainFrame.style.pointerEvents = 'none');
-		start && start();
+		start && start(x - startX, y - startY);
 		e.cancelable && e.preventDefault();
 	};
 
 	const drag = (e: MouseEvent | TouchEvent) => {
-		if (root.classList.contains('dragging')) dragging(x(e, startX), y(e, startY));
+		if (root.classList.contains('dragging')) dragging(xe(e, startX), ye(e, startY));
 	};
 
 	const stopDragging = () => {
