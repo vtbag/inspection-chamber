@@ -1,6 +1,7 @@
 import { listAnimations } from '../animations';
 import { setStyles } from '../styles';
 import { syncTwins } from '../twin';
+import { DEBUG } from './debug';
 import { resetFilter, resetSelected } from './filter';
 import { controllerChanged, updateControl } from './full-control';
 import { plugInPanel } from './inner';
@@ -125,6 +126,17 @@ function insideViewport(element: HTMLElement | null, panelWidth = 0, panelHeight
 	if (!element) return undefined;
 	const { top, right, bottom, left, width, height } = element.getBoundingClientRect();
 
+	DEBUG &&
+		console.log(
+			~~window.top!.innerWidth,
+			~~window.top!.innerHeight,
+			~~width,
+			~~height,
+			~~left,
+			~~top,
+			~~right,
+			~~bottom
+		);
 	return (
 		width > 0 &&
 		height > 0 &&
@@ -141,29 +153,31 @@ export function updateImageVisibility() {
 	top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
 		const name = li.innerText;
 		const classes = li.classList;
+		let oldHidden = false;
 		if (classes.contains('old-hidden')) {
+			oldHidden = true;
 			rules.push(`::view-transition-old(${name}) { visibility: hidden; }`);
 		}
 		if (classes.contains('new-hidden')) {
 			rules.push(`::view-transition-new(${name}) { visibility: hidden; }`);
+			if (oldHidden) {
+				rules.push(`::view-transition-group(${name}) { visibility: hidden; }`);
+			}
 		}
 	});
 	setStyles(rules.join('\n'), 'image-visibility');
 }
 
 function highlightNames(name: string) {
-	const control =
-		top!.document.documentElement.dataset.vtbagModus === 'control' &&
-		top!.document.querySelector<HTMLElement>('#vtbag-ui-names h4')!.innerText ===
-			'Animation Groups';
+	const control = top!.document.documentElement.dataset.vtbagModus === 'control' && vtActive();
 	const lis = top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li');
 	let selected: HTMLLIElement | undefined;
+	const sel = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-controller')!;
+	const prog = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-progress')!;
+	const unsel = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-controller2')!;
+	const unprog = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-progress2')!;
 	lis.forEach((li) => {
 		if (li.innerText === name) {
-			const sel = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-controller')!;
-			const prog = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-progress')!;
-			const unsel = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-controller2')!;
-			const unprog = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-progress2')!;
 			if (li.classList.contains('selected')) {
 				unsel.value = sel.value;
 				unprog.innerText = prog.innerText;
@@ -257,18 +271,19 @@ export function initNames() {
 		});
 
 	top!.document.querySelector('#vtbag-ui-names ol')!.addEventListener('click', (e) => {
+		const indirect = !e.isTrusted;
 		if (e.target instanceof HTMLElement) {
 			const targetLi = e.target.closest('li');
 
-			if (targetLi && e instanceof MouseEvent) {
+			if (targetLi && e instanceof PointerEvent) {
 				if (targetLi.style.display === 'none') resetFilter();
 				const modus = top!.document.documentElement.dataset.vtbagModus;
 				mayViewTransition(
 					() => {
 						const { left, width } = targetLi.getBoundingClientRect();
 						const x = e.clientX - left;
-						const leftClick = x >= 0 && x <= 20;
-						const rightClick = x >= width - 20 && x <= width;
+						const leftClick = !indirect && x >= 0 && x <= 20;
+						const rightClick = !indirect && x >= width - 20 && x <= width;
 
 						const classes = targetLi.classList;
 						if (leftClick && classes.contains('old')) {
@@ -282,12 +297,12 @@ export function initNames() {
 							return;
 						}
 						const name = targetLi.innerText;
-						highlightInFrame(name);
+						!indirect && highlightInFrame(name);
 						highlightNames(name);
+
 						const elem = window.top!.__vtbag.inspectionChamber?.frameDocument!.querySelector(
 							`[data-vtbag-transition-name="${name}"]`
 						);
-
 						if (modus && modus !== 'bypass') writeSelectorToClipboard(elem);
 						listAnimations(name);
 					},
@@ -302,26 +317,26 @@ export function initNames() {
 
 const glow = [
 	// Keyframes
-	{ boxShadow: '0 0  0px blue' },
-	{ boxShadow: '0 0 50px blue' },
+	{ boxShadow: 'inset 0 0  50px darkslateblue' },
+	{ boxShadow: 'inset 0 0 0px darkslateblue' },
+	{ boxShadow: '0 0 50px darkslateblue' },
 	{
-		boxShadow: '0 0 100px blue',
+		boxShadow: '0 0 100px darkslateblue',
 		display: 'inline-block',
 		minWidth: '20px',
 		minHeight: '20px',
 		backgroundColor: 'darkslateblue',
 		opacity: '0.5',
 	},
-	{ boxShadow: '0 0 50px blue' },
-	{ boxShadow: '0 0  0px blue' },
+	{ boxShadow: '0 0 50px darkslateblue' },
+	{ boxShadow: '0 0 0px darkslateblue' },
+	{ boxShadow: 'inset 0 0 50px darkslateblue' },
 ];
 
 export function highlightInFrame(name: string) {
-	const modus = top!.document.documentElement.dataset.vtbagModus;
-	if (!modus || modus === 'bypass') return;
 	if (vtActive()) {
 		glowPseudo(name);
-	} else if (!top!.__vtbag.inspectionChamber!.viewTransition) {
+	} else {
 		const chamber = top!.__vtbag.inspectionChamber!;
 		const el = chamber.frameDocument!.querySelector<HTMLElement>(
 			`[data-vtbag-transition-name="${name}"]`
@@ -333,31 +348,34 @@ export function highlightInFrame(name: string) {
 				inline: 'nearest',
 			});
 			const display = self.getComputedStyle(el).display;
-			glow[2]!.display = !display.includes('block') ? 'inline-block' : display;
-			chamber.glow = el.animate(glow, { delay: 250, duration: 500, iterations: 1 });
+			glow[3]!.display = !display.includes('block') ? 'inline-block' : display;
+			chamber.glow = el.animate(glow, { duration: 500, iterations: 1 });
 			setTimeout(() => (chamber.glow = undefined), 500);
 		}
 	}
 }
 
 function glowPseudo(name: string) {
+	const framed = sessionStorage.getItem('vtbag-ui-framed');
 	setStyles(
 		`
 		::view-transition-old(*),
-		::view-transition-new(*) {
+		::view-transition-new(*),
+		::view-transition-group(*) {
 			opacity: 0;
 		}
+		::view-transition-group(${name}) {
+			opacity: 1;
+		}
 		::view-transition-old(${name}) {
-			box-shadow: 0 0 100px blue;
-			background-color: darkslateblue;
       opacity: 1;
-			transition: all 0.5s;
+			${framed && 'border: 2px dashed darkslateblue;'}
+			transition: opacity 1s;
 		}
 		::view-transition-new(${name}) {
-			box-shadow: 0 0 100px green;
-			background-color: darkolivegreen;
-      opacity: 1;
-			transition: all 0.5s;
+			opacity: 1;
+			${framed && 'border: 2px dashed darkolivegreen;'}
+			transition: opacity 0.5s;
 		}`,
 		'glow'
 	);
