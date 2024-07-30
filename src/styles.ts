@@ -52,9 +52,5 @@ function frame(namedOnly = false) {
 [data-vtbag-transition-name] {
 	cursor: help;
 }
-:root::view-transition {
-	position: absolute;
-	inset: 0;
-}
 `);
 }

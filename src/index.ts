@@ -242,18 +242,17 @@ async function initPanel() {
 }
 
 function innerClick(e: MouseEvent) {
-	if (!vtActive() && !e.defaultPrevented) {
-		const target = e.target as HTMLElement;
-		const vt = target.closest<HTMLElement>('[data-vtbag-transition-name]');
-		if (vt) {
-			const name = vt.dataset.vtbagTransitionName;
-			top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
-				if (li.innerText === name) {
-					li.click();
-					if (e.ctrlKey && e.shiftKey) e.preventDefault();
-				}
-			});
-		}
+	if (vtActive()) return;
+	const target = e.target as HTMLElement;
+	const vt = target.closest<HTMLElement>('[data-vtbag-transition-name]');
+	if (vt) {
+		const name = vt.dataset.vtbagTransitionName;
+		top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
+			if (li.innerText === name) {
+				li.click();
+				if (e.ctrlKey && e.shiftKey) e.preventDefault();
+			}
+		});
 	}
 }
 
