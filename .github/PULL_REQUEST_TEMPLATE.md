@@ -1,7 +1,7 @@
-<!-- 🙌 Thanks for contributing to the astro-vtbot package!  -->
+<!-- 🙌 Thanks for contributing to the vtbag packages!  -->
 ### Description
 
- - Summarize your changes in one or two sentences. 
+ - Summarize your changes in one or two sentences.
  - Don't forget `npm changeset`
 
 ### Tests
@@ -11,4 +11,4 @@
 
 ### Docs & Examples
 
-- Does your change here require changes to the astro-vtbot-website?
+- Does your change here require changes to the vtbag-website?
