@@ -38,13 +38,15 @@ export function initInnerPanel() {
 	opacity.addEventListener('input', (e) => {
 		innerPanel.style.opacity = `${parseInt((e.target as HTMLInputElement).value, 10) / 100}`;
 	});
-	innerPanel.querySelector<HTMLDivElement>('#vtbag-ui-inner-panel-close')!.addEventListener('click', () => {
-		mayViewTransition(() => {
-			mainPanel.insertBefore(innerPanel.children[INNER_POSITION], pushBack);
-			pushBack = null;
-			innerPanel.style.display = 'none';
-		}, 'close inner panel');
-	});
+	innerPanel
+		.querySelector<HTMLDivElement>('#vtbag-ui-inner-panel-close')!
+		.addEventListener('click', () => {
+			mayViewTransition(() => {
+				mainPanel.insertBefore(innerPanel.children[INNER_POSITION], pushBack);
+				pushBack = null;
+				innerPanel.style.display = 'none';
+			}, 'close inner panel');
+		});
 	mainPanel.querySelectorAll<HTMLHeadingElement>(':scope > div').forEach((el) => plugInPanel(el));
 }
 
@@ -52,7 +54,8 @@ export function plugInPanel(el: HTMLHeadingElement) {
 	el.querySelector(':scope > h4')?.addEventListener('click', (e) => {
 		mayViewTransition(() => {
 			const div = (e.target as HTMLElement).closest<HTMLDivElement>('#vtbag-ui-panel > div')!;
-			innerPanel.children.length > INNER_POSITION + 2 && mainPanel.insertBefore(innerPanel.children[INNER_POSITION], pushBack);
+			innerPanel.children.length > INNER_POSITION + 2 &&
+				mainPanel.insertBefore(innerPanel.children[INNER_POSITION], pushBack);
 			pushBack = null;
 			if (div) {
 				pushBack = div.nextElementSibling as HTMLDivElement;
