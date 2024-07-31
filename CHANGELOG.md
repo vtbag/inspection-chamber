@@ -5,7 +5,7 @@
 ### Patch Changes
 
 - 8a89a9e: Tries to improve opening the chamber on mobile.
-- 8529e93: Adds an explicit button to close the inner window (in addition to the existing option to click the header again).
+- 8529e93: Adds an explicit button to close the enlarged panel (in addition to the existing option to click the heading again).
 - b575757: Fixes some styling issues
 
 ## 1.0.3 - 2024-07-28

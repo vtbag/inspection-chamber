@@ -27,7 +27,7 @@ export function initInnerPanel() {
 		innerPanel.style.top = `${y}px`;
 	});
 
-	initDragging(innerPanel.children[INNER_POSITION] as HTMLElement, (x: number, y: number) => {
+	initDragging(innerPanel.children[innerPanel.children.length-1] as HTMLElement, (x: number, y: number) => {
 		const rect = innerPanel.getBoundingClientRect();
 		innerPanel.style.width = `${Math.max(200, x - rect.x + 32)}px`;
 		innerPanel.style.height = `${Math.max(200, y - rect.y + 32)}px`;
