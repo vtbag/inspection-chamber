@@ -25,7 +25,7 @@ import { initNames, updateImageVisibility, updateNames } from './panel/names';
 import { initFilter } from './panel/filter';
 import { twinClick } from './twin';
 import { DEBUG } from './panel/debug';
-import { initInnerPanel, mightHideMode, plugInPanel } from './panel/inner';
+import { initInnerPanel, mayCloseInner, mightHideMode, plugInPanel } from './panel/inner';
 
 const ORIENTATION = 'vtbag-ui-panel-orientation';
 const FRAMED = 'vtbag-ui-framed';
@@ -145,12 +145,7 @@ function beforeUpdateCallbackDone() {
 		!root.dataset.vtbagModus &&
 			top!.document.querySelector<HTMLLIElement>('#vtbag-ui-modi li input')?.click();
 		inspectionChamber.frameDocument!.addEventListener('click', innerClick);
-		setTimeout(() => {
-			const empty = top!.document.querySelector<HTMLDivElement>(
-				'#vtbag-ui-inner-panel:has( > div:nth-of-type(2):empty)'
-			);
-			empty && (empty.style.display = 'none');
-		}, 100);
+		mayCloseInner();
 	});
 }
 
