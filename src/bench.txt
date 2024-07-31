@@ -34,8 +34,8 @@
 				for pasting into the console of the browser's Developer tools.
 			</p>
 			<p>
-				Active view transitions show a <i>play indicator</i> ([>])
-				in the top left corner of the viewport. Clicking it ends the transition.
+				Active view transitions show a <i>play indicator</i> ([>]) in the top left corner of the
+				viewport. Clicking it ends the transition.
 			</p>
 			<p>
 				View transitions are also canceled when the
@@ -112,8 +112,11 @@
 			/>
 			<div style="view-transition-name: vtbag-checkbox-styled">
 				<input id="vtbag-ui-framed" type="checkbox" />
-				<label for="vtbag-ui-framed"
-				title="Highlight the outline of elements with view&#10;transition names or their pseudo elements&#10;during view transitions.">Frame elements</label><br />
+				<label
+					for="vtbag-ui-framed"
+					title="Highlight the outline of elements with view&#10;transition names or their pseudo elements&#10;during view transitions."
+					>Frame elements</label
+				><br />
 				<input id="vtbag-ui-named-only" type="checkbox" />
 				<label
 					for="vtbag-ui-named-only"
@@ -249,14 +252,22 @@
 		<div
 			id="vtbag-ui-move"
 			style="
-				width: 100%;
+				width: calc(100% - 3ex);
 				height: 1ex;
 				background-image: repeating-linear-gradient(180deg, #aaa, #0000 2px, #666 2px, #0000 4px);
 				cursor: move;
 			"
 		></div>
+		<div id="vtbag-ui-inner-panel-close" style="position: absolute; right: 1ex; top: 1ex; height: 1ex; width: 3ex; "><div style="position:relative; border: none; transform: translate(-0.5ex, -1.5ex)">🗙</div></div>
+		<!--Content will be inserted here-->
 		<div style="width: calc(100% - 2ex); height: 3ex; position: absolute; left: 1ex">
-			<input type="range" id="vtbag-ui-opacity" style="height: 1ex; width:calc(100% - 5ex); padding: 0; margin: 0" value="97" min="20" />
+			<input
+				type="range"
+				id="vtbag-ui-opacity"
+				style="height: 1ex; width: calc(100% - 5ex); padding: 0; margin: 0"
+				value="97"
+				min="20"
+			/>
 		</div>
 		<div
 			id="vtbag-ui-resize"
@@ -388,7 +399,8 @@
 		#vtbag-ui-panel > div > h4 {
 			cursor: zoom-in;
 		}
-		#vtbag-ui-inner-panel > div > h4 {
+		#vtbag-ui-inner-panel > div > h4,
+		#vtbag-ui-inner-panel-close {
 			cursor: zoom-out;
 		}
 		#vtbag-ui-inner-panel > div {
@@ -396,7 +408,7 @@
 			margin: 0px;
 			border: 1px solid #888;
 		}
-		#vtbag-ui-inner-panel > div:nth-of-type(2) {
+		#vtbag-ui-inner-panel > div:nth-of-type(3) {
 			padding: 8px;
 			min-width: 100%;
 			min-height: calc(100% - 6ex);
