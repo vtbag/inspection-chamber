@@ -9,11 +9,15 @@ Put your view transitions through their paces in the Inspection Chamber!
 The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
+v1.0.4 improves opening the Chamber on mobiles, adds an explicit close button to the inner panel and fixes some styling issues. 
+
+For details, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
+
+## What happend so far:
+
 v1.0.3 fixes some teething issues. The main areas affected are:
 * Better integration into same-document and cross-document transitions.
 * Further optimizations for identifying transition elements on the screen.
-
-For details, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
 ## What is it?
 
