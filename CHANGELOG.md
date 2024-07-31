@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.5
+
+### Patch Changes
+
+- 74279be: Fixes broken resize behavior of enlarged panel.
+
 ## 1.0.4
 
 ### Patch Changes
