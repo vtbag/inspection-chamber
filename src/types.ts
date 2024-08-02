@@ -7,11 +7,14 @@ export type InspectionChamber = {
 	animationMap?: Map<string, Animation> | undefined;
 	longestAnimation?: Animation | undefined;
 	animationEndTime?: number | undefined;
-	styleMap?: Map<string, CSSStyleDeclaration> | undefined;
+	styleMap?: Map<string, CSSStyleDeclaration | false> | undefined;
 	keyframesMap?: Map<string, Keyframe[]> | undefined;
 	glow?: Animation | undefined;
 	twin?: HTMLElement | undefined;
 	updateNameVisibilityTimeout?: number | undefined;
+	mainPanel?: HTMLDivElement;
+	innerPanel?: HTMLDivElement;
+	pushBack?: HTMLDivElement | null;
 };
 
 declare global {
