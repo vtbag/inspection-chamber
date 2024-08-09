@@ -4,9 +4,8 @@ import bench from './bench.txt';
 import { setTransitionNames } from './stylesheets';
 import { initDragging } from './dragging';
 import { showReopener, STANDBY } from './reopener';
-import { Modus } from './types';
+import { Modus, updateMessage } from './panel/modus';
 import { addFrames } from './styles';
-import { message } from './panel/messages';
 import {
 	clearVtActive,
 	exitViewTransition,
@@ -25,7 +24,8 @@ import { initNames, updateImageVisibility, updateNames } from './panel/names';
 import { initFilter } from './panel/filter';
 import { twinClick } from './twin';
 import { DEBUG } from './panel/debug';
-import { initInnerPanel, mayCloseInner, mightHideMode, plugInPanel } from './panel/inner';
+import { initInnerPanel, mayCloseInner, mightHideMode } from './panel/inner';
+import { getModus, setModus } from './panel/modus';
 
 const ORIENTATION = 'vtbag-ui-panel-orientation';
 const FRAMED = 'vtbag-ui-framed';
@@ -35,8 +35,6 @@ const titleLogo = '🔬';
 top!.__vtbag ??= {};
 top!.__vtbag.inspectionChamber ??= {};
 const inspectionChamber = top!.__vtbag.inspectionChamber!;
-
-let firstModusInteraction = true;
 
 if (top === self) {
 	top.setTimeout(initPanel, 500);
@@ -49,15 +47,17 @@ function initSpecimen() {
 
 	self.addEventListener('pageswap', pageSwap, { once: true });
 	self.addEventListener('pagereveal', prePageReveal, { once: true });
-	if (!frameDocument.head.dataset.vtbagStartViewTransitionPatched) {
-		frameDocument.head.dataset.vtbagStartViewTransitionPatched = 'true';
-		monkeyPatchStartViewTransition();
-	}
+	monkeyPatchStartViewTransition();
 
 	function monkeyPatchStartViewTransition() {
 		const originalStartViewTransition = frameDocument.startViewTransition;
+		if (
+			originalStartViewTransition.toString() !== 'function startViewTransition() { [native code] }'
+		)
+			return;
 		// todo: add level 2 options
 		frameDocument.startViewTransition = (cb: () => void | Promise<void>) => {
+			'@vtbag';
 			pageSwap();
 			inspectionChamber.viewTransition = originalStartViewTransition.call(
 				frameDocument,
@@ -98,28 +98,29 @@ function beforeUpdateCallbackDone() {
 	const modusFunction: Record<Modus, () => void> = {
 		bypass: () => {},
 		'slow-motion': setupSlowMotionPlay,
-		control: controlledPlay,
+		'full-control': controlledPlay,
 		compare: () => {},
 	};
-	const modus = root.dataset.vtbagModus as Modus;
+	const modus = getModus();
 
 	viewTransition.updateCallbackDone.catch(() => {});
 
 	viewTransition.ready
 		.then(async () => {
 			if (modus && modus !== 'bypass') {
-				const canvas = top!.document.querySelector<HTMLCanvasElement>('#canvas');
-				if (canvas) {
-					canvas.style.zIndex = '1000';
-					canvas.style.cursor = 'wait';
+				const canvas = top!.document.querySelector<HTMLCanvasElement>('#canvas')!;
+				const timeoutId = top!.setTimeout(() => (canvas.style.zIndex = '1000'), 300);
+				try {
+					await retrieveViewTransitionAnimations();
+					addFrames(
+						!!top!.document.querySelector<HTMLInputElement>('#vtbag-ui-framed')?.checked,
+						!!top!.document.querySelector<HTMLInputElement>('#vtbag-ui-named-only')?.checked
+					);
+					inspectionChamber.twin!.ownerDocument.addEventListener('click', twinClick);
+				} finally {
+					top!.clearTimeout(timeoutId);
+					top!.document.querySelector<HTMLCanvasElement>('#canvas')!.style.zIndex = '';
 				}
-				await retrieveViewTransitionAnimations();
-				addFrames(
-					!!top!.document.querySelector<HTMLInputElement>('#vtbag-ui-framed')?.checked,
-					!!top!.document.querySelector<HTMLInputElement>('#vtbag-ui-named-only')?.checked
-				);
-				inspectionChamber.twin!.ownerDocument.addEventListener('click', twinClick);
-
 				modusFunction[modus]();
 			}
 			top!.history.replaceState(history.state, '', self.location.href);
@@ -142,8 +143,7 @@ function beforeUpdateCallbackDone() {
 		updateImageVisibility();
 		top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-slo-mo-progress')!.innerText = '';
 		top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-animations')!.innerText = '';
-		!root.dataset.vtbagModus &&
-			top!.document.querySelector<HTMLLIElement>('#vtbag-ui-modi li input')?.click();
+		!getModus() && top!.document.querySelector<HTMLLIElement>('#vtbag-ui-modi li input')?.click();
 		inspectionChamber.frameDocument!.addEventListener('click', innerClick);
 		mayCloseInner();
 	});
@@ -155,6 +155,26 @@ function setBackgroundAccent() {
 		'--vtbag-background-accent',
 		root.style.colorScheme.startsWith('dark') ? '#4E545D' : '#c6d1d7'
 	);
+}
+
+function setTutorialMode() {
+	const toggle = top!.document.querySelector<HTMLInputElement>('#vtbag-tutorial-mode')!;
+	toggle.checked = localStorage.getItem('vtbag-tutorial-mode') !== 'false';
+	toggle.addEventListener('change', () => {
+		localStorage.setItem('vtbag-tutorial-mode', '' + toggle.checked);
+		const openedMessages = top!.document.querySelector<HTMLHeadingElement>(
+			'#vtbag-ui-inner-panel #vtbag-ui-messages h4'
+		);
+		const closedMessages = top!.document.querySelector<HTMLHeadingElement>(
+			'#vtbag-ui-panel #vtbag-ui-messages h4'
+		);
+		if (!toggle.checked && openedMessages) {
+			openedMessages.click();
+		}
+		if (toggle.checked && closedMessages) {
+			closedMessages.click();
+		}
+	});
 }
 
 async function initPanel() {
@@ -182,8 +202,8 @@ async function initPanel() {
 	root.style.colorScheme = colorScheme;
 	setOrientation();
 	setBackgroundAccent();
-
-	root.dataset.vtbagModus = '';
+	setTutorialMode();
+	setModus();
 	const mainFrame = top!.document.querySelector<HTMLIFrameElement>('#vtbag-main-frame')!;
 	await new Promise((r) => (mainFrame.onload = r));
 
@@ -229,6 +249,9 @@ async function initPanel() {
 				);
 		}
 	});
+	if (localStorage.getItem('vtbag-tutorial-mode') !== 'false') {
+		top!.document.querySelector<HTMLHeadingElement>('#vtbag-ui-messages h4')!.click();
+	}
 	mainFrame.animate([{ opacity: 0, transform: 'translateY(100vh)' }, { opacity: 1 }], {
 		duration: 500,
 		fill: 'forwards',
@@ -344,43 +367,25 @@ function initPanelHandlers() {
 }
 
 function updateModus() {
-	const root = top!.document.documentElement;
 	const checked = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-modi ul input:checked');
 	if (checked) {
 		const modus = checked.id.replace('vtbag-m-', '') as Modus;
-		if (modus !== root.dataset.vtbagModus) {
+		if (modus !== getModus()) {
 			mayViewTransition(() => {
-				root.dataset.vtbagModus = modus;
+				setModus(modus);
 				exitViewTransition();
 
 				top!.document.querySelector<HTMLInputElement>('#vtbag-ui-filter ul input')!.click();
 				if (modus === 'slow-motion') {
 					attachFrameToggle('#vtbag-ui-slow-motion');
 				}
-				if (modus === 'control') {
+				if (modus === 'full-control') {
 					attachFrameToggle('#vtbag-ui-control');
 				}
 				if (modus === 'bypass') {
 					attachFrameToggle('#vtbag-ui-modi');
 				}
-				const messages = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-messages')!;
-				messages.innerHTML = message[modus];
-				plugInPanel(messages);
-
-				const modi = top!.document.querySelector<HTMLDivElement>('#vtbag-ui-modi')!;
-				if (
-					firstModusInteraction &&
-					modi.parentElement?.id === 'vtbag-ui-panel' &&
-					messages.parentElement?.id === 'vtbag-ui-panel'
-				) {
-					firstModusInteraction = false;
-					top!.document
-						.querySelector('#vtbag-ui-panel')
-						?.insertAdjacentElement(
-							'afterbegin',
-							top!.document.querySelector<HTMLInputElement>('#vtbag-ui-modi')!
-						);
-				}
+				updateMessage(modus);
 				mightHideMode();
 			}, 'update-modus');
 		}

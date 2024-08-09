@@ -42,7 +42,8 @@
 				<a href="https://github.com/w3c/csswg-drafts/issues/8045">size or orientation</a> of the
 				window changes.
 			</p>
-			<p style="margin-bottom: 0">You can resize this panel by dragging the border.</p>
+			<p>You can resize the side panel by dragging the border.</p>
+			<p style="margin-bottom: 0">You can click the heading of a sub-panel to enlarge or shrink it.</p>
 		</div>
 		<div id="vtbag-ui-modi" style="view-transition-name: vtbag-div-modi">
 			<h4>Select Mode:</h4>
@@ -67,7 +68,8 @@
 					/></label>
 				</li>
 				<li>
-					<input type="radio" name="vtbag-m-rg" id="vtbag-m-control" /><label for="vtbag-m-control"
+					<input type="radio" name="vtbag-m-rg" id="vtbag-m-full-control" /><label
+						for="vtbag-m-full-control"
 						><span style="display: inline-block; width: 6.7em; padding-left: 0.7em">
 							Full Control</span
 						>
@@ -97,6 +99,13 @@
 					/></label>
 				</li>
 			</ul>
+			<div>
+				<hr/>
+				<input style="padding-left:4ex" id="vtbag-tutorial-mode" type="checkbox" />
+				<label for="vtbag-tutorial-mode" title="Display usage instructions prominently in the enlarged inner sub-panel."
+					>Tutorial Mode</label
+				>
+			</div>
 		</div>
 		<div id="vtbag-ui-slow-motion" style="view-transition-name: vtbag-div-slo-mo">
 			<h4>Slow Motion:<span id="vtbag-ui-slo-mo-progress"></span></h4>
@@ -150,14 +159,11 @@
 			<div style="display: none; justify-content: space-between">
 				<span id="vtbag-ui-names-old" class="button">old</span
 				><span
-					><input id="vtbag-ui-visible-only" type="checkbox" checked /><label
-						for="vtbag-ui-visible-only"
-						>in viewport</label
-					></span
+					><input id="vtbag-ui-visible-only" type="checkbox" checked />
+					<label for="vtbag-ui-visible-only">in viewport</label></span
 				><span id="vtbag-ui-names-new" class="button">new</span>
 			</div>
 			<ol>
-				<li>Name 1</li>
 			</ol>
 			<button title="Reset selection">Reset</button>
 		</div>
@@ -226,7 +232,7 @@
 	<button
 		id="vtbag-ui-turn"
 		title="Switch panel orientation
-(also cancels view transitions)"
+(may also cancel view transitions)"
 		style="view-transition-name: vtbag-button-turn"
 	>
 		⤪
@@ -259,7 +265,12 @@
 				cursor: move;
 			"
 		></div>
-		<div id="vtbag-ui-inner-panel-close" style="position: absolute; right: 1ex; top: 1ex; height: 1ex; width: 3ex; "><div style="position:relative; border: none; transform: translate(-0.5ex, -1.5ex)">🗙</div></div>
+		<div
+			id="vtbag-ui-inner-panel-close"
+			style="position: absolute; right: 1ex; top: 1ex; height: 1ex; width: 3ex"
+		>
+			<div style="position: relative; border: none; transform: translate(-0.9ex, -1.5ex)">➖</div>
+		</div>
 		<!--Content will be inserted here-->
 		<div style="width: calc(100% - 2ex); height: 3ex; position: absolute; left: 1ex">
 			<input
@@ -273,7 +284,7 @@
 		<div
 			id="vtbag-ui-resize"
 			style="
-				width: 20px;
+				width: 3ex;
 				height: 3ex;
 				background-image: repeating-linear-gradient(
 					-35deg,
@@ -487,6 +498,9 @@
 			padding-left: 16pt;
 		}
 
+		#vtbag-ui-messages li {
+			padding: 4px 0
+		}
 		#vtbag-ui-names {
 			display: flex;
 			flex-direction: column;
@@ -502,7 +516,8 @@
 			flex-grow: 1;
 			list-style-type: none;
 		}
-		#vtbag-ui-panel li {
+		#vtbag-ui-panel li,
+		#vtbag-ui-inner-panel li {
 			margin-bottom: 8px;
 		}
 
@@ -638,7 +653,7 @@
 		:root:not([data-vtbag-modus='slow-motion']) #vtbag-ui-slow-motion {
 			display: none;
 		}
-		:root:not([data-vtbag-modus='control']) #vtbag-ui-control {
+		:root:not([data-vtbag-modus='full-control']) #vtbag-ui-control {
 			display: none;
 		}
 
@@ -680,6 +695,8 @@
 			--vtbag-panel-width: 200px;
 		}
 		#canvas {
+			cursor: wait;
+			background-color: rgba(71, 61, 139, 0.33);
 			position: absolute;
 			top: 0;
 			left: 0;
@@ -811,6 +828,9 @@
 		}
 		hr {
 			border-color: #888;
+		}
+		input[type='checkbox'] {
+			transform: translateY(0.4ex);
 		}
 	</style>
 </body>
