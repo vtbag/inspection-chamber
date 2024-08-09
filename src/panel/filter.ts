@@ -1,3 +1,4 @@
+import { resetAnimationVisibility } from '../animations';
 import { updateControl } from './full-control';
 import { refreshNames, updateImageVisibility } from './names';
 
@@ -11,6 +12,7 @@ export function resetSelected() {
 		.querySelectorAll<HTMLInputElement>('#vtbag-ui-names li')
 		.forEach((item) => item.classList.remove('selected', 'old-hidden', 'new-hidden'));
 	updateImageVisibility();
+	resetAnimationVisibility();
 	updateControl();
 }
 

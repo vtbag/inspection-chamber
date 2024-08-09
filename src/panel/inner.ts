@@ -75,7 +75,7 @@ export function mightHideMode() {
 }
 
 export function mayCloseInner() {
-	setTimeout(() => {
+	top!.setTimeout(() => {
 		const empty = top!.document.querySelector<HTMLDivElement>(
 			`#vtbag-ui-inner-panel:has( > div:nth-of-type(${INNER_POSITION + 1}):empty)`
 		);

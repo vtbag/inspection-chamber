@@ -5,14 +5,11 @@ export const STANDBY = 'vtbag-ui-standby';
 const REOPENER_POSITION = 'vtbag-ui-reopener-position';
 
 export function showReopener() {
-	top!.addEventListener('resize', () => {
-		// todo: ensure reopener is visible after resize.
-		// For now just start a new session to make it visible again.
-	});
 	const { reopenerLeft, reopenerTop } = JSON.parse(
 		top!.sessionStorage.getItem(REOPENER_POSITION) ??
 			'{"reopenerLeft": "0px", "reopenerTop": "0px"}'
 	);
+	top!.document.querySelector('#vtbag-ui-reopen')?.remove();
 	top!.document.body.insertAdjacentHTML(
 		'beforeend',
 		`<div title="Reactivate the inspection chamber" id="vtbag-ui-reopen" style="position: fixed; z-index:1100; left: ${reopenerLeft}; top: ${reopenerTop}"><img style="  border-radius: 50%;

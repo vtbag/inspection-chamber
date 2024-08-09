@@ -39,7 +39,6 @@
     "@eslint/js": "^9.8.0",
     "@types/dom-view-transitions": "^1.0.5",
     "esbuild": "^0.23.0",
-    "globals": "^15.8.0",
     "prettier": "^3.3.3",
     "typescript": "^5.5.4"
   }

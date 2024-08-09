@@ -9,7 +9,7 @@ export function initTwin(
 ) {
 	const placeHolder = toDoc.createElement('vtbag-pseudo-twin');
 
-	addToTwin(placeHolder, fromDoc, '', '');
+	addToTwin(placeHolder, fromDoc, '::view-transition', '');
 	const twin = (top!.__vtbag.inspectionChamber!.twin =
 		placeHolder.firstElementChild as HTMLElement);
 	names.forEach((name: string) => {
@@ -18,7 +18,6 @@ export function initTwin(
 		addToTwin(pair, fromDoc, 'old', name) && oldNames.add(name);
 		addToTwin(pair, fromDoc, 'new', name) && newNames.add(name);
 	});
-	// fastForward();
 	toDoc.body.insertAdjacentElement('beforeend', twin);
 
 	function addToTwin(
@@ -27,60 +26,55 @@ export function initTwin(
 		pseudo: string,
 		name: string
 	) {
-		if (!dom) return undefined;
+		if (!dom) {
+			console.error('[inspection chamber] Works not as expected ;-)');
+			return undefined;
+		}
 		const inspectionChamber = top!.__vtbag.inspectionChamber;
 
 		const toDoc = dom.ownerDocument;
 
 		const fromWin = fromDoc.defaultView!;
-		const style = fromWin.getComputedStyle(
-			fromDoc.documentElement,
-			pseudo ? `::view-transition-${pseudo}(${name})` : '::view-transition'
-		);
+		const pseudoName = name ? `::view-transition-${pseudo}(${name})` : pseudo;
+		const style = fromWin.getComputedStyle(fromDoc.documentElement, pseudoName);
 		if (!style.height.endsWith('px')) return undefined;
-		inspectionChamber?.styleMap?.set(`${pseudo}-${name}`, style);
-
+		inspectionChamber?.styleMap!.set(name ? `${pseudo}-${name}` : pseudo, style);
 		const elem = toDoc.createElement('vtbag-pseudo-twin');
-		elem.id = pseudo
-			? `vtbag-twin--view-transition-${pseudo}-${name}`
-			: 'vtbag-twin--view-transition';
+		elem.id = twinId(name, pseudo);
 		elem.dataset.vtbagTransitionName = name;
 		elem.dataset.vtbagTransitionPseudo = pseudo;
 		dom.insertAdjacentElement('beforeend', elem);
 		copyArea(style, elem.style);
-		//setNonDefaultProps(elem.style, style);
-		//replaceUaAnimation(elem.style)
-
-		//elem.style.outline = '1px dashed lightblue';
-		//elem.style.opacity = "1";
 		elem.style.visibility = 'hidden';
-
 		return elem;
 	}
 }
 
-export function syncTwins() {
+function twinId(name: string, pseudo: string) {
+	return pseudo ? `vtbag-twin--view-transition-${pseudo}-${name}` : 'vtbag-twin--view-transition';
+}
+export async function syncTwins(hidden: Set<string>) {
 	top!.document.documentElement.classList.add('vtbag-twin-sync');
-	setTimeout(() => {
-		const inspectionChamber = top!.__vtbag.inspectionChamber!;
-		const root = inspectionChamber.frameDocument!.documentElement;
-		[...inspectionChamber.twin!.children].forEach(async (group) => {
-			const name = (group as HTMLElement).dataset.vtbagTransitionName!;
-			morph(root, group as HTMLElement, name);
-			morph(root, group.children[0] as HTMLElement, name);
-			morph(root, group.children[0].children[0] as HTMLElement, name);
-			morph(root, group.children[0].children[1] as HTMLElement, name);
-			await new Promise<void>((r) => setTimeout(r));
-		});
-		top!.document.documentElement.classList.remove('vtbag-twin-sync');
-	});
+	const inspectionChamber = top!.__vtbag.inspectionChamber!;
+	const root = inspectionChamber.frameDocument!.documentElement;
+	for (let group of [...inspectionChamber.twin!.children]) {
+		const name = (group as HTMLElement).dataset.vtbagTransitionName!;
+		if (hidden.has(name)) continue;
+		morph(root, group as HTMLElement, name);
+		morph(root, group.children[0] as HTMLElement, name);
+		morph(root, group.children[0].children[0] as HTMLElement, name);
+		morph(root, group.children[0].children[1] as HTMLElement, name);
+		await new Promise<void>((r) => self.setTimeout(r));
+	}
+	top!.document.documentElement.classList.remove('vtbag-twin-sync');
 }
 
 function morph(root: HTMLElement, elem: HTMLElement, name: string) {
 	if (!elem) return;
 	const pseudo = elem.dataset.vtbagTransitionPseudo!;
-	const doc = elem.ownerDocument;
-	const style = doc.defaultView!.getComputedStyle(root, `::view-transition-${pseudo}(${name})`);
+	const style = top!.__vtbag.inspectionChamber!.styleMap!.get(`${pseudo}-${name}`)!;
+	//const doc = elem.ownerDocument;
+	//const style = doc.defaultView!.getComputedStyle(root, `::view-transition-${pseudo}(${name})`);
 	const elemStyle = elem.style;
 	copyArea(style, elemStyle);
 }
@@ -95,68 +89,13 @@ function copyArea(fromStyle: CSSStyleDeclaration, toStyle: CSSStyleDeclaration) 
 	toStyle.perspective = fromStyle.perspective;
 }
 
-export function replaceUaAnimation(style: CSSStyleDeclaration) {
-	const animationName = style.animationName;
-	if (animationName.startsWith('-ua-view-transition-group-anim-')) {
-		style.animationName = animationName.replace(/-ua-view-transition/g, 'vtbag-twin');
-		generateCSSKeyframes(
-			top!.__vtbag.inspectionChamber!.animationMap!.get(animationName)!,
-			style.animationName
-		);
-	}
-}
-export function generateCSSKeyframes(animation: Animation, keyframesName: string) {
-	const keyframe = animation.effect!.getKeyframes()[0];
-	return `
-	@keyframes ${keyframesName} {
-		from {${['transform', 'width', 'height', 'backdrop-filter'].forEach((property) => {
-			return `
-			${property}: ${keyframe[property]};`;
-		})}
-		}
-	}`;
-}
-
-export function fastForward() {
-	const inspectionChamber = top!.__vtbag.inspectionChamber!;
-	const twin = inspectionChamber.twin!;
-	const doc = inspectionChamber.frameDocument!;
-	[...twin.children].forEach(async (g) => {
-		const name = g.getAttribute('data-vtbag-transition-name')!;
-		const animation = inspectionChamber.animationMap!.get(`-ua-view-transition-group-anim-${name}`);
-		if (animation) {
-			const savedTime = animation.currentTime;
-			animation.currentTime = inspectionChamber.animationEndTime! * 2;
-			const endTimeStyle = doc.defaultView!.getComputedStyle(
-				doc.documentElement,
-				`::view-transition-group(${name})`
-			);
-			const gStyle = (g as HTMLElement).style;
-			copyArea(endTimeStyle, gStyle);
-			animation.currentTime = savedTime;
-		}
-	});
-}
-
-export function syncTwinAnimations() {
-	const inspectionChamber = top!.__vtbag.inspectionChamber!;
-	inspectionChamber.animations?.forEach((animation) => {
-		const twin = inspectionChamber.animationMap?.get(
-			(animation as CSSAnimation).animationName.replace('-ua-view-transition', 'vtbot-twin')
-		);
-		if (twin) {
-			twin.currentTime = animation.currentTime;
-		}
-	});
-}
-
 export function twinClick(e: MouseEvent) {
 	if (vtActive()) {
 		let entry: HTMLLIElement | undefined;
 		let size = Infinity;
 		top!.__vtbag
 			.inspectionChamber!.twin!.querySelectorAll<HTMLElement>(
-				'vtbag-pseudo-twin > vtbag-pseudo-twin > vtbag-pseudo-twin'
+				'vtbag-pseudo-twin > vtbag-pseudo-twin > vtbag-pseudo-twin > vtbag-pseudo-twin'
 			)
 			.forEach((d) => {
 				const { clientX, clientY } = e;
@@ -164,6 +103,8 @@ export function twinClick(e: MouseEvent) {
 				const name = d.dataset.vtbagTransitionName!;
 				const pseudo = d.dataset.vtbagTransitionPseudo!;
 				if (
+					width &&
+					height &&
 					width * height < size &&
 					top <= clientY &&
 					clientY <= bottom &&
@@ -172,6 +113,7 @@ export function twinClick(e: MouseEvent) {
 				) {
 					let visible = true;
 					let me;
+					console.log('test', name, pseudo);
 					window
 						.top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li')
 						.forEach((li) => {

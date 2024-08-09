@@ -37,7 +37,7 @@ function updateProgress() {
 		top!.document.querySelector<HTMLSpanElement>('#vtbag-ui-slo-mo-progress')!.innerText =
 			` ${~~(longestAnimation.currentTime ?? 0)} / ${inspectionChamber.animationEndTime} ms`;
 		if (vtActive()) {
-			setTimeout(updateProgress, 20);
+			top!.setTimeout(updateProgress, 20);
 		}
 	}
 }

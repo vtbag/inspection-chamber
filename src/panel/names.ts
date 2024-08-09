@@ -3,11 +3,12 @@ import { setStyles } from '../styles';
 import { syncTwins } from '../twin';
 import { DEBUG } from './debug';
 import { resetFilter, resetSelected } from './filter';
-import { controllerChanged, updateControl } from './full-control';
+import { control, updateControl } from './full-control';
 import { plugInPanel } from './inner';
+import { getModus } from './modus';
 import { mayViewTransition, vtActive } from './transition';
 
-export let updateNameVisibilityTimeout: number | undefined;
+export const THROTTLING_DELAY = 500;
 
 export function updateNames(leftTransitionNames: Set<string>, rightTransitionNames?: Set<string>) {
 	//navigator.clipboard.writeText("");
@@ -69,57 +70,59 @@ export function refreshNames() {
 	}, 'refresh names');
 }
 
-export function updateNameVisibility() {
+export async function updateNameVisibility() {
+	if (!vtActive()) return;
 	const inspectionChamber = top!.__vtbag.inspectionChamber!;
-	if (controllerChanged()) {
-		syncTwins();
 
-		inspectionChamber.updateNameVisibilityTimeout = undefined;
-		const twinDocument = inspectionChamber.twin!.ownerDocument;
-		const topDocument = top!.document;
-		const computedStyle = top!.getComputedStyle(topDocument.documentElement);
-		const column = topDocument.documentElement.classList.contains('vtbag-ui-column');
-		const panelWidth = column
-			? parseFloat(computedStyle.getPropertyValue('--vtbag-panel-width') || '0')
-			: 0;
-		const panelHeight = column
-			? 0
-			: parseFloat(computedStyle.getPropertyValue('--vtbag-panel-height') || '0');
-		topDocument.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
-			const name = li.innerText;
-			const classes = li.classList;
-			classes[
-				classes.contains('old') &&
-				insideViewport(
-					twinDocument.querySelector(`#vtbag-twin--view-transition-old-${name}`),
-					panelWidth,
-					panelHeight
-				) === false
-					? 'add'
-					: 'remove'
-			]('old-invisible');
-			classes[
-				classes.contains('new') &&
-				insideViewport(
-					twinDocument.querySelector(`#vtbag-twin--view-transition-new-${name}`),
-					panelWidth,
-					panelHeight
-				) === false
-					? 'add'
-					: 'remove'
-			]('new-invisible');
-			classes[
-				(!classes.contains('old') || classes.contains('old-invisible')) &&
-				(!classes.contains('new') || classes.contains('new-invisible'))
-					? 'add'
-					: 'remove'
-			]('invisible');
-		});
+	const twinDocument = inspectionChamber.twin!.ownerDocument;
+	const topDocument = top!.document;
+	const computedStyle = top!.getComputedStyle(topDocument.documentElement);
+	const column = topDocument.documentElement.classList.contains('vtbag-ui-column');
+	const panelWidth = column
+		? parseFloat(computedStyle.getPropertyValue('--vtbag-panel-width') || '0')
+		: 0;
+	const panelHeight = column
+		? 0
+		: parseFloat(computedStyle.getPropertyValue('--vtbag-panel-height') || '0');
 
-		if (vtActive()) {
-			inspectionChamber.updateNameVisibilityTimeout = top!.setTimeout(updateNameVisibility, 1000);
-		}
-	}
+	const lis = topDocument.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li');
+	const hidden = new Set<string>();
+	lis.forEach((li) => {
+		li.classList.contains('old-hidden') &&
+			li.classList.contains('new-hidden') &&
+			hidden.add(li.innerText);
+	});
+	await syncTwins(hidden);
+	lis.forEach((li) => {
+		const name = li.innerText;
+		const classes = li.classList;
+		classes[
+			classes.contains('old') &&
+			insideViewport(
+				twinDocument.querySelector(`#vtbag-twin--view-transition-old-${name}`),
+				panelWidth,
+				panelHeight
+			) === false
+				? 'add'
+				: 'remove'
+		]('old-invisible');
+		classes[
+			classes.contains('new') &&
+			insideViewport(
+				twinDocument.querySelector(`#vtbag-twin--view-transition-new-${name}`),
+				panelWidth,
+				panelHeight
+			) === false
+				? 'add'
+				: 'remove'
+		]('new-invisible');
+		classes[
+			(!classes.contains('old') || classes.contains('old-invisible')) &&
+			(!classes.contains('new') || classes.contains('new-invisible'))
+				? 'add'
+				: 'remove'
+		]('invisible');
+	});
 }
 
 function insideViewport(element: HTMLElement | null, panelWidth = 0, panelHeight = 0) {
@@ -166,10 +169,11 @@ export function updateImageVisibility() {
 		}
 	});
 	setStyles(rules.join('\n'), 'image-visibility');
+	control();
 }
 
 function highlightNames(name: string) {
-	const control = top!.document.documentElement.dataset.vtbagModus === 'control' && vtActive();
+	const control = getModus() === 'full-control' && vtActive();
 	const lis = top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li');
 	let selected: HTMLLIElement | undefined;
 	const sel = top!.document.querySelector<HTMLInputElement>('#vtbag-ui-controller')!;
@@ -246,29 +250,24 @@ function deriveCSSSelector(element?: Element, useIds = true) {
 }
 
 export function initNames() {
+	let toggleAll = (oldNew: 'old' | 'new') => {
+		const hidden = oldNew + '-hidden';
+		const lis = [...top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li')];
+		const allLis = lis.filter((li) => li.classList.contains(oldNew));
+		const cmd = allLis.length > 0 && allLis[0].classList.contains(hidden) ? 'remove' : 'add';
+		allLis.forEach((li) => li.classList[cmd](hidden));
+		updateImageVisibility();
+	};
+
 	top!.document
 		.querySelector('#vtbag-ui-names button')!
 		.addEventListener('click', () => resetSelected());
 	top!.document
 		.querySelector<HTMLSpanElement>('#vtbag-ui-names-old')!
-		.addEventListener('click', () => {
-			top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
-				if (li.classList.contains('old')) {
-					li.classList.toggle('old-hidden');
-				}
-			});
-			updateImageVisibility();
-		});
+		.addEventListener('click', () => toggleAll('old'));
 	top!.document
 		.querySelector<HTMLSpanElement>('#vtbag-ui-names-new')!
-		.addEventListener('click', () => {
-			top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
-				if (li.classList.contains('new')) {
-					li.classList.toggle('new-hidden');
-				}
-			});
-			updateImageVisibility();
-		});
+		.addEventListener('click', () => toggleAll('new'));
 
 	top!.document.querySelector('#vtbag-ui-names ol')!.addEventListener('click', (e) => {
 		const indirect = !e.isTrusted;
@@ -277,7 +276,7 @@ export function initNames() {
 
 			if (targetLi && e instanceof PointerEvent) {
 				if (targetLi.style.display === 'none') resetFilter();
-				const modus = top!.document.documentElement.dataset.vtbagModus;
+				const modus = getModus();
 				mayViewTransition(
 					() => {
 						const { left, width } = targetLi.getBoundingClientRect();
@@ -304,7 +303,7 @@ export function initNames() {
 							`[data-vtbag-transition-name="${name}"]`
 						);
 						if (modus && modus !== 'bypass') writeSelectorToClipboard(elem);
-						listAnimations(name);
+						vtActive() && listAnimations(name);
 					},
 					'names',
 					true
@@ -350,13 +349,12 @@ export function highlightInFrame(name: string) {
 			const display = self.getComputedStyle(el).display;
 			glow[3]!.display = !display.includes('block') ? 'inline-block' : display;
 			chamber.glow = el.animate(glow, { duration: 500, iterations: 1 });
-			setTimeout(() => (chamber.glow = undefined), 500);
+			self.setTimeout(() => (chamber.glow = undefined), 500);
 		}
 	}
 }
 
 function glowPseudo(name: string) {
-	const framed = sessionStorage.getItem('vtbag-ui-framed');
 	setStyles(
 		`
 		::view-transition-old(*),
@@ -366,18 +364,26 @@ function glowPseudo(name: string) {
 		}
 		::view-transition-group(${name}) {
 			opacity: 1;
+			outline: 2px dashed darkgoldenrod;
 		}
 		::view-transition-old(${name}) {
       opacity: 1;
-			${framed && 'border: 2px dashed darkslateblue;'}
-			transition: opacity 1s;
+			outline: 2px dashed darkslateblue;
 		}
 		::view-transition-new(${name}) {
 			opacity: 1;
-			${framed && 'border: 2px dashed darkolivegreen;'}
-			transition: opacity 0.5s;
+			outline: 2px dashed darkolivegreen;
 		}`,
 		'glow'
 	);
-	setTimeout(() => setStyles('', 'glow'), 500);
+	self.setTimeout(() => setStyles('', 'glow'), 300);
+}
+
+export function showSomeAnimations() {
+	const firstName = top!.document.querySelector<HTMLLIElement>('#vtbag-ui-names li');
+	//select
+	firstName?.click();
+	//and unselect again
+	firstName?.click();
+	// might open the animation panel as a side effect
 }
