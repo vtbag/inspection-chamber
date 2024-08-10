@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.6
+
+### Patch Changes
+
+- 731a96d: mini patch to logging & styling
+
 ## 1.0.5 - 2024-08-10
 
 ### Patch Changes
