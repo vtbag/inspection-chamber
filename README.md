@@ -9,11 +9,15 @@ Put your view transitions through their paces in the Inspection Chamber!
 The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
-v1.0.4 improves opening the Chamber on mobiles, adds an explicit close button to the inner panel and fixes some styling issues. 
+v1.0.5 introduces the ability to switch single animations on and off as you navigate through the timeline of view transitions. For example, you can temporarily disable fades while investigating a morph animation or disable morphing to focus on other features of your transition.
+
+This version also includes numerous smaller improvements, moving the Chamber closer to becoming a stable product rather than just a prototype.
 
 For details, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
-## What happend so far:
+## What happened so far:
+
+v1.0.4 improves opening the Chamber on mobiles, adds an explicit close button to the inner panel and fixes some styling issues.
 
 v1.0.3 fixes some teething issues. The main areas affected are:
 * Better integration into same-document and cross-document transitions.
