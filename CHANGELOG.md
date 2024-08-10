@@ -1,6 +1,6 @@
 # @vtbag/inspection-chamber
 
-## 1.0.5
+## 1.0.5 - 2024-08-10
 
 ### Patch Changes
 
@@ -12,7 +12,7 @@
 - eb0e145: Adds the ability to deselect single animations
 - 326b0cf: Updates README
 
-## 1.0.4
+## 1.0.4 - 2024-07-31
 
 ### Patch Changes
 
