@@ -1,5 +1,17 @@
 # @vtbag/inspection-chamber
 
+## 1.0.5
+
+### Patch Changes
+
+- ce5578f: Fixes scrolling & closing of enlarged sub-panels.
+- 2dea51e: Introduces tutorial mode that shows usage instructions prominently by expanding the messages panel.
+- 74279be: Fixes broken resize behavior of enlarged panel.
+- eec3e26: Refactorings to further stabilize and clean up The Chamber prototype
+- b946e4e: Reworkes time travel during full control mode
+- eb0e145: Adds the ability to deselect single animations
+- 326b0cf: Updates README
+
 ## 1.0.4
 
 ### Patch Changes
