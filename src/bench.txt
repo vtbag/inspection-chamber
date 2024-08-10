@@ -43,7 +43,9 @@
 				window changes.
 			</p>
 			<p>You can resize the side panel by dragging the border.</p>
-			<p style="margin-bottom: 0">You can click the heading of a sub-panel to enlarge or shrink it.</p>
+			<p style="margin-bottom: 0">
+				You can click the heading of a sub-panel to enlarge or shrink it.
+			</p>
 		</div>
 		<div id="vtbag-ui-modi" style="view-transition-name: vtbag-div-modi">
 			<h4>Select Mode:</h4>
@@ -100,9 +102,11 @@
 				</li>
 			</ul>
 			<div>
-				<hr/>
-				<input style="padding-left:4ex" id="vtbag-tutorial-mode" type="checkbox" />
-				<label for="vtbag-tutorial-mode" title="Display usage instructions prominently in the enlarged inner sub-panel."
+				<hr />
+				<input style="padding-left: 4ex" id="vtbag-tutorial-mode" type="checkbox" />
+				<label
+					for="vtbag-tutorial-mode"
+					title="Display usage instructions prominently in the enlarged inner sub-panel."
 					>Tutorial Mode</label
 				>
 			</div>
@@ -163,8 +167,7 @@
 					<label for="vtbag-ui-visible-only">in viewport</label></span
 				><span id="vtbag-ui-names-new" class="button">new</span>
 			</div>
-			<ol>
-			</ol>
+			<ol></ol>
 			<button title="Reset selection">Reset</button>
 		</div>
 
@@ -499,7 +502,7 @@
 		}
 
 		#vtbag-ui-messages li {
-			padding: 4px 0
+			padding: 4px 0;
 		}
 		#vtbag-ui-names {
 			display: flex;
@@ -831,6 +834,9 @@
 		}
 		input[type='checkbox'] {
 			transform: translateY(0.4ex);
+		}
+		:is(#vtbag-ui-panel, #vtbag-ui-inner-panel) :is(p, hr) {
+			margin-bottom: 8px;
 		}
 	</style>
 </body>
