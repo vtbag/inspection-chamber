@@ -113,7 +113,6 @@ export function twinClick(e: MouseEvent) {
 				) {
 					let visible = true;
 					let me;
-					console.log('test', name, pseudo);
 					window
 						.top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li')
 						.forEach((li) => {
