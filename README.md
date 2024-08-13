@@ -1,9 +1,11 @@
+[⭐️ Please star to support this work! ⭐️]()
 # The Inspection Chamber
 
 Put your view transitions through their paces in the Inspection Chamber!
 
-![Build Status](https://github.com/vtbag/inspection-chamber/actions/workflows/run-tests.yml/badge.svg)
 [![npm version](https://img.shields.io/npm/v/@vtbag/inspection-chamber/latest)](https://www.npmjs.com/package/@vtbag/inspection-chamber)
+![minzip](https://badgen.net/bundlephobia/minzip/@vtbag/inspection-chamber)
+![Build Status](https://github.com/vtbag/inspection-chamber/actions/workflows/run-tests.yml/badge.svg)
 [![NPM Downloads](https://img.shields.io/npm/dw/@vtbag/inspection-chamber)](https://www.npmjs.com/package/@vtbag/inspection-chamber)
 
 The @vtbag website can be found at https://vtbag.pages.dev/

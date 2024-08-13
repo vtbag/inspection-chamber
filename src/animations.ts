@@ -235,7 +235,11 @@ export function listAnimations(name: string) {
 
 export function resetAnimationVisibility() {
 	top!.__vtbag.inspectionChamber!.animations?.forEach((anim) => {
-		if (anim instanceof CSSAnimation && anim.animationName !== 'vtbag-twin-noop' && anim.playState === 'idle') {
+		if (
+			anim instanceof CSSAnimation &&
+			anim.animationName !== 'vtbag-twin-noop' &&
+			anim.playState === 'idle'
+		) {
 			anim.pause();
 		}
 	});
@@ -268,7 +272,7 @@ export function selectAnimation(name: string, pseudo: string, idx: number) {
 		console.error('[injection chamber] no animation found with idx', idx);
 		return;
 	}
-	const result = selected[idx] ;
+	const result = selected[idx];
 	if (result instanceof CSSAnimation && result.animationName !== animationName) {
 		console.error(
 			'[injection chamber] animation name mismatch',
