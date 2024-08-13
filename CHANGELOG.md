@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.7 - 2024-08-13
+
+### Patch Changes
+
+- ab1bd93: Fixes canvas background
+
 ## 1.0.6 - 2024-08-10
 
 ### Patch Changes
