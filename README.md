@@ -1,4 +1,4 @@
-[⭐️ Please star to support this work! ⭐️]()
+[⭐️ Please star to support this work! ⭐️](https://github.com/vtbag/inspection-chamber)
 # The Inspection Chamber
 
 Put your view transitions through their paces in the Inspection Chamber!
@@ -11,9 +11,9 @@ Put your view transitions through their paces in the Inspection Chamber!
 The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
-v1.0.5 introduces the ability to switch single animations on and off as you navigate through the timeline of view transitions. For example, you can temporarily disable fades while investigating a morph animation or disable morphing to focus on other features of your transition.
+v1.0.5 introduced the ability to switch single animations on and off as you navigate through the timeline of view transitions. For example, you can temporarily disable fades while investigating a morph animation or disable morphing to focus on other features of your transition.
 
-This version also includes numerous smaller improvements, moving the Chamber closer to becoming a stable product rather than just a prototype.
+The current version also includes smaller improvements, moving the Chamber closer to becoming a stable product rather than just a prototype.
 
 For details, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
