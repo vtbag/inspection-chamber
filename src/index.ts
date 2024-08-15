@@ -86,9 +86,20 @@ function prePageReveal(e: Event) {
 function pageReveal() {
 	DEBUG && console.log('pageReveal');
 	if (inspectionChamber.viewTransition) {
+		observeRenderBlocking();
 		forceAnimations();
 		beforeUpdateCallbackDone();
 	}
+}
+
+function observeRenderBlocking() {
+	const observer = new PerformanceObserver((list) => {
+		list.getEntries().forEach((entry) => {
+			//@ts-expect-error
+			console.log(`${(entry.renderBlockingStatus as string).toUpperCase()}: ${entry.name}`);
+		});
+	});
+	observer.observe({ type: "resource", buffered: true });
 }
 
 function beforeUpdateCallbackDone() {
@@ -96,20 +107,18 @@ function beforeUpdateCallbackDone() {
 	const root = top!.document.documentElement;
 	const viewTransition = inspectionChamber.viewTransition!;
 	const modusFunction: Record<Modus, () => void> = {
-		bypass: () => {},
+		bypass: () => { },
 		'slow-motion': setupSlowMotionPlay,
 		'full-control': controlledPlay,
-		compare: () => {},
+		compare: () => { },
 	};
 	const modus = getModus();
 
-	viewTransition.updateCallbackDone.catch(() => {});
+	viewTransition.updateCallbackDone.catch(() => { });
 
 	viewTransition.ready
 		.then(async () => {
 			if (modus && modus !== 'bypass') {
-				const canvas = top!.document.querySelector<HTMLCanvasElement>('#canvas')!;
-				const timeoutId = top!.setTimeout(() => (canvas.style.zIndex = '1000'), 300);
 				try {
 					await retrieveViewTransitionAnimations();
 					addFrames(
@@ -118,15 +127,13 @@ function beforeUpdateCallbackDone() {
 					);
 					inspectionChamber.twin!.ownerDocument.addEventListener('click', twinClick);
 				} finally {
-					top!.clearTimeout(timeoutId);
-					top!.document.querySelector<HTMLCanvasElement>('#canvas')!.style.zIndex = '';
 				}
 				modusFunction[modus]();
 			}
 			top!.history.replaceState(history.state, '', self.location.href);
 			top!.document.title = titleLogo + ' ' + self.document.title;
 		})
-		.finally(() => {});
+		.finally(() => { });
 
 	viewTransition!.finished.finally(() => {
 		clearVtActive();
@@ -229,23 +236,23 @@ async function initPanel() {
 			if (root.classList.contains('vtbag-ui-tl'))
 				root.style.setProperty(
 					'--vtbag-panel-width',
-					`calc(max(200px, ${Math.min(innerWidth - 100, clientX)}px))`
+					`calc(max(216px, ${Math.min(innerWidth - 100, clientX)}px))`
 				);
 			else
 				root.style.setProperty(
 					'--vtbag-panel-width',
-					`calc(max(200px, 100vw - ${Math.max(100, clientX + 1)}px))`
+					`calc(max(216px, 100vw - ${Math.max(100, clientX + 1)}px))`
 				);
 		} else {
 			if (root.classList.contains('vtbag-ui-tl'))
 				root.style.setProperty(
 					'--vtbag-panel-height',
-					`calc(max(212px, ${Math.min(innerHeight - 100, clientY)}px))`
+					`calc(max(245px, ${Math.min(innerHeight - 100, clientY)}px))`
 				);
 			else
 				root.style.setProperty(
 					'--vtbag-panel-height',
-					`calc(max(212px, 100vh - ${Math.max(100, clientY + 1)}px))`
+					`calc(max(245px, 100vh - ${Math.max(100, clientY + 1)}px))`
 				);
 		}
 	});

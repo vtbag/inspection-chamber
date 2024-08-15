@@ -7,7 +7,7 @@
 	<meta name="astro-view-transitions-enabled" content="true" />
 </head>
 <body>
-	<canvas id="canvas"></canvas> <iframe id="vtbag-main-frame" src="/"></iframe>
+	<iframe id="vtbag-main-frame" src="/"></iframe>
 	<div id="divider" class="divider"></div>
 
 	<button id="vtbag-ui-control-play">
@@ -437,7 +437,12 @@
 			padding: 8px;
 			margin: 4px;
 			border: 1px solid #888;
-			min-width: 155px;
+			min-width: 180px;
+			min-height: 212px;
+			overflow: auto;
+		}
+		#vtbag-ui-panel > #vtbag-ui-modi {
+			min-width: 160px;
 		}
 		#vtbag-ui-animations,
 		#vtbag-ui-messages {
@@ -515,7 +520,7 @@
 			padding-left: 0px;
 			margin: 8px;
 			overflow-y: auto;
-			width: calc(100% - 8px);
+			width: calc(100% - 16px);
 			flex-grow: 1;
 			list-style-type: none;
 		}
@@ -637,7 +642,7 @@
 			#vtbag-ui-panel {
 				flex-direction: column;
 				height: 100vh;
-				width: var(--vtbag-panel-width, 200px);
+				width: var(--vtbag-panel-width, 216px);
 			}
 			.horizontal {
 				display: none;
@@ -694,29 +699,8 @@
 		}
 
 		:root {
-			--vtbag-panel-height: 226px;
-			--vtbag-panel-width: 200px;
-		}
-		#canvas {
-			cursor: wait;
-			background-color: #0000
-			position: absolute;
-			top: 0;
-			left: 0;
-			height: calc(100vh - var(--vtbag-panel-height));
-			width: 100vw;
-		}
-		:root.vtbag-ui-column #canvas {
-			width: calc(100vw - var(--vtbag-panel-width));
-			height: 100vh;
-		}
-		:root.vtbag-ui-tl #canvas {
-			left: 0;
-			top: var(--vtbag-panel-height);
-		}
-		:root.vtbag-ui-tl :root.vtbag-ui-column #canvas {
-			left: var(--vtbag-panel-width);
-			top: 0;
+			--vtbag-panel-height: 245px;
+			--vtbag-panel-width: 216px;
 		}
 
 		#vtbag-main-frame {
@@ -765,7 +749,7 @@
 		}
 
 		:root.vtbag-ui-tl #divider {
-			bottom: calc(100vh - var(--vtbag-panel-height) - 5px);
+			bottom: calc(100vh - var(--vtbag-panel-height) - 4px);
 		}
 		:root.vtbag-ui-column {
 			#divider:hover,
@@ -792,7 +776,7 @@
 		}
 		:root.vtbag-ui-tl.vtbag-ui-column {
 			#vtbag-ui-panel {
-				right: calc(100vw - var(--vtbag-panel-width) - 18px);
+				right: calc(100vw - var(--vtbag-panel-width));
 				bottom: 0;
 			}
 			#vtbag-main-frame {
@@ -803,7 +787,7 @@
 				animation: slide-from-left 0.5s both;
 			}
 			#divider {
-				right: calc(100vw - var(--vtbag-panel-width) - 24px);
+				right: calc(100vw - var(--vtbag-panel-width) - 4px);
 			}
 		}
 		@keyframes slide-from-bottom {
