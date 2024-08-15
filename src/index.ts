@@ -52,6 +52,7 @@ function initSpecimen() {
 	function monkeyPatchStartViewTransition() {
 		const originalStartViewTransition = frameDocument.startViewTransition;
 		if (
+			!originalStartViewTransition ||
 			originalStartViewTransition.toString() !== 'function startViewTransition() { [native code] }'
 		)
 			return;
@@ -86,7 +87,7 @@ function prePageReveal(e: Event) {
 function pageReveal() {
 	DEBUG && console.log('pageReveal');
 	if (inspectionChamber.viewTransition) {
-		observeRenderBlocking();
+		// observeRenderBlocking();
 		forceAnimations();
 		beforeUpdateCallbackDone();
 	}
@@ -99,7 +100,7 @@ function observeRenderBlocking() {
 			console.log(`${(entry.renderBlockingStatus as string).toUpperCase()}: ${entry.name}`);
 		});
 	});
-	observer.observe({ type: "resource", buffered: true });
+	observer.observe({ type: 'resource', buffered: true });
 }
 
 function beforeUpdateCallbackDone() {
@@ -107,14 +108,14 @@ function beforeUpdateCallbackDone() {
 	const root = top!.document.documentElement;
 	const viewTransition = inspectionChamber.viewTransition!;
 	const modusFunction: Record<Modus, () => void> = {
-		bypass: () => { },
+		bypass: () => {},
 		'slow-motion': setupSlowMotionPlay,
 		'full-control': controlledPlay,
-		compare: () => { },
+		compare: () => {},
 	};
 	const modus = getModus();
 
-	viewTransition.updateCallbackDone.catch(() => { });
+	viewTransition.updateCallbackDone.catch(() => {});
 
 	viewTransition.ready
 		.then(async () => {
@@ -133,7 +134,7 @@ function beforeUpdateCallbackDone() {
 			top!.history.replaceState(history.state, '', self.location.href);
 			top!.document.title = titleLogo + ' ' + self.document.title;
 		})
-		.finally(() => { });
+		.finally(() => {});
 
 	viewTransition!.finished.finally(() => {
 		clearVtActive();
