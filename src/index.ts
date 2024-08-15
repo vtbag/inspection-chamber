@@ -87,20 +87,9 @@ function prePageReveal(e: Event) {
 function pageReveal() {
 	DEBUG && console.log('pageReveal');
 	if (inspectionChamber.viewTransition) {
-		// observeRenderBlocking();
 		forceAnimations();
 		beforeUpdateCallbackDone();
 	}
-}
-
-function observeRenderBlocking() {
-	const observer = new PerformanceObserver((list) => {
-		list.getEntries().forEach((entry) => {
-			//@ts-expect-error
-			console.log(`${(entry.renderBlockingStatus as string).toUpperCase()}: ${entry.name}`);
-		});
-	});
-	observer.observe({ type: 'resource', buffered: true });
 }
 
 function beforeUpdateCallbackDone() {
