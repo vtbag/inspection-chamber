@@ -1,5 +1,12 @@
 # @vtbag/inspection-chamber
 
+## 1.0.8
+
+### Patch Changes
+
+- c90d8be: Optimizes styling of panels
+- 81315a3: Fix error on browsers without native view transition API.
+
 ## 1.0.7 - 2024-08-13
 
 ### Patch Changes
