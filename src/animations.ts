@@ -124,10 +124,10 @@ export function listAnimations(name: string) {
 	anim.innerHTML = !vtActive()
 		? ''
 		: `<h4 data-vtbag-name=${name}>Animations of ${name}:</h4>` +
-			animationPanel2('group') +
-			animationPanel2('image-pair') +
-			animationPanel2('old') +
-			animationPanel2('new');
+			animationPanel('group') +
+			animationPanel('image-pair') +
+			animationPanel('old') +
+			animationPanel('new');
 
 	anim.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((box) => {
 		const context = JSON.parse(box.dataset.vtbagContext!);
@@ -141,21 +141,28 @@ export function listAnimations(name: string) {
 	});
 	plugInPanel(anim);
 
-	function animationPanel2(pseudo: string) {
+	function animationPanel(pseudo: string) {
 		const res: string[] = [];
 		const style = styleMap.get(`${pseudo}-${name}`) as CSSStyleDeclaration;
 		const cssAnimation = style?.animation;
 		const animationName = style?.animationName;
 		if (animationName && animationName !== 'vtbag-twin-noop' && animationName !== 'none') {
-			const animationNames = style.animationName.split(', ');
+			const animationNames = animationName.split(', ');
+			let skipped = 0;
 			cssAnimation.split(/,(?![^(]*\))/).forEach((animation, idx) => {
-				res.push(
-					`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":${idx}}'/> ${pseudo}: <tt>${animationNames[idx]}</tt></summary>${details(animationNames[idx], animation.endsWith(animationName) ? animation.slice(0, -animationName.length) : animation)}</details>`
-				);
+				if (inspectionChamber.keyframesMap?.get(animationNames[idx])) {
+					res.push(
+						`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":${idx - skipped}}'/> ${pseudo}: <tt>${animationNames[idx]}</tt></summary>${details(animationNames[idx], animation.endsWith(animationName) ? animation.slice(0, -animationName.length) : animation)}</details>`
+					);
+				} else {
+					res.push(
+						`<span style="padding-right: 0.25ex; width: 4.75ex; display: inline-block; text-align:right">🔴</span> ${pseudo}: <tt>${animationNames[idx]}</tt><br>`
+					);
+					++skipped;
+					console.error(`[inspection chamber] did not find keyframes named "${animationNames[idx]}" for ::view-transition-${pseudo}(${name})`)
+				}
 			});
 		}
-		//const cssTtransition = style?.transition;
-
 		return res.length > 0 ? res.join('') + '<hr>' : '';
 
 		function details(keyframeName: string, animation: string) {
@@ -168,48 +175,11 @@ export function listAnimations(name: string) {
 		}
 	}
 
-	function animationPanel(pseudo: string) {
-		const style = styleMap.get(`${pseudo}-${name}`) as CSSStyleDeclaration;
-		const animationName = style?.animationName;
-		if (!style || !animationName || animationName === 'vtbag-twin-noop' || animationName === 'none')
-			return '';
-		const animationNames = animationName.split(', ');
-		const delays = style.animationDelay.split(', ');
-		const durations = style.animationDuration.split(', ');
-		const directions = style.animationDirection.split(', ');
-		const fillModes = style.animationFillMode.split(', ');
-		const iterationCounts = style.animationIterationCount.split(', ');
-		const timingFunctions = style.animationTimingFunction.split(/,(?![^(]*\))/);
-		const timelines =
-			'animationTimeline' in style ? (style['animationTimeline'] as string).split(', ') : [];
-
-		const res: string[] = [];
-		animationNames.forEach((animationName, idx) => {
-			res.push(
-				`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":${idx}}'/> ${pseudo}: <tt>${animationName}(${durations[idx % durations.length]}, ${delays[idx % delays.length]})</tt></summary>${details(idx, animationName)}</details>`
-			);
-		});
-		return res.join('') + '<hr>';
-
-		function details(idx: number, keyframeName: string) {
-			return `
-<table>
-	${row('direction:', directions[idx % directions.length])}
-	${row('fill-mode:', fillModes[idx % fillModes.length])}
-	${row('iteration-count:', iterationCounts[idx % iterationCounts.length])}
-	${row('timing-function:', timingFunctions[idx % timingFunctions.length])}
-	${row('timeline:', timelines[idx % timelines.length])}
-	${row('animates:', keyframeProperties(keyframeName))}
-	${keyframes(keyframeName)}
-</table>`;
-		}
-	}
 	function keyframeProperties(name: string) {
 		const keys = new Set<string>();
 		inspectionChamber.keyframesMap
 			?.get(name)
 			?.forEach((k) => Object.keys(k).forEach((key) => keys.add(key)));
-		const meta = ['offset', 'computedOffset', 'easing', 'composite'];
 		return [...keys]
 			.filter((k) => !meta.includes(k))
 			.sort()
@@ -219,7 +189,7 @@ export function listAnimations(name: string) {
 	function keyframes(name: string) {
 		return inspectionChamber.keyframesMap
 			?.get(name)
-			?.map((key, idx) =>
+			?.map((key) =>
 				row(
 					+(key.computedOffset ?? 0) * 100 + '% :',
 					Object.keys(key)
@@ -269,15 +239,15 @@ export function selectAnimation(name: string, pseudo: string, idx: number) {
 	const pseudoElement = `::view-transition-${pseudo}(${name})`;
 	const selected = animations.filter((anim) => anim.effect?.pseudoElement === pseudoElement);
 	if (idx >= selected.length) {
-		console.error('[injection chamber] no animation found with idx', idx);
+		console.error(
+			`[injection chamber] found ${selected.length} animations for ${pseudoElement} when looking for animation with index ${idx} called ${name}`
+		);
 		return;
 	}
 	const result = selected[idx];
 	if (result instanceof CSSAnimation && result.animationName !== animationName) {
 		console.error(
-			'[injection chamber] animation name mismatch',
-			animationName,
-			result.animationName
+			`[injection chamber] found an animation called ${result.animationName} for ${pseudoElement} when looking for animation at index ${idx} with expected name ${name}`
 		);
 		return;
 	}

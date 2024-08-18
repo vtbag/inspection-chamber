@@ -7,6 +7,7 @@
 	<meta name="astro-view-transitions-enabled" content="true" />
 </head>
 <body>
+	<div style="display:none" id="vtbot-loading-indicator"></div>
 	<iframe id="vtbag-main-frame" src="/"></iframe>
 	<div id="divider" class="divider"></div>
 
