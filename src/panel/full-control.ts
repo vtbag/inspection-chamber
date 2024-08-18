@@ -16,9 +16,9 @@ export function controlledPlay() {
 	controller2.max = '' + animationEndTime;
 	controller2.value = '0';
 	controller2.disabled = false;
-	showSomeAnimations();
 	control();
 	updateNameVisibility();
+	//showSomeAnimations();
 }
 
 export function control() {
