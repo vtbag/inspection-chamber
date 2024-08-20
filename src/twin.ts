@@ -60,21 +60,19 @@ export async function syncTwins(hidden: Set<string>) {
 	for (let group of [...inspectionChamber.twin!.children]) {
 		const name = (group as HTMLElement).dataset.vtbagTransitionName!;
 		if (hidden.has(name)) continue;
-		morph(root, group as HTMLElement, name);
-		morph(root, group.children[0] as HTMLElement, name);
-		morph(root, group.children[0].children[0] as HTMLElement, name);
-		morph(root, group.children[0].children[1] as HTMLElement, name);
+		morph(group as HTMLElement, name);
+		morph(group.children[0] as HTMLElement, name);
+		morph(group.children[0].children[0] as HTMLElement, name);
+		morph(group.children[0].children[1] as HTMLElement, name);
 		await new Promise<void>((r) => self.setTimeout(r));
 	}
 	top!.document.documentElement.classList.remove('vtbag-twin-sync');
 }
 
-function morph(root: HTMLElement, elem: HTMLElement, name: string) {
+function morph(elem: HTMLElement, name: string) {
 	if (!elem) return;
 	const pseudo = elem.dataset.vtbagTransitionPseudo!;
 	const style = top!.__vtbag.inspectionChamber!.styleMap!.get(`${pseudo}-${name}`)!;
-	//const doc = elem.ownerDocument;
-	//const style = doc.defaultView!.getComputedStyle(root, `::view-transition-${pseudo}(${name})`);
 	const elemStyle = elem.style;
 	copyArea(style, elemStyle);
 }

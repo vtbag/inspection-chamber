@@ -444,6 +444,7 @@
 		}
 		#vtbag-ui-panel > #vtbag-ui-modi {
 			min-width: 160px;
+			min-height: 240px;
 		}
 		#vtbag-ui-animations,
 		#vtbag-ui-messages {
@@ -467,6 +468,9 @@
 		#vtbag-ui-filter,
 		#vtbag-ui-control {
 			position: relative;
+		}
+		#vtbag-ui-panel #vtbag-ui-filter {
+			min-width: 190px;
 		}
 		#vtbag-ui-control button,
 		#vtbag-ui-names button,

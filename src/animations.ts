@@ -159,7 +159,9 @@ export function listAnimations(name: string) {
 						`<span style="padding-right: 0.25ex; width: 4.75ex; display: inline-block; text-align:right">🔴</span> ${pseudo}: <tt>${animationNames[idx]}</tt><br>`
 					);
 					++skipped;
-					console.error(`[inspection chamber] did not find keyframes named "${animationNames[idx]}" for ::view-transition-${pseudo}(${name})`)
+					console.error(
+						`[inspection chamber] did not find keyframes named "${animationNames[idx]}" for ::view-transition-${pseudo}(${name})`
+					);
 				}
 			});
 		}
