@@ -1,5 +1,12 @@
 # @vtbag/inspection-chamber
 
+## 1.0.9 - 2024-08-20
+
+### Patch Changes
+
+- 35b93dd: Chore: Pushes plus mini styling and refectoring
+- 62c7102: Improves robustness against broken animations and outputs better error messages.
+
 ## 1.0.8 - 2024-08-16
 
 ### Patch Changes
