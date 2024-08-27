@@ -1,5 +1,12 @@
 # @vtbag/inspection-chamber
 
+## 1.0.10 - 2024-08-27
+
+### Patch Changes
+
+- 8774263: Improves CCS information on animation panel
+- 79774ea: Prevents dragging the enlarged sub-panel off the screen
+
 ## 1.0.9 - 2024-08-20
 
 ### Patch Changes
