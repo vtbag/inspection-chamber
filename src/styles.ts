@@ -36,14 +36,29 @@ function frame(namedOnly = false) {
 
 ::view-transition-old(*) {
 	outline: 3px dashed darkslateblue;
-	border-radius: 5px;
+}
+[data-vtbag-transition-pseudo="old"] {
+	outline: 5px dashed darkslateblue;
 }
 ::view-transition-new(*) {
 	outline: 3px dashed darkolivegreen;
 }
+[data-vtbag-transition-pseudo="new"] {
+	outline: 5px dashed darkolivegreen;
+}
+
 ::view-transition-group(*),
 [data-vtbag-transition-name] {
 	outline: 2px dotted darkgoldenrod;
+}
+[data-vtbag-transition-pseudo="group"] {
+	outline: 3px dotted darkgoldenrod;
+}
+::view-transition-image-pair(*) {
+	outline: 1px solid #8888;
+}
+[data-vtbag-transition-pseudo="image-pair"] {
+	outline: 3px solid #8888;
 }
 ::view-transition-group(*),
 ::view-transition-image-pair(*),

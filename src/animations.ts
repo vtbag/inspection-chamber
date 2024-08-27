@@ -1,3 +1,4 @@
+import { getNonDefaultPropNames, getNonDefaultProps } from './default-styles';
 import { control, namesOfAnimation } from './panel/full-control';
 import { plugInPanel } from './panel/inner';
 import { getModus } from './panel/modus';
@@ -85,11 +86,15 @@ export async function retrieveViewTransitionAnimations() {
 	const endTime = (animation: Animation) =>
 		(animation.effect?.getComputedTiming().endTime?.valueOf() as number) ?? 0;
 
-	inspectionChamber.longestAnimation = animations.reduce((acc, anim) =>
-		endTime(anim) > endTime(acc) ? anim : acc
-	);
-	inspectionChamber.animationEndTime = ~~endTime(inspectionChamber.longestAnimation);
-
+	if (animations.length > 0) {
+		inspectionChamber.longestAnimation = animations.reduce((acc, anim) =>
+			endTime(anim) > endTime(acc) ? anim : acc
+		);
+		inspectionChamber.animationEndTime = ~~endTime(inspectionChamber.longestAnimation);
+	} else {
+		inspectionChamber.longestAnimation = undefined;
+		inspectionChamber.animationEndTime = 0;
+	}
 	const oldNames = new Set<string>();
 	const newNames = new Set<string>();
 
@@ -111,11 +116,13 @@ export function unleashAllAnimations() {
 	});
 }
 
+const row = (field: string, value: string) =>
+	value
+		? `<tr><td style="text-align:right">${field}</td><td><tt><b>${value}</b></tt></td><tr>`
+		: '';
+
 export function listAnimations(name: string) {
-	const row = (field: string, value: string) =>
-		value
-			? `<tr><td style="text-align:right">${field}</td><td><tt><b>${value}</b></tt></td><tr>`
-			: '';
+	const allProps: Set<string> = new Set();
 	const meta = ['offset', 'computedOffset', 'easing', 'composite'];
 	const inspectionChamber = top!.__vtbag.inspectionChamber!;
 	const styleMap = inspectionChamber.styleMap!;
@@ -133,12 +140,17 @@ export function listAnimations(name: string) {
 		const context = JSON.parse(box.dataset.vtbagContext!);
 		box.removeAttribute('data-vtbag-context');
 		box.checked = selectAnimation(name, context.pseudo, context.idx)?.playState === 'paused';
-		box.addEventListener('change', (e) => {
+		box.addEventListener('change', () => {
 			if (!stopAndGo(name, context.pseudo, context.idx, box.checked)) {
 				box.checked = !box.checked;
 			}
 		});
 	});
+	anim
+		.querySelectorAll<HTMLDetailsElement>('[data-vtbag-snapshot]')
+		.forEach((s) => s.addEventListener('toggle', updateSnapshots));
+	updateLiveValues();
+	updateSnapshots();
 	plugInPanel(anim);
 
 	function animationPanel(pseudo: string) {
@@ -146,6 +158,7 @@ export function listAnimations(name: string) {
 		const style = styleMap.get(`${pseudo}-${name}`) as CSSStyleDeclaration;
 		const cssAnimation = style?.animation;
 		const animationName = style?.animationName;
+		allProps.clear();
 		if (animationName && animationName !== 'vtbag-twin-noop' && animationName !== 'none') {
 			const animationNames = animationName.split(', ');
 			let skipped = 0;
@@ -156,22 +169,31 @@ export function listAnimations(name: string) {
 					);
 				} else {
 					res.push(
-						`<span style="padding-right: 0.25ex; width: 4.75ex; display: inline-block; text-align:right">🔴</span> ${pseudo}: <tt>${animationNames[idx]}</tt><br>`
+						`<span style="padding-right: 0.25ex; width: 4.75ex; display: inline-block; text-align:right">⚠️</span> ${pseudo}: keyframes <tt>${animationNames[idx]}</tt> not found.<br>`
 					);
 					++skipped;
-					console.error(
-						`[inspection chamber] did not find keyframes named "${animationNames[idx]}" for ::view-transition-${pseudo}(${name})`
-					);
 				}
 			});
+			if (allProps.size > 0) {
+				res.push(
+					`<details data-vtbag-live-values="${pseudo + ',' + [...allProps].sort().join(',')}"><summary>&nbsp;🌀&thinsp; ${pseudo}: live values</summary></details>`
+				);
+			}
+		}
+
+		if (style) {
+			res.push(
+				`<details data-vtbag-snapshot="${pseudo}"><summary>&nbsp;📸 ${pseudo}: CSS snapshot</summary></details>`
+			);
 		}
 		return res.length > 0 ? res.join('') + '<hr>' : '';
 
 		function details(keyframeName: string, animation: string) {
+			const properties = keyframeProperties(keyframeName) || `⚠️ no properties? `;
 			return `
 <table>
 	${row('animation:', animation)}
-	${row('animates:', keyframeProperties(keyframeName))}
+	${row('animates:', properties)}
 	${keyframes(keyframeName)}
 </table>`;
 		}
@@ -182,10 +204,9 @@ export function listAnimations(name: string) {
 		inspectionChamber.keyframesMap
 			?.get(name)
 			?.forEach((k) => Object.keys(k).forEach((key) => keys.add(key)));
-		return [...keys]
-			.filter((k) => !meta.includes(k))
-			.sort()
-			.join(', ');
+		const props = [...keys].filter((k) => !meta.includes(k)).sort();
+		props.forEach((p) => allProps.add(p));
+		return props.join(', ');
 	}
 
 	function keyframes(name: string) {
@@ -254,4 +275,46 @@ export function selectAnimation(name: string, pseudo: string, idx: number) {
 		return;
 	}
 	return result;
+}
+
+export function updateLiveValues() {
+	const name =
+		top!.document.querySelector<HTMLHeadingElement>('h4[data-vtbag-name]')?.dataset.vtbagName;
+	const chamber = top!.__vtbag.inspectionChamber!;
+	const styleMap = chamber.styleMap!;
+	top!.document
+		.querySelectorAll<HTMLDetailsElement>('[data-vtbag-live-values]')
+		.forEach((details) => {
+			const [pseudo, ...props] = details.dataset.vtbagLiveValues!.split(',');
+			const style = styleMap.get(`${pseudo}-${name}`) as CSSStyleDeclaration;
+			const values = props.map((p) => row(p + ':', style.getPropertyValue(p)));
+			details.innerHTML =
+				`<summary>&nbsp;🌀&thinsp; ${pseudo}: live values</summary><table>` +
+				values.join('') +
+				'</table>';
+		});
+}
+
+function updateSnapshots() {
+	const name =
+		top!.document.querySelector<HTMLHeadingElement>('h4[data-vtbag-name]')?.dataset.vtbagName;
+	const chamber = top!.__vtbag.inspectionChamber!;
+	const styleMap = chamber.styleMap!;
+	top!.document.querySelectorAll<HTMLDetailsElement>('[data-vtbag-snapshot]').forEach((details) => {
+		if (details.open) {
+			const pseudo = details.dataset.vtbagSnapshot;
+			const live: string[] = (
+				details.previousElementSibling as HTMLElement
+			)?.dataset.vtbagLiveValues
+				?.split(',')
+				.slice(1) ?? [''];
+			const style = styleMap.get(`${pseudo}-${name}`) as CSSStyleDeclaration;
+			const values = getNonDefaultPropNames(style)
+				.filter((p) => !live.includes(p))
+				.sort()
+				.map((p) => row(p + ':', style.getPropertyValue(p)));
+			details.innerHTML =
+				`<summary>&nbsp;📸 ${pseudo}: CSS snapshot</summary><table>` + values.join('') + '</table>';
+		}
+	});
 }

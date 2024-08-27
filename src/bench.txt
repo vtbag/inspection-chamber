@@ -7,7 +7,7 @@
 	<meta name="astro-view-transitions-enabled" content="true" />
 </head>
 <body>
-	<div style="display:none" id="vtbot-loading-indicator"></div>
+	<div style="display: none" id="vtbot-loading-indicator"></div>
 	<iframe id="vtbag-main-frame" src="/"></iframe>
 	<div id="divider" class="divider"></div>
 
@@ -826,6 +826,10 @@
 		}
 		:is(#vtbag-ui-panel, #vtbag-ui-inner-panel) :is(p, hr) {
 			margin-bottom: 8px;
+		}
+		details[data-vtbag-live-values],
+		details[data-vtbag-snapshot] {
+			margin-top: 0.15rem;
 		}
 	</style>
 </body>

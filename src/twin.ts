@@ -51,7 +51,7 @@ export function initTwin(
 }
 
 function twinId(name: string, pseudo: string) {
-	return pseudo ? `vtbag-twin--view-transition-${pseudo}-${name}` : 'vtbag-twin--view-transition';
+	return name ? `vtbag-twin--view-transition-${pseudo}-${name}` : 'vtbag-twin--view-transition';
 }
 export async function syncTwins(hidden: Set<string>) {
 	top!.document.documentElement.classList.add('vtbag-twin-sync');

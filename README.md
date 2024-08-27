@@ -12,13 +12,17 @@ The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
 
-The current version also includes smaller improvements, moving the Chamber closer to becoming a stable product rather than just a prototype.
+You can now observe in real-time how CSS properties are updated by animations and easily see which other properties are applied to the pseudo-elements created by the View Transition API.
+
+The Chamber now also includes improved error reporting for missing animations or corrupted keyframe definitions.
 
 For details, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
 ## What happened so far:
 
-v1.0.5 introduced the ability to switch single animations on and off as you navigate through the timeline of view transitions. For example, you can temporarily disable fades while investigating a morph animation or disable morphing to focus on other features of your transition.
+Continuous smaller improvements, moving the Chamber closer to becoming a stable product rather than just a prototype.
+
+Added ability to switch single animations on and off as you navigate through the timeline of view transitions. For example, you can temporarily disable fades while investigating a morph animation or disable morphing to focus on other features of your transition.
 
 
 v1.0.4 improves opening the Chamber on mobiles, adds an explicit close button to the inner panel and fixes some styling issues.
