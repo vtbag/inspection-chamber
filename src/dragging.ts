@@ -9,10 +9,12 @@ export function initDragging(
 
 	let startX: number;
 	let startY: number;
+	const lX = (x: number) => x < 0 ? 0 : x > (innerWidth - 16) ? (innerWidth - 16) : x;
+	const lY = (y: number) => y < 0 ? 0 : y > (innerHeight - 16) ? (innerHeight - 16) : y;
 	const xe = (e: TouchEvent | MouseEvent, delta = 0) =>
-		((e instanceof TouchEvent ? e.touches[0]?.clientX : e.clientX) ?? 0) - delta;
+		lX(((e instanceof TouchEvent ? e.touches[0]?.clientX : e.clientX) ?? 0)) - delta;
 	const ye = (e: TouchEvent | MouseEvent, delta = 0) =>
-		((e instanceof TouchEvent ? e.touches[0]?.clientY : e.clientY) ?? 0) - delta;
+		lY(((e instanceof TouchEvent ? e.touches[0]?.clientY : e.clientY) ?? 0)) - delta;
 
 	const startDragging = (e: TouchEvent | MouseEvent, t: HTMLElement) => {
 		dragged = t;
