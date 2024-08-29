@@ -8,7 +8,6 @@ import { setStyles } from './styles';
 import { initTwin } from './twin';
 
 export function forceAnimations() {
-	const frameBody = top!.__vtbag.inspectionChamber!.frameDocument!.body;
 	setStyles(
 		`
 		@keyframes vtbag-twin-noop {

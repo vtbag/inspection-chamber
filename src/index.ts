@@ -38,7 +38,7 @@ const inspectionChamber = top!.__vtbag.inspectionChamber!;
 
 if (top === self) {
 	top.setTimeout(initPanel, 500);
-} else {
+} else if (self.parent === top) {
 	initSpecimen();
 }
 
@@ -50,12 +50,8 @@ function initSpecimen() {
 	monkeyPatchStartViewTransition();
 
 	function monkeyPatchStartViewTransition() {
-		const originalStartViewTransition = frameDocument.startViewTransition;
-		if (
-			!originalStartViewTransition ||
-			originalStartViewTransition.toString() !== 'function startViewTransition() { [native code] }'
-		)
-			return;
+		const originalStartViewTransition = top!.document.startViewTransition;
+		if (!originalStartViewTransition) return;
 		// todo: add level 2 options
 		frameDocument.startViewTransition = (cb: () => void | Promise<void>) => {
 			'@vtbag';
@@ -215,8 +211,6 @@ async function initPanel() {
 			.forEach((e) => e.remove());
 		return;
 	}
-	const frameDocument = (top!.__vtbag.inspectionChamber!.frameDocument =
-		mainFrame.contentDocument!);
 
 	updateNames(setTransitionNames());
 	initPanelHandlers();
@@ -253,7 +247,7 @@ async function initPanel() {
 		duration: 500,
 		fill: 'forwards',
 	});
-	frameDocument!.addEventListener('click', innerClick);
+	mainFrame.contentDocument!.addEventListener('click', innerClick);
 }
 
 function innerClick(e: MouseEvent) {
