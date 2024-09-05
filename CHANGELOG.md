@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.11 - 2024-09-05
+
+### Patch Changes
+
+- aa8c519: Fixes a bug that blocked the chamber on nested iframes and framework components when used with the Astro router.
+
 ## 1.0.10 - 2024-08-27
 
 ### Patch Changes
