@@ -37,5 +37,5 @@ The Inspection Chamber is your ultimate playground for experimenting with the Vi
 
 With a comprehensive set of controls at your fingertips, you can interactively test and fine-tune your view transitions to perfection. Dive in and explore all the features the Inspection Chamber offers to elevate your web development projects!
 
-Find the documentation of the Inspection Chamber at https://vtbag.pages.dev/inspection-chamber/!
+Find the documentation of the Inspection Chamber at [https://vtbag.pages.dev/tools/inspection-chamber/](https://vtbag.pages.dev/tools/inspection-chamber/)!
 
