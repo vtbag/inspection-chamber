@@ -53,14 +53,14 @@ function initSpecimen() {
 		const originalStartViewTransition = top!.document.startViewTransition;
 		if (!originalStartViewTransition) return;
 		// todo: add level 2 options
-		frameDocument.startViewTransition = (cb: () => void | Promise<void>) => {
+		frameDocument.startViewTransition = (cb?: () => void | Promise<void>) => {
 			'@vtbag';
 			pageSwap();
 			inspectionChamber.viewTransition = originalStartViewTransition.call(
 				frameDocument,
 				async () => {
 					await Promise.resolve();
-					await cb();
+					cb && await cb();
 					pageReveal();
 				}
 			);
