@@ -99,7 +99,7 @@ export async function retrieveViewTransitionAnimations() {
 
 	initTwin(frameDoc, frameDoc, names, oldNames, newNames);
 
-	updateNames(oldNames, newNames);
+	updateNames(names, oldNames, newNames);
 }
 
 export function unleashAllAnimations() {
