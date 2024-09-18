@@ -1,5 +1,12 @@
 # @vtbag/inspection-chamber
 
+## 1.0.12
+
+### Patch Changes
+
+- 02f22df: Names in the Animation Groups panel are now shown in the order in which the transition groups appear as children of the `::view-transition` pseudo-element. If you miss the alphabetic order when searching for groups, please try the search function of the Filter panel.
+- 3d31e58: Fixes a bug that caused the chamber to wedge when `startViewTransition()` was called without parameters.
+
 ## 1.0.11 - 2024-09-05
 
 ### Patch Changes
