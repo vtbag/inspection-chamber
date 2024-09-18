@@ -60,7 +60,7 @@ function initSpecimen() {
 				frameDocument,
 				async () => {
 					await Promise.resolve();
-					cb && await cb();
+					cb && (await cb());
 					pageReveal();
 				}
 			);
