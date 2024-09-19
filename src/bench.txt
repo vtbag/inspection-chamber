@@ -647,6 +647,7 @@
 			#vtbag-ui-panel {
 				flex-direction: column;
 				height: 100vh;
+				min-height: unset;
 				width: var(--vtbag-panel-width, 216px);
 			}
 			.horizontal {
