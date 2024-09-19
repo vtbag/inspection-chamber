@@ -1,5 +1,12 @@
 # @vtbag/inspection-chamber
 
+## 1.0.13 - 2024.09.19
+
+### Patch Changes
+
+- 49942c9: Fixes buggy styling that disabled scrolling of the main panel for Chrome 129.0.x.y
+- dac7964: Fixes a bug with name sorting
+
 ## 1.0.12 - 2024-09-19
 
 ### Patch Changes
