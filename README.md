@@ -11,22 +11,20 @@ The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
 
-You can now observe in real-time how CSS properties are updated by animations and easily see which other properties are applied to the pseudo-elements created by the View Transition API.
-
-The Chamber now also includes improved error reporting for missing animations or corrupted keyframe definitions.
+Names in the Animation Groups panel are now shown in the order in which the transition groups appear as children of the `::view-transition` pseudo-element. This makes it easier to understand how the individual groups overlap during rendering.
 
 For details, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
 ## What happened so far:
 
-Continuous smaller improvements, moving the Chamber closer to becoming a stable product rather than just a prototype.
 
-Added ability to switch single animations on and off as you navigate through the timeline of view transitions. For example, you can temporarily disable fades while investigating a morph animation or disable morphing to focus on other features of your transition.
+> You can now observe in real-time how CSS properties are updated by animations and easily see which other properties are applied to the pseudo-elements created by the View Transition API.
 
+> Added ability to switch single animations on and off as you navigate through the timeline of view transitions. For example, you can temporarily disable fades while investigating a morph animation or disable morphing to focus on other features of your transition.
 
-v1.0.4 improves opening the Chamber on mobiles, adds an explicit close button to the inner panel and fixes some styling issues.
-
-v1.0.3 fixes some teething issues. The main areas affected are:
+* Improved error reporting for missing animations or corrupted keyframe definitions.
+* Improved opening the Chamber on mobiles.
+* Explicit close button to the inner panel and fixes some styling issues.
 * Better integration into same-document and cross-document transitions.
 * Further optimizations for identifying transition elements on the screen.
 
