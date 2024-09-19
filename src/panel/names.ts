@@ -11,9 +11,9 @@ import { mayViewTransition, vtActive } from './transition';
 export const THROTTLING_DELAY = 500;
 
 export function updateNames(
-	names: Set<string>,
 	leftTransitionNames: Set<string>,
-	rightTransitionNames?: Set<string>
+	rightTransitionNames?: Set<string>,
+	names?: Set<string>
 ) {
 	//navigator.clipboard.writeText("");
 	mayViewTransition(() => {
@@ -26,7 +26,7 @@ export function updateNames(
 		top!.document.querySelector<HTMLElement>('#vtbag-ui-names div')!.style.display =
 			rightTransitionNames ? 'flex' : 'none';
 		const list = top!.document.querySelector('#vtbag-ui-names > ol')!;
-		(rightTransitionNames ? names : [...names].sort()).forEach((name, idx) => {
+		(rightTransitionNames ? names! : [...leftTransitionNames].sort()).forEach((name, idx) => {
 			const li = top!.document.createElement('li');
 			li.innerText = name;
 			if (rightTransitionNames && leftTransitionNames.has(name)) {
