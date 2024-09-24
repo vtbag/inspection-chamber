@@ -1,5 +1,5 @@
 [⭐️ Please star to support this work! ⭐️](https://github.com/vtbag/inspection-chamber)
-# The Inspection Chamber
+# 🔬 The Inspection Chamber
 
 Put your view transitions through their paces in the Inspection Chamber!
 
@@ -11,12 +11,13 @@ The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
 
-Names in the Animation Groups panel are now shown in the order in which the transition groups appear as children of the `::view-transition` pseudo-element. This makes it easier to understand how the individual groups overlap during rendering.
+Improved error handling.
 
 For details, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
 ## What happened so far:
 
+> Names in the Animation Groups panel are now shown in the order in which the transition groups appear as children of the `::view-transition` pseudo-element. This makes it easier to understand how the individual groups overlap during rendering.
 
 > You can now observe in real-time how CSS properties are updated by animations and easily see which other properties are applied to the pseudo-elements created by the View Transition API.
 

@@ -168,7 +168,7 @@ export function listAnimations(name: string) {
 					);
 				} else {
 					res.push(
-						`<span style="padding-right: 0.25ex; width: 4.75ex; display: inline-block; text-align:right">⚠️</span> ${pseudo}: keyframes <tt>${animationNames[idx]}</tt> not found.<br>`
+						`<span style="padding-right: 0.25ex; width: 4.75ex; display: inline-block; text-align:right">⚠️</span> ${pseudo}: error in animation: <tt>${animation}</tt>.<br>`
 					);
 					++skipped;
 				}
