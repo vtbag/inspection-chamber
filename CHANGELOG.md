@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.14 - 2024-09-25
+
+### Patch Changes
+
+- adf156a: Gives better error messages in the animation panel if there is some problem with the definition of an animation.
+
 ## 1.0.13 - 2024.09.19
 
 ### Patch Changes
