@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vtbag/inspection-chamber.git"
+    "url": "https://github.com/vtbag/inspection-chamber"
   },
   "keywords": [
     "view",
