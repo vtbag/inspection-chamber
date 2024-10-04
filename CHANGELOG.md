@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.15
+
+### Patch Changes
+
+- 54acd79: Now the Chamber can also handle animations of view transition pseudo-elements that where started using JavaScript and the Web Animation API
+
 ## 1.0.14 - 2024-09-25
 
 ### Patch Changes
