@@ -11,11 +11,13 @@ The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
 
-Improved error handling.
+In addition to CSS animations of pseudo-elements, the Chamber can now also handle animations of pseudo-elements started using the Web Animation API.
 
-For details, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
+For latest changes, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
 ## What happened so far:
+
+> Improved error handling
 
 > Names in the Animation Groups panel are now shown in the order in which the transition groups appear as children of the `::view-transition` pseudo-element. This makes it easier to understand how the individual groups overlap during rendering.
 

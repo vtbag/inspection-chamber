@@ -35,14 +35,17 @@ export async function retrieveViewTransitionAnimations() {
 	const set = new WeakSet();
 	let growing = true;
 	let rootRootAnimation = false;
+	let cnt = 0;
 	while (growing) {
 		growing = false;
 		frameDoc.getAnimations().forEach((animationObject) => {
 			if (animationObject.effect?.pseudoElement?.startsWith('::view-transition')) {
 				const { pseudoName, viewTransitionName } = namesOfAnimation(animationObject)!;
 				if (!set.has(animationObject)) {
-					const keyframeName =
-						animationObject instanceof CSSAnimation ? animationObject.animationName : undefined;
+					let keyframeName =
+						animationObject instanceof CSSAnimation
+							? animationObject.animationName
+							: (animationObject.id ||= `vtbag-js-animation-${++cnt}`);
 					const transitionProperty =
 						animationObject instanceof CSSTransition
 							? animationObject.transitionProperty
@@ -138,9 +141,10 @@ export function listAnimations(name: string) {
 	anim.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((box) => {
 		const context = JSON.parse(box.dataset.vtbagContext!);
 		box.removeAttribute('data-vtbag-context');
-		box.checked = selectAnimation(name, context.pseudo, context.idx)?.playState === 'paused';
+		box.checked =
+			selectAnimation(name, context.pseudo, context.idx, context.id)?.playState === 'paused';
 		box.addEventListener('change', () => {
-			if (!stopAndGo(name, context.pseudo, context.idx, box.checked)) {
+			if (!stopAndGo(name, context.pseudo, context.idx, context.id, box.checked)) {
 				box.checked = !box.checked;
 			}
 		});
@@ -164,7 +168,7 @@ export function listAnimations(name: string) {
 			cssAnimation.split(/,(?![^(]*\))/).forEach((animation, idx) => {
 				if (inspectionChamber.keyframesMap?.get(animationNames[idx])) {
 					res.push(
-						`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":${idx - skipped}}'/> ${pseudo}: <tt>${animationNames[idx]}</tt></summary>${details(animationNames[idx], animation.endsWith(animationName) ? animation.slice(0, -animationName.length) : animation)}</details>`
+						`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":${idx - skipped},"id":""}'/> ${pseudo}: <tt>${animationNames[idx]}</tt></summary>${details(animationNames[idx], animation.endsWith(animationName) ? animation.slice(0, -animationName.length) : animation)}</details>`
 					);
 				} else {
 					res.push(
@@ -173,11 +177,29 @@ export function listAnimations(name: string) {
 					++skipped;
 				}
 			});
-			if (allProps.size > 0) {
-				res.push(
-					`<details data-vtbag-live-values="${pseudo + ',' + [...allProps].sort().join(',')}"><summary>&nbsp;🌀&thinsp; ${pseudo}: live values</summary></details>`
+		}
+
+		inspectionChamber.animations
+			?.filter((a) => {
+				return (
+					!('animationName' in a) &&
+					a.effect?.pseudoElement === `::view-transition-${pseudo}(${name})`
 				);
-			}
+			})
+			.forEach((animation, idx) => {
+				const animationString = (a: Animation) => {
+					const t = a.effect?.getTiming();
+					return `${t?.duration || '0'}ms ${t?.easing ?? ''}  ${t?.delay ?? '0'}ms   ${t?.iterations ?? ''} ${t?.direction ?? ''} ${t?.fill ?? ''} ${a.playState}`;
+				};
+				res.push(
+					`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":-1,"id":"${animation.id}"}'/> ${pseudo}: <tt>${animation.id}</tt></summary>${details(animation.id, animationString(animation))}</details>`
+				);
+			});
+
+		if (allProps.size > 0) {
+			res.push(
+				`<details data-vtbag-live-values="${pseudo + ',' + [...allProps].sort().join(',')}"><summary>&nbsp;🌀&thinsp; ${pseudo}: live values</summary></details>`
+			);
 		}
 
 		if (style) {
@@ -241,8 +263,8 @@ export function resetAnimationVisibility() {
 	control();
 }
 
-function stopAndGo(name: string, pseudo: any, idx: any, checked: boolean) {
-	const anim = selectAnimation(name, pseudo, idx);
+function stopAndGo(name: string, pseudo: string, idx: number, id: string, checked: boolean) {
+	const anim = selectAnimation(name, pseudo, idx, id);
 	if (!anim) return false;
 	if (checked) {
 		anim.pause();
@@ -253,12 +275,25 @@ function stopAndGo(name: string, pseudo: any, idx: any, checked: boolean) {
 	return true;
 }
 
-export function selectAnimation(name: string, pseudo: string, idx: number) {
+export function selectAnimation(name: string, pseudo: string, idx: number, id: string) {
+	const pseudoElement = `::view-transition-${pseudo}(${name})`;
 	const chamber = top!.__vtbag.inspectionChamber!;
+	const animations = chamber.animations!;
+
+	if (id) {
+		const filtered = animations.filter(
+			(anim) => anim.id === id && anim.effect?.pseudoElement === pseudoElement
+		);
+		if (filtered.length === 1) {
+			return filtered[0];
+		}
+		console.error(
+			`[injection chamber] found ${filtered.length} animations for ${pseudoElement} when looking for animation with id ${id} `
+		);
+		return;
+	}
 	const styleMap = chamber.styleMap!;
 	const animationName = styleMap.get(`${pseudo}-${name}`)!.animationName.split(', ')[idx];
-	const animations = chamber.animations!;
-	const pseudoElement = `::view-transition-${pseudo}(${name})`;
 	const selected = animations.filter((anim) => anim.effect?.pseudoElement === pseudoElement);
 	if (idx >= selected.length) {
 		console.error(
