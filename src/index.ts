@@ -272,11 +272,7 @@ function setOrientation() {
 		panelOrientation.split(' ').forEach((c) => html.classList.add(c));
 		updateTurner();
 	} else {
-		if (
-			top!.matchMedia('(orientation: landscape)').matches !==
-			html.classList.contains('vtbag-ui-column')
-		)
-			switchOrientation();
+		switchOrientation();
 	}
 }
 
