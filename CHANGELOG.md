@@ -1,5 +1,12 @@
 # @vtbag/inspection-chamber
 
+## 1.0.16
+
+### Patch Changes
+
+- dcbae28: Prefers column layout on first use.
+- fc0447a: Adds .d.ts declarations
+
 ## 1.0.15 - 2024-10-04
 
 ### Patch Changes
