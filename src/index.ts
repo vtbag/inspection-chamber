@@ -45,8 +45,8 @@ if (top === self) {
 function initSpecimen() {
 	const frameDocument = (inspectionChamber.frameDocument = self.document);
 
-	self.addEventListener('pageswap', pageSwap, { once: true });
-	self.addEventListener('pagereveal', prePageReveal, { once: true });
+	self.addEventListener('pageswap', pageSwap);
+	self.addEventListener('pagereveal', prePageReveal);
 	monkeyPatchStartViewTransition();
 
 	function monkeyPatchStartViewTransition() {
@@ -82,6 +82,8 @@ function prePageReveal(e: Event) {
 }
 function pageReveal() {
 	DEBUG && console.log('pageReveal');
+	top!.history.replaceState(self.history.state, '', self.location.href);
+	top!.document.title = titleLogo + ' ' + self.document.title;
 	if (inspectionChamber.viewTransition) {
 		forceAnimations();
 		beforeUpdateCallbackDone();
@@ -116,8 +118,6 @@ function beforeUpdateCallbackDone() {
 				}
 				modusFunction[modus]();
 			}
-			top!.history.replaceState(history.state, '', self.location.href);
-			top!.document.title = titleLogo + ' ' + self.document.title;
 		})
 		.finally(() => {});
 
