@@ -82,8 +82,6 @@ function prePageReveal(e: Event) {
 }
 function pageReveal() {
 	DEBUG && console.log('pageReveal');
-	top!.history.replaceState(self.history.state, '', self.location.href);
-	top!.document.title = titleLogo + ' ' + self.document.title;
 	if (inspectionChamber.viewTransition) {
 		forceAnimations();
 		beforeUpdateCallbackDone();
@@ -118,6 +116,8 @@ function beforeUpdateCallbackDone() {
 				}
 				modusFunction[modus]();
 			}
+			top!.history.replaceState(self.history.state, '', self.location.href);
+			top!.document.title = titleLogo + ' ' + self.document.title;
 		})
 		.finally(() => {});
 
