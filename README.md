@@ -11,20 +11,20 @@ The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
 
-In addition to CSS animations of pseudo-elements, the Chamber can now also handle animations of pseudo-elements started using the Web Animation API.
+Smaller fixes and improvements.
 
 For latest changes, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
 ## What happened so far:
 
+> In addition to CSS animations of pseudo-elements, the Chamber can now also handle animations of pseudo-elements started using the Web Animation API.
+
 > Improved error handling
 
-> Names in the Animation Groups panel are now shown in the order in which the transition groups appear as children of the `::view-transition` pseudo-element. This makes it easier to understand how the individual groups overlap during rendering.
+> Names in the Animation Groups panel are now shown in the order in which the transition groups appear as children of the `::view-transition` pseudo-element. This makes it easier to understand how the individual groups overlap during the transition.
 
-> You can now observe in real-time how CSS properties are updated by animations and easily see which other properties are applied to the pseudo-elements created by the View Transition API.
-
-> Added ability to switch single animations on and off as you navigate through the timeline of view transitions. For example, you can temporarily disable fades while investigating a morph animation or disable morphing to focus on other features of your transition.
-
+* Observe in real-time how CSS properties are updated by animations
+* Ability to switch single animations on and off
 * Improved error reporting for missing animations or corrupted keyframe definitions.
 * Improved opening the Chamber on mobiles.
 * Explicit close button to the inner panel and fixes some styling issues.
