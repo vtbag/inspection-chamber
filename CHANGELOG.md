@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.17
+
+### Patch Changes
+
+- bd4af9e: The Chamber now also works with same-document view transitions that use the extended signature for startViewTransition as defined by the level 2 spec, which allows you to pass view transition types to the transition!
+
 ## 1.0.16 - 2024-10-17
 
 ### Patch Changes
