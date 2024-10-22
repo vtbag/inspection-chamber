@@ -49,12 +49,11 @@ function initSpecimen() {
 	self.addEventListener('pagereveal', prePageReveal);
 	monkeyPatchStartViewTransition();
 
-
 	function monkeyPatchStartViewTransition() {
 		const originalStartViewTransition = top!.document.startViewTransition;
 		if (!originalStartViewTransition) return;
 
-		const rewrite = (cb: UpdateCallback) => async () => {
+		const rewrite = (cb?: UpdateCallback) => async () => {
 			await Promise.resolve();
 			cb && (await cb());
 			pageReveal();
