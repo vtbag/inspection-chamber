@@ -49,26 +49,48 @@ function initSpecimen() {
 	self.addEventListener('pagereveal', prePageReveal);
 	monkeyPatchStartViewTransition();
 
+
 	function monkeyPatchStartViewTransition() {
 		const originalStartViewTransition = top!.document.startViewTransition;
 		if (!originalStartViewTransition) return;
-		// todo: add level 2 options
-		frameDocument.startViewTransition = (cb?: () => void | Promise<void>) => {
-			'@vtbag';
-			pageSwap();
-			inspectionChamber.viewTransition = originalStartViewTransition.call(
-				frameDocument,
-				async () => {
-					await Promise.resolve();
-					cb && (await cb());
-					pageReveal();
-				}
-			);
-			return inspectionChamber.viewTransition;
+
+		const rewrite = (cb: UpdateCallback) => async () => {
+			await Promise.resolve();
+			cb && (await cb());
+			pageReveal();
 		};
+
+		if (CSS.supports('selector(:active-view-transition-type(x))')) {
+			// level 2 signature
+			frameDocument.startViewTransition = (obj: StartViewTransitionParameter) => {
+				const param: StartViewTransitionParameter = { types: [], update: undefined };
+				('@vtbag');
+				pageSwap();
+
+				if (!obj || obj instanceof Function) {
+					param.update = rewrite(obj);
+				} else {
+					param.types = obj.types;
+					param.update = rewrite(obj.update);
+				}
+				return (inspectionChamber.viewTransition = originalStartViewTransition.call(
+					frameDocument,
+					param as any
+				));
+			};
+		} else {
+			// level 1 signature
+			frameDocument.startViewTransition = (cb: UpdateCallback) => {
+				'@vtbag';
+				pageSwap();
+				return (inspectionChamber.viewTransition = originalStartViewTransition.call(
+					frameDocument,
+					rewrite(cb)
+				));
+			};
+		}
 	}
 }
-
 function pageSwap() {
 	DEBUG && console.log('pageSwap');
 	inspectionChamber.glow?.cancel();

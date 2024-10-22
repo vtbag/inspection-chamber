@@ -11,7 +11,7 @@ The @vtbag website can be found at https://vtbag.pages.dev/
 
 ## !!! News !!!
 
-Smaller fixes and improvements.
+Now compatible with the View Transition API Level 2 signature for `startViewTransition({types:..., update:...})`!
 
 For latest changes, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
