@@ -7,7 +7,7 @@ Put your view transitions through their paces in the Inspection Chamber!
 ![Build Status](https://github.com/vtbag/inspection-chamber/actions/workflows/run-tests.yml/badge.svg)
 [![NPM Downloads](https://img.shields.io/npm/dw/@vtbag/inspection-chamber)](https://www.npmjs.com/package/@vtbag/inspection-chamber)
 
-The @vtbag website can be found at https://vtbag.pages.dev/
+The @vtbag website can be found at https://vtbag.dev/
 
 ## !!! News !!!
 
@@ -37,5 +37,5 @@ The Inspection Chamber is your ultimate playground for experimenting with the Vi
 
 With a comprehensive set of controls at your fingertips, you can interactively test and fine-tune your view transitions to perfection. Dive in and explore all the features the Inspection Chamber offers to elevate your web development projects!
 
-Find the documentation of the Inspection Chamber at [https://vtbag.pages.dev/tools/inspection-chamber/](https://vtbag.pages.dev/tools/inspection-chamber/)!
+Find the documentation of the Inspection Chamber at [https://vtbag.dev/tools/inspection-chamber/](https://vtbag.dev/tools/inspection-chamber/)!
 
