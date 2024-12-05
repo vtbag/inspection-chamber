@@ -13,6 +13,8 @@ The @vtbag website can be found at https://vtbag.dev/
 
 The items of the name panel escaped their scrollable list during view transitions. Fixed that. Read more about the root cause at https://vtbag.dev/basics/hide-and-seek/.
 
+Better support for short pages.
+
 For latest changes, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
 ## What happened so far:
