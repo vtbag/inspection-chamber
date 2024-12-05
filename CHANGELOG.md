@@ -1,5 +1,12 @@
 # @vtbag/inspection-chamber
 
+## 1.0.18
+
+### Patch Changes
+
+- 904b8e4: Stops list items from escaping the name panel on view transitions.
+- 8beb0e4: Fixes an issue (#35) with collapsing views. Getting a little better with styling.
+
 ## 1.0.17 - 2024-10-22
 
 ### Patch Changes
