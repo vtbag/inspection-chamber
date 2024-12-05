@@ -11,25 +11,21 @@ The @vtbag website can be found at https://vtbag.dev/
 
 ## !!! News !!!
 
-Now compatible with the View Transition API Level 2 signature for `startViewTransition({types:..., update:...})`!
+The items of the name panel escaped their scrollable list during view transitions. Fixed that. Read more about the root cause at https://vtbag.dev/basics/hide-and-seek/.
 
 For latest changes, see the [CHANGELOG](https://github.com/vtbag/inspection-chamber/blob/main/CHANGELOG.md)
 
 ## What happened so far:
 
-> In addition to CSS animations of pseudo-elements, the Chamber can now also handle animations of pseudo-elements started using the Web Animation API.
+> Now compatible with the View Transition API Level 2 signature for `startViewTransition({types:..., update:...})`!
 
-> Improved error handling
+> In addition to CSS animations of pseudo-elements, the Chamber can now also handle animations of pseudo-elements started using the Web Animation API.
 
 > Names in the Animation Groups panel are now shown in the order in which the transition groups appear as children of the `::view-transition` pseudo-element. This makes it easier to understand how the individual groups overlap during the transition.
 
+Also:
 * Observe in real-time how CSS properties are updated by animations
 * Ability to switch single animations on and off
-* Improved error reporting for missing animations or corrupted keyframe definitions.
-* Improved opening the Chamber on mobiles.
-* Explicit close button to the inner panel and fixes some styling issues.
-* Better integration into same-document and cross-document transitions.
-* Further optimizations for identifying transition elements on the screen.
 
 ## What is it?
 
