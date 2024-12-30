@@ -20,9 +20,9 @@ declare global {
 	}
 
 	interface NavigationActivation {
-		entry: NavigationEntry;
-		from: NavigationEntry;
-		navigationType: string;
+		entry: NavigationHistoryEntry;
+		from: NavigationHistoryEntry;
+		navigationType: NavigationTypeString;
 	}
 	interface AnimationEffect {
 		target: HTMLElement;

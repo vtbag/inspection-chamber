@@ -61,7 +61,7 @@ function initSpecimen() {
 
 		if (CSS.supports('selector(:active-view-transition-type(x))')) {
 			// level 2 signature
-			frameDocument.startViewTransition = (obj: StartViewTransitionParameter|UpdateCallback) => {
+			frameDocument.startViewTransition = (obj: StartViewTransitionParameter | UpdateCallback) => {
 				const param: StartViewTransitionParameter = { types: [], update: undefined };
 				('@vtbag');
 				pageSwap();

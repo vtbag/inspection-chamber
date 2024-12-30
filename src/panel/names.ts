@@ -35,7 +35,7 @@ export function updateNames(
 			if (rightTransitionNames?.has(name)) {
 				li.classList.add('new');
 			}
-		//	li.style.viewTransitionName = `vtbag-name-${idx}`;
+			//	li.style.viewTransitionName = `vtbag-name-${idx}`;
 			list.appendChild(li);
 		});
 		top!.document.querySelector<HTMLElement>('#vtbag-ui-filter ul')!.style.display =
