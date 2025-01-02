@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.19 - 2025-01-02
+
+### Patch Changes
+
+- 48bd379: Adds a workaround for quoted animation names in Webkit which caused user agent animation names to be flagged as errors in Safari.
+
 ## 1.0.18 - 2024-12-05
 
 ### Patch Changes
