@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.19
+
+### Patch Changes
+
+- 48bd379: Adds a workaround for Webkit's quoted animationNames
+
 ## 1.0.18 - 2024-12-05
 
 ### Patch Changes
