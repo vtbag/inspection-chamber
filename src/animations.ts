@@ -44,8 +44,9 @@ export async function retrieveViewTransitionAnimations() {
 				if (!set.has(animationObject)) {
 					let keyframeName =
 						animationObject instanceof CSSAnimation
-							? animationObject.animationName
+							? correctAnimationName(animationObject)
 							: (animationObject.id ||= `vtbag-js-animation-${++cnt}`);
+
 					const transitionProperty =
 						animationObject instanceof CSSTransition
 							? animationObject.transitionProperty
@@ -160,7 +161,7 @@ export function listAnimations(name: string) {
 		const res: string[] = [];
 		const style = styleMap.get(`${pseudo}-${name}`) as CSSStyleDeclaration;
 		const cssAnimation = style?.animation;
-		const animationName = style?.animationName;
+		const animationName = correctAnimationName(style);
 		allProps.clear();
 		if (animationName && animationName !== 'vtbag-twin-noop' && animationName !== 'none') {
 			const animationNames = animationName.split(', ');
@@ -251,7 +252,7 @@ export function resetAnimationVisibility() {
 	top!.__vtbag.inspectionChamber!.animations?.forEach((anim) => {
 		if (
 			anim instanceof CSSAnimation &&
-			anim.animationName !== 'vtbag-twin-noop' &&
+			correctAnimationName(anim) !== 'vtbag-twin-noop' &&
 			anim.playState === 'idle'
 		) {
 			anim.pause();
@@ -293,7 +294,7 @@ export function selectAnimation(name: string, pseudo: string, idx: number, id: s
 		return;
 	}
 	const styleMap = chamber.styleMap!;
-	const animationName = styleMap.get(`${pseudo}-${name}`)!.animationName.split(', ')[idx];
+	const animationName = correctAnimationName(styleMap.get(`${pseudo}-${name}`)!)!.split(', ')[idx];
 	const selected = animations.filter((anim) => anim.effect?.pseudoElement === pseudoElement);
 	if (idx >= selected.length) {
 		console.error(
@@ -302,9 +303,9 @@ export function selectAnimation(name: string, pseudo: string, idx: number, id: s
 		return;
 	}
 	const result = selected[idx];
-	if (result instanceof CSSAnimation && result.animationName !== animationName) {
+	if (result instanceof CSSAnimation && correctAnimationName(result) !== animationName) {
 		console.error(
-			`[injection chamber] found an animation called ${result.animationName} for ${pseudoElement} when looking for animation at index ${idx} with expected name ${name}`
+			`[injection chamber] found an animation called ${correctAnimationName(result)} for ${pseudoElement} when looking for animation at index ${idx} with expected name ${name}`
 		);
 		return;
 	}
@@ -351,4 +352,16 @@ function updateSnapshots() {
 				`<summary>&nbsp;📸 ${pseudo}: CSS snapshot</summary><table>` + values.join('') + '</table>';
 		}
 	});
+}
+
+// workaround for Webkit bug
+function correctAnimationName(animationObject?: { animationName: string }) {
+	let res = animationObject?.animationName;
+	if (res && res.startsWith('"')) {
+		res = res
+			.split(/\s*,\s*/)
+			.map((n) => n.slice(1, -1))
+			.join(', ');
+	}
+	return res;
 }
