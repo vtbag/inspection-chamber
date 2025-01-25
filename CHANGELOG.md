@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.20
+
+### Patch Changes
+
+- ccb1e36: Provides internal fixes and code stabilization
+
 ## 1.0.19 - 2025-01-02
 
 ### Patch Changes
