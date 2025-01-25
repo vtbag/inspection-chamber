@@ -132,7 +132,7 @@ function beforeUpdateCallbackDone() {
 						!!top!.document.querySelector<HTMLInputElement>('#vtbag-ui-framed')?.checked,
 						!!top!.document.querySelector<HTMLInputElement>('#vtbag-ui-named-only')?.checked
 					);
-					inspectionChamber.twin!.ownerDocument.addEventListener('click', twinClick);
+					inspectionChamber.twin?.ownerDocument.addEventListener('click', twinClick);
 				} finally {
 				}
 				modusFunction[modus]();

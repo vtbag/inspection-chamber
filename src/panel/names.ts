@@ -76,7 +76,7 @@ export async function updateNameVisibility() {
 	if (!vtActive()) return;
 	const inspectionChamber = top!.__vtbag.inspectionChamber!;
 
-	const twinDocument = inspectionChamber.twin!.ownerDocument;
+	const twinDocument = inspectionChamber.twin?.ownerDocument;
 	const topDocument = top!.document;
 	const computedStyle = top!.getComputedStyle(topDocument.documentElement);
 	const column = topDocument.documentElement.classList.contains('vtbag-ui-column');
@@ -95,36 +95,37 @@ export async function updateNameVisibility() {
 			hidden.add(li.innerText);
 	});
 	await syncTwins(hidden);
-	lis.forEach((li) => {
-		const name = li.innerText;
-		const classes = li.classList;
-		classes[
-			classes.contains('old') &&
-			insideViewport(
-				twinDocument.querySelector(`#vtbag-twin--view-transition-old-${name}`),
-				panelWidth,
-				panelHeight
-			) === false
-				? 'add'
-				: 'remove'
-		]('old-invisible');
-		classes[
-			classes.contains('new') &&
-			insideViewport(
-				twinDocument.querySelector(`#vtbag-twin--view-transition-new-${name}`),
-				panelWidth,
-				panelHeight
-			) === false
-				? 'add'
-				: 'remove'
-		]('new-invisible');
-		classes[
-			(!classes.contains('old') || classes.contains('old-invisible')) &&
-			(!classes.contains('new') || classes.contains('new-invisible'))
-				? 'add'
-				: 'remove'
-		]('invisible');
-	});
+	twinDocument &&
+		lis.forEach((li) => {
+			const name = li.innerText;
+			const classes = li.classList;
+			classes[
+				classes.contains('old') &&
+				insideViewport(
+					twinDocument.querySelector(`#vtbag-twin--view-transition-old-${name}`),
+					panelWidth,
+					panelHeight
+				) === false
+					? 'add'
+					: 'remove'
+			]('old-invisible');
+			classes[
+				classes.contains('new') &&
+				insideViewport(
+					twinDocument.querySelector(`#vtbag-twin--view-transition-new-${name}`),
+					panelWidth,
+					panelHeight
+				) === false
+					? 'add'
+					: 'remove'
+			]('new-invisible');
+			classes[
+				(!classes.contains('old') || classes.contains('old-invisible')) &&
+				(!classes.contains('new') || classes.contains('new-invisible'))
+					? 'add'
+					: 'remove'
+			]('invisible');
+		});
 }
 
 function insideViewport(element: HTMLElement | null, panelWidth = 0, panelHeight = 0) {

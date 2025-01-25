@@ -29,6 +29,7 @@ export async function retrieveViewTransitionAnimations() {
 	const animations: Animation[] = (inspectionChamber.animations = []);
 	const keyframesMap = (inspectionChamber.keyframesMap = new Map<string, Keyframe[]>());
 	const names = new Set<string>();
+	const additionalAnimations = new Set<string>();
 
 	inspectionChamber.styleMap = new Map<string, CSSStyleDeclaration>();
 
@@ -39,48 +40,45 @@ export async function retrieveViewTransitionAnimations() {
 	while (growing) {
 		growing = false;
 		frameDoc.getAnimations().forEach((animationObject) => {
-			if (animationObject.effect?.pseudoElement?.startsWith('::view-transition')) {
-				const { pseudoName, viewTransitionName } = namesOfAnimation(animationObject)!;
-				if (!set.has(animationObject)) {
-					let keyframeName =
-						animationObject instanceof CSSAnimation
-							? correctAnimationName(animationObject)
-							: (animationObject.id ||= `vtbag-js-animation-${++cnt}`);
+			if (set.has(animationObject)) return;
+			set.add(animationObject);
+			const { pseudoName, viewTransitionName } = namesOfAnimation(animationObject)!;
 
-					const transitionProperty =
-						animationObject instanceof CSSTransition
-							? animationObject.transitionProperty
-							: undefined;
-					if (transitionProperty) {
-						console.warn(
-							'[inspection-chamber] Unhandled transition:',
-							viewTransitionName,
-							pseudoName,
-							transitionProperty
-						);
-					} else if (keyframeName) {
-						animationObject.pause();
-						animationObject.currentTime = 0;
-						viewTransitionName && pseudoName === 'image-pair' && names.add(viewTransitionName);
-						!viewTransitionName && pseudoName === '::view-transition' && (rootRootAnimation = true);
-						if (keyframeName === 'vtbag-twin-noop') {
-							animationObject.cancel();
-						} else {
-							animations.push(animationObject);
-							keyframesMap.set(keyframeName, animationObject.effect?.getKeyframes()!);
-						}
-					} else {
-						console.warn(
-							'[inspection-chamber] Unhandled animation:',
-							viewTransitionName,
-							pseudoName,
-							animationObject.constructor.name
-						);
-					}
-					growing = true;
+			let keyframeName =
+				animationObject instanceof CSSAnimation
+					? correctAnimationName(animationObject)
+					: (animationObject.id ||= `vtbag-js-animation-${++cnt}`);
+
+			const transitionProperty =
+				animationObject instanceof CSSTransition ? animationObject.transitionProperty : undefined;
+			if (transitionProperty) {
+				console.warn(
+					'[inspection-chamber] Unhandled transition:',
+					viewTransitionName,
+					pseudoName,
+					transitionProperty
+				);
+			} else if (keyframeName) {
+				animationObject.pause();
+				animationObject.currentTime = 0;
+				viewTransitionName && pseudoName === 'image-pair' && names.add(viewTransitionName);
+				!viewTransitionName && pseudoName === '::view-transition' && (rootRootAnimation = true);
+				!viewTransitionName && additionalAnimations.add(keyframeName);
+				if (keyframeName === 'vtbag-twin-noop') {
+					animationObject.cancel();
+				} else {
+					animations.push(animationObject);
+					keyframesMap.set(keyframeName, animationObject.effect?.getKeyframes()!);
 				}
-				set.add(animationObject);
+			} else {
+				console.warn(
+					'[inspection-chamber] Unhandled animation:',
+					viewTransitionName,
+					pseudoName,
+					animationObject.constructor.name
+				);
 			}
+			growing = true;
 		});
 		growing && (await new Promise((r) => frameDoc.defaultView!.setTimeout(r)));
 		rootRootAnimation && console.warn('[inspection-chamber] Root root animation detected');
@@ -91,7 +89,10 @@ export async function retrieveViewTransitionAnimations() {
 
 	if (animations.length > 0) {
 		inspectionChamber.longestAnimation = animations.reduce((acc, anim) =>
-			endTime(anim) > endTime(acc) ? anim : acc
+			endTime(acc) === Infinity ||
+			(anim.effect?.pseudoElement?.startsWith('::view-transition') && endTime(anim) > endTime(acc))
+				? anim
+				: acc
 		);
 		inspectionChamber.animationEndTime = ~~endTime(inspectionChamber.longestAnimation);
 	} else {
@@ -103,7 +104,7 @@ export async function retrieveViewTransitionAnimations() {
 
 	initTwin(frameDoc, frameDoc, names, oldNames, newNames);
 
-	updateNames(oldNames, newNames, names);
+	updateNames(oldNames, newNames, new Set([...names, ...additionalAnimations]));
 }
 
 export function unleashAllAnimations() {
@@ -112,17 +113,21 @@ export function unleashAllAnimations() {
 	frameDocument.querySelector('#vtbag-adopted-sheet')?.remove();
 	chamber.animations?.forEach((a) => {
 		try {
-			a.finish();
+			a.effect?.getComputedTiming()?.iterations === Infinity || a.finish();
 		} catch (e) {
 			console.error(e, a, a.effect?.getComputedTiming());
 		}
 	});
 }
 
-const row = (field: string, value: string) =>
-	value
-		? `<tr><td style="text-align:right">${field}</td><td><tt><b>${value}</b></tt></td><tr>`
-		: '';
+function row(field: string, value: string, colSpan?: string) {
+	if (!value) return '';
+	const val = value
+		.split(/,(?![^(]*\))/)
+		.map((v) => `<td ${colSpan ? 'colspan="' + colSpan + '"' : ''}><tt><b>${v}</b></tt></td>`)
+		.join('');
+	return value ? `<tr><td style="text-align:right">${field}</td>${val}<tr>` : '';
+}
 
 export function listAnimations(name: string) {
 	const allProps: Set<string> = new Set();
@@ -214,7 +219,7 @@ export function listAnimations(name: string) {
 			const properties = keyframeProperties(keyframeName) || `⚠️ no properties? `;
 			return `
 <table>
-	${row('animation:', animation)}
+	${row('animation:', animation, '4')}
 	${row('animates:', properties)}
 	${keyframes(keyframeName)}
 </table>`;

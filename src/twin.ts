@@ -57,7 +57,7 @@ export async function syncTwins(hidden: Set<string>) {
 	top!.document.documentElement.classList.add('vtbag-twin-sync');
 	const inspectionChamber = top!.__vtbag.inspectionChamber!;
 	const root = inspectionChamber.frameDocument!.documentElement;
-	for (let group of [...inspectionChamber.twin!.children]) {
+	for (let group of [...(inspectionChamber.twin?.children||[])]) {
 		const name = (group as HTMLElement).dataset.vtbagTransitionName!;
 		if (hidden.has(name)) continue;
 		morph(group as HTMLElement, name);
@@ -92,7 +92,7 @@ export function twinClick(e: MouseEvent) {
 		let entry: HTMLLIElement | undefined;
 		let size = Infinity;
 		top!.__vtbag
-			.inspectionChamber!.twin!.querySelectorAll<HTMLElement>(
+			.inspectionChamber!.twin?.querySelectorAll<HTMLElement>(
 				'vtbag-pseudo-twin > vtbag-pseudo-twin > vtbag-pseudo-twin > vtbag-pseudo-twin'
 			)
 			.forEach((d) => {
