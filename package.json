@@ -1,7 +1,7 @@
 {
   "name": "@vtbag/inspection-chamber",
   "type": "module",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "main": "lib/index.js",
   "description": "The Inspection Chamber is an in-browser development tool that gives you all the knobs and dials to interactively put your view transitions through their paces.",
   "files": [

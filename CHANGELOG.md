@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.21
+
+### Patch Changes
+
+- c26cb14: Fixes a bug where the frame of the group pseudo-element is visible even both, the old and the new image are hidden or non existent
+
 ## 1.0.20 - 2025-01-25
 
 ### Patch Changes
