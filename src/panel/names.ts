@@ -159,16 +159,22 @@ export function updateImageVisibility() {
 	top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
 		const name = li.innerText;
 		const classes = li.classList;
-		let oldHidden = false;
+		let oldVisible = true;
+		let newVisible = true;
 		if (classes.contains('old-hidden')) {
-			oldHidden = true;
+			oldVisible = false;
 			rules.push(`::view-transition-old(${name}) { visibility: hidden; }`);
+		} else if (!classes.contains('old')) {
+			oldVisible = false;
 		}
 		if (classes.contains('new-hidden')) {
 			rules.push(`::view-transition-new(${name}) { visibility: hidden; }`);
-			if (oldHidden) {
-				rules.push(`::view-transition-group(${name}) { visibility: hidden; }`);
-			}
+			newVisible = false;
+		} else if (!classes.contains('new')) {
+			newVisible = false;
+		}
+		if (!oldVisible && !newVisible) {
+			rules.push(`::view-transition-group(${name}) { visibility: hidden; }`);
 		}
 	});
 	setStyles(rules.join('\n'), 'image-visibility');
