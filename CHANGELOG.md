@@ -1,6 +1,6 @@
 # @vtbag/inspection-chamber
 
-## 1.0.21
+## 1.0.21 - 2025-02-05
 
 ### Patch Changes
 
