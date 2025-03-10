@@ -156,6 +156,8 @@ function insideViewport(element: HTMLElement | null, panelWidth = 0, panelHeight
 export function updateImageVisibility() {
 	const rules: string[] = [];
 
+	const modus = getModus();
+	if (!modus || modus === 'bypass') return;
 	top!.document.querySelectorAll<HTMLLIElement>('#vtbag-ui-names li').forEach((li) => {
 		const name = li.innerText;
 		const classes = li.classList;
