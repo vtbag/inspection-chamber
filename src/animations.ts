@@ -174,7 +174,7 @@ export function listAnimations(name: string) {
 			cssAnimation.split(/,(?![^(]*\))/).forEach((animation, idx) => {
 				if (inspectionChamber.keyframesMap?.get(animationNames[idx])) {
 					res.push(
-						`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":${idx - skipped},"id":""}'/> ${pseudo}: <tt>${animationNames[idx]}</tt></summary>${details(animationNames[idx], animation.endsWith(animationName) ? animation.slice(0, -animationName.length) : animation)}</details>`
+						`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":${idx - skipped},"id":""}'> ${pseudo}: <tt>${animationNames[idx]}</tt></summary>${details(animationNames[idx], animation.endsWith(animationName) ? animation.slice(0, -animationName.length) : animation)}</details>`
 					);
 				} else {
 					res.push(
@@ -198,7 +198,7 @@ export function listAnimations(name: string) {
 					return `${t?.duration || '0'}ms ${t?.easing ?? ''}  ${t?.delay ?? '0'}ms   ${t?.iterations ?? ''} ${t?.direction ?? ''} ${t?.fill ?? ''} ${a.playState}`;
 				};
 				res.push(
-					`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":-1,"id":"${animation.id}"}'/> ${pseudo}: <tt>${animation.id}</tt></summary>${details(animation.id, animationString(animation))}</details>`
+					`<details><summary><input type="checkbox" data-vtbag-context='{"pseudo":"${pseudo}","idx":-1,"id":"${animation.id}"}'> ${pseudo}: <tt>${animation.id}</tt></summary>${details(animation.id, animationString(animation))}</details>`
 				);
 			});
 

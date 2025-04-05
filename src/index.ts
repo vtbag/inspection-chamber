@@ -209,7 +209,7 @@ async function initPanel() {
 			`<iframe id="vtbag-main-frame" style="opacity: 0;" src="${location.href}"></iframe>`
 		)
 		.replace('<title></title>', `<title>${titleLogo} ${docTitle}</title>`)
-		.replace(`<link rel="icon" />`, icon);
+		.replace(`<link rel="icon">`, icon);
 	top!.addEventListener('resize', setOrientation);
 	root.innerHTML = page;
 

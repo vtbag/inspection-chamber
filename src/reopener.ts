@@ -15,7 +15,7 @@ export function showReopener() {
 		`<div title="Reactivate the inspection chamber" id="vtbag-ui-reopen" style="position: fixed; z-index:1100; left: ${reopenerLeft}; top: ${reopenerTop}"><img style="  border-radius: 50%;
   border: 8px dashed #8888;
   mask-image: radial-gradient(ellipse at center, white 35%, transparent 71%);
-" src=${src} alt="Reactivate the inspection chamber" /><div>
+" src=${src} alt="Reactivate the inspection chamber"><div>
 
 		<style>
 			#vtbag-ui-reopen g {

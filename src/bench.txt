@@ -1,10 +1,10 @@
 <head>
-	<meta name="vtbag-inspection-chamber" content="true" />
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="icon" />
+	<meta name="vtbag-inspection-chamber" content="true">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon">
 	<title></title>
-	<meta name="astro-view-transitions-enabled" content="true" />
+	<meta name="astro-view-transitions-enabled" content="true">
 </head>
 <body style="margin: 0; min-height:100dvh">
 	<div style="display: none" id="vtbot-loading-indicator"></div>
@@ -15,8 +15,7 @@
 		<img
 			style="transform: scale(1.5)"
 			src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMzYgMzYiPjxwYXRoIGZpbGw9ImRhcmtnb2xkZW5yb2QiIGQ9Ik0zMCA0SDZhMiAyIDAgMCAwLTIgMnYyNGEyIDIgMCAwIDAgMiAyaDI0YTIgMiAwIDAgMCAyLTJWNmEyIDIgMCAwIDAtMi0yTTIwIDdoMnYzaC0yWm0tNiAwaDJ2M2gtMlptLTQgMjJIOHYtM2gyWm0wLTE5SDhWN2gyWm02IDE5aC0ydi0zaDJabTYgMGgtMnYtM2gyWm0zLjE2LTEwLjE2bC05Ljc3IDQuMzZhMSAxIDAgMCAxLTEuMzktLjkydi04LjcxYTEgMSAwIDAgMSAxLjQxLS45MUwyNS4xNiAxN2ExIDEgMCAwIDEgMCAxLjg0TTI4IDI5aC0ydi0zaDJabTAtMTloLTJWN2gyWiIgY2xhc3M9ImNsci1pLXNvbGlkIGNsci1pLXNvbGlkLXBhdGgtMSIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMzZ2MzZIMHoiLz48L3N2Zz4=
-"
-		/>
+">
 	</button>
 	<div id="vtbag-ui-panel">
 		<div id="vtbag-ui-messages" style="view-transition-name: vtbag-div-messages">
@@ -52,26 +51,24 @@
 			<h4>Select Mode:</h4>
 			<ul>
 				<li>
-					<input type="radio" name="vtbag-m-rg" id="vtbag-m-bypass" /><label for="vtbag-m-bypass"
+					<input type="radio" name="vtbag-m-rg" id="vtbag-m-bypass"><label for="vtbag-m-bypass"
 						><span style="display: inline-block; width: 7em; padding-left: 0.7em"> Bypass</span
 						><img
 							style="transform: scale(1.5) translateY(1px)"
 							src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxkZWZzPjxzeW1ib2wgaWQ9ImxpbmVNZENvZ09mZkxvb3AwIj48cGF0aCBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiIGQ9Ik0xNS4yNCA2LjM3QzE1LjY1IDYuNiAxNi4wNCA2Ljg4IDE2LjM4IDcuMkMxNi42IDcuNCAxNi44IDcuNjEgMTYuOTkgNy44M0MxNy40NiA4LjQgMTcuODUgOS4wNSAxOC4xMSA5Ljc3QzE4LjIgMTAuMDMgMTguMjggMTAuMzEgMTguMzUgMTAuNTlDMTguNDUgMTEuMDQgMTguNSAxMS41MiAxOC41IDEyIj48YW5pbWF0ZSBmaWxsPSJmcmVlemUiIGF0dHJpYnV0ZU5hbWU9ImQiIGJlZ2luPSIwLjhzIiBkdXI9IjAuMnMiIHZhbHVlcz0iTTE1LjI0IDYuMzdDMTUuNjUgNi42IDE2LjA0IDYuODggMTYuMzggNy4yQzE2LjYgNy40IDE2LjggNy42MSAxNi45OSA3LjgzQzE3LjQ2IDguNCAxNy44NSA5LjA1IDE4LjExIDkuNzdDMTguMiAxMC4wMyAxOC4yOCAxMC4zMSAxOC4zNSAxMC41OUMxOC40NSAxMS4wNCAxOC41IDExLjUyIDE4LjUgMTI7TTE1LjI0IDYuMzdDMTUuNjUgNi42IDE2LjA0IDYuODggMTYuMzggNy4yQzE2LjM4IDcuMiAxOSA2LjEyIDE5LjAxIDYuMTRDMTkuMDEgNi4xNCAyMC41NyA4Ljg0IDIwLjU3IDguODRDMjAuNTggOC44NyAxOC4zNSAxMC41OSAxOC4zNSAxMC41OUMxOC40NSAxMS4wNCAxOC41IDExLjUyIDE4LjUgMTIiLz48L3BhdGg+PC9zeW1ib2w+PG1hc2sgaWQ9ImxpbmVNZENvZ09mZkxvb3AxIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMiI+PGcgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBzdHJva2UtZGFzaGFycmF5PSI0MiIgc3Ryb2tlLWRhc2hvZmZzZXQ9IjQyIiBkPSJNMTIgNS41QzE1LjU5IDUuNSAxOC41IDguNDEgMTguNSAxMkMxOC41IDE1LjU5IDE1LjU5IDE4LjUgMTIgMTguNUM4LjQxIDE4LjUgNS41IDE1LjU5IDUuNSAxMkM1LjUgOC40MSA4LjQxIDUuNSAxMiA1LjV6IiBvcGFjaXR5PSIwIj48YW5pbWF0ZSBmaWxsPSJmcmVlemUiIGF0dHJpYnV0ZU5hbWU9InN0cm9rZS1kYXNob2Zmc2V0IiBiZWdpbj0iMC4ycyIgZHVyPSIwLjVzIiB2YWx1ZXM9IjQyOzAiLz48c2V0IGF0dHJpYnV0ZU5hbWU9Im9wYWNpdHkiIGJlZ2luPSIwLjJzIiB0bz0iMSIvPjxzZXQgYXR0cmlidXRlTmFtZT0ib3BhY2l0eSIgYmVnaW49IjAuN3MiIHRvPSIwIi8+PC9wYXRoPjxwYXRoIHN0cm9rZS1kYXNoYXJyYXk9IjIwIiBzdHJva2UtZGFzaG9mZnNldD0iMjAiIGQ9Ik0xMiA5QzEzLjY2IDkgMTUgMTAuMzQgMTUgMTJDMTUgMTMuNjYgMTMuNjYgMTUgMTIgMTVDMTAuMzQgMTUgOSAxMy42NiA5IDEyQzkgMTAuMzQgMTAuMzQgOSAxMiA5eiI+PGFuaW1hdGUgZmlsbD0iZnJlZXplIiBhdHRyaWJ1dGVOYW1lPSJzdHJva2UtZGFzaG9mZnNldCIgZHVyPSIwLjJzIiB2YWx1ZXM9IjIwOzAiLz48L3BhdGg+PC9nPjxnIG9wYWNpdHk9IjAiPjx1c2UgaHJlZj0iI2xpbmVNZENvZ09mZkxvb3AwIi8+PHVzZSBocmVmPSIjbGluZU1kQ29nT2ZmTG9vcDAiIHRyYW5zZm9ybT0icm90YXRlKDYwIDEyIDEyKSIvPjx1c2UgaHJlZj0iI2xpbmVNZENvZ09mZkxvb3AwIiB0cmFuc2Zvcm09InJvdGF0ZSgxMjAgMTIgMTIpIi8+PHVzZSBocmVmPSIjbGluZU1kQ29nT2ZmTG9vcDAiIHRyYW5zZm9ybT0icm90YXRlKDE4MCAxMiAxMikiLz48dXNlIGhyZWY9IiNsaW5lTWRDb2dPZmZMb29wMCIgdHJhbnNmb3JtPSJyb3RhdGUoMjQwIDEyIDEyKSIvPjx1c2UgaHJlZj0iI2xpbmVNZENvZ09mZkxvb3AwIiB0cmFuc2Zvcm09InJvdGF0ZSgzMDAgMTIgMTIpIi8+PHNldCBhdHRyaWJ1dGVOYW1lPSJvcGFjaXR5IiBiZWdpbj0iMC43cyIgdG89IjEiLz48YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGR1cj0iMzBzIiByZXBlYXRDb3VudD0iaW5kZWZpbml0ZSIgdHlwZT0icm90YXRlIiB2YWx1ZXM9IjAgMTIgMTI7MzYwIDEyIDEyIi8+PC9nPjwvZz48ZyBmaWxsPSJub25lIiBzdHJva2UtZGFzaGFycmF5PSIyNiIgc3Ryb2tlLWRhc2hvZmZzZXQ9IjI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgdHJhbnNmb3JtPSJyb3RhdGUoNDUgMTIgMTIpIj48cGF0aCBzdHJva2U9IiMwMDAiIGQ9Ik0wIDExaDI0Ii8+PHBhdGggc3Ryb2tlPSIjZmZmIiBkPSJNMCAxM2gyNCI+PGFuaW1hdGUgYXR0cmlidXRlTmFtZT0iZCIgZHVyPSI2cyIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiIHZhbHVlcz0iTS0xIDEzaDI0O00xIDEzaDI0O00tMSAxM2gyNCIvPjwvcGF0aD48YW5pbWF0ZSBmaWxsPSJmcmVlemUiIGF0dHJpYnV0ZU5hbWU9InN0cm9rZS1kYXNob2Zmc2V0IiBiZWdpbj0iMS4xcyIgZHVyPSIwLjJzIiB2YWx1ZXM9IjI2OzAiLz48L2c+PC9tYXNrPjwvZGVmcz48cmVjdCB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIGZpbGw9IiM4ODgiIG1hc2s9InVybCgjbGluZU1kQ29nT2ZmTG9vcDEpIi8+PC9zdmc+
-"
-					/></label>
+"></label>
 				</li>
 				<li>
-					<input type="radio" name="vtbag-m-rg" id="vtbag-m-slow-motion" /><label
+					<input type="radio" name="vtbag-m-rg" id="vtbag-m-slow-motion"><label
 						for="vtbag-m-slow-motion"
 						><span style="display: inline-block; width: 7em; padding-left: 0.7em"> Slow Motion</span
 						><img
 							style="transform: scale(1.5)"
 							src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgNTEyIDUxMiI+PHBhdGggZmlsbD0iIzg4OCIgZD0iTTQyNS41IDc0LjMxM2MtOC44OTUgMC0xNi4zNSA2LjIxLTE4LjI1IDE0LjUzYy04LjU5MyAzLjctMTUuMTk1IDEwLjYxNy0xOS4wMyAxOC44MTNjLTUuMjU0IDExLjIyMy02Ljg0OCAyNC42NDgtNy4xNTggMzkuMzEzYy0uNTI1IDI0LjkwNCAyLjk5IDUzLjczIDQuNTMyIDc5LjAzYy0xLjc4MiAxNC42NjYtNC44NjcgMjguNTE4LTkuMDYzIDQxLjQwNmMyLjg0IDE3LjkzNCAzLjM5IDM2LjQ4Ny45NCA1NS4xODhjLTUuMDE3IDM4LjI4Ni0zNi41MiA2MS4xMzQtNzAuMjIgNjcuOTM3Yy0zMS4wNDggNi4yNy02NS4zMTIuNDItODcuNjU2LTE5LjQwNWMtMzQuNzUyIDIyLjYxLTc2LjY0NiAyOC41NzgtMTEyLjQwNiAxNi41OTRjLTQyLjA0OCAxNi4yNDgtNzQuNTMgMzguODI2LTg3LjYyNiA2MS40MzZIMzQxLjI1YzEwMy4xMDUgMCAxMzcuOTUyLTEwNy44ODggMTExLjQwNi0yMjUuNTNjLS4wMTguMDIzLS4wNDQuMDM4LS4wNjIuMDZjLTUuNzEtNDAuODUzLjk4LTcwLjQ1IDE0LjkwNi04OC45MDVhMTguNiAxOC42IDAgMCAwIDYuMjUgMS4wOTVjMTAuMzMzIDAgMTguNjg4LTguMzg2IDE4LjY4OC0xOC43MmMwLTEwLjMzMi04LjM1NS0xOC43MTgtMTguNjg4LTE4LjcxOHMtMTguNzIgOC4zODYtMTguNzIgMTguNzJjMCAxLjAxNy4wOTUgMS45OTQuMjUgMi45NjhjLTIxLjI0MiAyNS4xNjUtMjguODU0IDY1LjcwOC0xOS4yNSAxMTcuOTA2Yy0xMC4yOTYgNC44MzYtMjEuMTUyIDIuODc4LTMxLjQzNi02Ljc1Yy0xLjI4Ni0yOC4wMDItNS4zNjQtNTkuMjctNC44NDQtODMuOTA1Yy4yODMtMTMuNDA1IDIuMDctMjQuNzIgNS4zNzUtMzEuNzhjMi4xLTQuNDkgNC4yMjItNy4zNDQgNy40Ny05LjAzMmMzLjM1NSAzLjE5NiA3LjkwNCA1LjE4NyAxMi45MDUgNS4xODdjMTAuMzMzIDAgMTguNjg4LTguMzg2IDE4LjY4OC0xOC43MmMwLTEwLjMzMi04LjM1NS0xOC43MTgtMTguNjg4LTE4LjcxOE0xOTMuMzQ0IDEwNi4yNWMtMi4xOTYtLjAxLTQuMzk4LjAzNi02LjU5NC4xMjVjLTM1LjE0MyAxLjQyLTcwLjE0MiAxNS40NzUtOTkuMDYzIDQxLjI1Yy01Ni43MyA1MC41NTgtNTkuNDMgMTQ0LjU5LTkuMTg3IDIwMS4xMjVjMzguNjQ4IDM4LjMgMTA2Ljg1NiAzNC43OSAxNTEuNS05Ljg0NGMzNy43MTItMzcuNjEgNDAuNjEtOTQuOTc3IDguNzgtMTI3Yy0yMi4xLTIyLjIzLTYwLjk5Ni0yNC44MTctODUuODQzIDEuMTg4Yy01LjUzNCA1Ljc5LTguOTggMTYuMDItOC45MDYgMjYuOTA2Yy4wNzYgMTAuODg3IDMuNjUzIDIyLjAwMyA5LjUzMiAyOS4wNjNjMy41OTMgNC4zMTMgMTAuNjI1IDguNDc2IDE4LjUgMTAuNDY4YzQuNjg3IDEuMTg3IDkuNTk2IDEuNTggMTQuMDk0IDEuMjVjMTMuMTk1LS4yMjggMjYuMTU2LTkuMDEgMjYuMTU2LTI2LjYyNGMwLTE1LjcyLTEwLjMzMi0yNC40MjgtMjEuOTM3LTI2LjI4YzcuNzczLS42OTcgMTQuNzgzLjYxOCAyMC41OTQgMy44MWM4LjUxIDQuNjc4IDEzLjY5IDEyLjk0NCAxNS40NjggMjEuNTMzYzMuNTIgMTYuOTk1LTUuNDc4IDM3LjEyNS0yNS40MDcgNDMuMzQzbC4wMzIuMDYyYy0uMTYyLjA2LS4zMzcuMDY3LS41LjEyNWMtLjA0Ni4wMTQtLjA3OC4wNS0uMTI1LjA2M2MtMTAuNTcyIDMuNzUzLTIyLjIwMiAzLjU2Ny0zMi45NjguODQzYy0xMC45NzctMi43NzYtMjEuMjM4LTguMTY3LTI4LjI4Mi0xNi42MjVjLTkuNDE4LTExLjMwNi0xMy43NDQtMjYuMjIyLTEzLjg0NC00MC44NzRzNC4wMS0yOS40NTMgMTQuMDYyLTM5Ljk3YzMyLjAzLTMzLjUyIDgzLjI2My0zMSAxMTIuNjI1LTEuNDY3YzM5Ljk4IDQwLjIyIDM1LjI4MiAxMDkuMzUyLTguODQzIDE1My4zNzR2LjAzYy0yLjYyNyAyLjYyNy01LjM4NCA1LjA1Ni04LjE1NiA3LjQzOGMxNy4wMTcgMTIuNyA0NC4wMjIgMTcuNjA1IDY4LjUzMiAxMi42NTdjMjguMjU2LTUuNzA2IDUxLjUyNC0yMi42NjcgNTUuMzc1LTUyLjA2NGM5LjQ5Mi03Mi40NTUtMzQuMjE1LTE0Ny4zNDItNzIuMjUtMTc5LjI1Yy0yNy42NjMtMjMuMjEtNjAuNDAyLTM0LjUwNi05My4zNDMtMzQuNjU2eiIvPjwvc3ZnPg==
-"
-					/></label>
+"></label>
 				</li>
 				<li>
-					<input type="radio" name="vtbag-m-rg" id="vtbag-m-full-control" /><label
+					<input type="radio" name="vtbag-m-rg" id="vtbag-m-full-control"><label
 						for="vtbag-m-full-control"
 						><span style="display: inline-block; width: 6.7em; padding-left: 0.7em">
 							Full Control</span
@@ -80,15 +77,14 @@
 							class="horizontal"
 							style="transform: scale(1.5)"
 							src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGZpbGw9IiM4ODgiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTEwLjUgMWEuNS41IDAgMCAxIC41LjV2NGEuNS41IDAgMCAxLTEgMFY0SDEuNWEuNS41IDAgMCAxIDAtMUgxMFYxLjVhLjUuNSAwIDAgMSAuNS0uNU0xMiAzLjVhLjUuNSAwIDAgMSAuNS0uNWgyYS41LjUgMCAwIDEgMCAxaC0yYS41LjUgMCAwIDEtLjUtLjVtLTYuNSAyQS41LjUgMCAwIDEgNiA2djEuNWg4LjVhLjUuNSAwIDAgMSAwIDFINlYxMGEuNS41IDAgMCAxLTEgMFY2YS41LjUgMCAwIDEgLjUtLjVNMSA4YS41LjUgMCAwIDEgLjUtLjVoMmEuNS41IDAgMCAxIDAgMWgtMkEuNS41IDAgMCAxIDEgOG05LjUgMmEuNS41IDAgMCAxIC41LjV2NGEuNS41IDAgMCAxLTEgMFYxM0gxLjVhLjUuNSAwIDAgMSAwLTFIMTB2LTEuNWEuNS41IDAgMCAxIC41LS41bTEuNSAyLjVhLjUuNSAwIDAgMSAuNS0uNWgyYS41LjUgMCAwIDEgMCAxaC0yYS41LjUgMCAwIDEtLjUtLjUiLz48L3N2Zz4=
-" /><img
+"><img
 							class="vertical"
 							style="transform: scale(1.5)"
 							src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMTYgMTYiPjxwYXRoIGZpbGw9IiM4ODgiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTAgMTAuNWEuNS41IDAgMCAwIC41LjVoNGEuNS41IDAgMCAwIDAtMUgzVjEuNWEuNS41IDAgMCAwLTEgMFYxMEguNWEuNS41IDAgMCAwLS41LjVNMi41IDEyYS41LjUgMCAwIDAtLjUuNXYyYS41LjUgMCAwIDAgMSAwdi0yYS41LjUgMCAwIDAtLjUtLjVtMy02LjVBLjUuNSAwIDAgMCA2IDZoMS41djguNWEuNS41IDAgMCAwIDEgMFY2SDEwYS41LjUgMCAwIDAgMC0xSDZhLjUuNSAwIDAgMC0uNS41TTggMWEuNS41IDAgMCAwLS41LjV2MmEuNS41IDAgMCAwIDEgMHYtMkEuNS41IDAgMCAwIDggMW0zIDkuNWEuNS41IDAgMCAwIC41LjVoNGEuNS41IDAgMCAwIDAtMUgxNFYxLjVhLjUuNSAwIDAgMC0xIDBWMTBoLTEuNWEuNS41IDAgMCAwLS41LjVtMi41IDEuNWEuNS41IDAgMCAwLS41LjV2MmEuNS41IDAgMCAwIDEgMHYtMmEuNS41IDAgMCAwLS41LS41Ii8+PC9zdmc+
-"
-					/></label>
+"></label>
 				</li>
 				<li>
-					<input disabled type="radio" name="vtbag-m-rg" id="vtbag-m-compare" /><label
+					<input disabled type="radio" name="vtbag-m-rg" id="vtbag-m-compare"><label
 						for="vtbag-m-compare"
 						><span
 							title="Coming soon!"
@@ -98,13 +94,12 @@
 						><img
 							style="transform: scale(1.5)"
 							src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxZW0iIGhlaWdodD0iMWVtIiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzg4OCIgc3Ryb2tlLXdpZHRoPSIxLjUiIGQ9Ik0zIDcuNFYzLjZhLjYuNiAwIDAgMSAuNi0uNmg1LjhhLjYuNiAwIDAgMSAuNi42djMuOGEuNi42IDAgMCAxLS42LjZIMy42YS42LjYgMCAwIDEtLjYtLjZabTExIDEzdi0zLjhhLjYuNiAwIDAgMSAuNi0uNmg1LjhhLjYuNiAwIDAgMSAuNi42djMuOGEuNi42IDAgMCAxLS42LjZoLTUuOGEuNi42IDAgMCAxLS42LS42Wm0wLThWMy42YS42LjYgMCAwIDEgLjYtLjZoNS44YS42LjYgMCAwIDEgLjYuNnY4LjhhLjYuNiAwIDAgMS0uNi42aC01LjhhLjYuNiAwIDAgMS0uNi0uNlptLTExIDh2LTguOGEuNi42IDAgMCAxIC42LS42aDUuOGEuNi42IDAgMCAxIC42LjZ2OC44YS42LjYgMCAwIDEtLjYuNkgzLjZhLjYuNiAwIDAgMS0uNi0uNloiLz48L3N2Zz4=
-"
-					/></label>
+"></label>
 				</li>
 			</ul>
 			<div>
-				<hr />
-				<input style="padding-left: 4ex" id="vtbag-tutorial-mode" type="checkbox" />
+				<hr>
+				<input style="padding-left: 4ex" id="vtbag-tutorial-mode" type="checkbox">
 				<label
 					for="vtbag-tutorial-mode"
 					title="Display usage instructions prominently in the enlarged inner sub-panel."
@@ -115,23 +110,22 @@
 		<div id="vtbag-ui-slow-motion" style="view-transition-name: vtbag-div-slo-mo">
 			<h4>Slow Motion:<span id="vtbag-ui-slo-mo-progress"></span></h4>
 			<label for="vtbag-ui-slo-mo">Time stretch Factor: <span id="vtbag-ui-tsf">10.0</span></label
-			><br />
+			><br>
 			<input
 				id="vtbag-ui-slo-mo"
 				data-vtbag-slow-motion="1.0"
 				type="range"
 				min="264"
 				max="852"
-				value="692"
-			/>
+				value="692">
 			<div style="view-transition-name: vtbag-checkbox-styled">
-				<input id="vtbag-ui-framed" type="checkbox" />
+				<input id="vtbag-ui-framed" type="checkbox">
 				<label
 					for="vtbag-ui-framed"
 					title="Highlight the outline of elements with view&#10;transition names or their pseudo elements&#10;during view transitions."
 					>Frame elements</label
-				><br />
-				<input id="vtbag-ui-named-only" type="checkbox" />
+				><br>
+				<input id="vtbag-ui-named-only" type="checkbox">
 				<label
 					for="vtbag-ui-named-only"
 					title="When selected, only elements with a view transition name &#10;can be clicked for identification or to start a view transition.&#10;This is helpful if named elements are hidden beneath others."
@@ -144,14 +138,14 @@
 			<p id="vtbag-ui-control-hint">Start a transition to activate</p>
 			<p id="vtbag-ui-control-hint2">Select animations, then &hellip;</p>
 			<label for="vtbag-ui-controller2">Unselected: </label
-			><span id="vtbag-ui-progress2">0</span> ms<br />
-			<input type="range" id="vtbag-ui-controller2" min="0" max="100" value="0" />
+			><span id="vtbag-ui-progress2">0</span> ms<br>
+			<input type="range" id="vtbag-ui-controller2" min="0" max="100" value="0">
 			<div style="display: flex; justify-content: space-between; transform: translateY(-10px)">
 				<span>0</span><span id="vtbag-ui-controller-max">100%</span>
 			</div>
 			<label for="vtbag-ui-controller">Selected:</label>
-			<span id="vtbag-ui-progress">0</span> ms<br />
-			<input type="range" id="vtbag-ui-controller" min="0" max="100" value="0" />
+			<span id="vtbag-ui-progress">0</span> ms<br>
+			<input type="range" id="vtbag-ui-controller" min="0" max="100" value="0">
 			<button id="vtbag-ui-control-exit">Exit</button>
 		</div>
 
@@ -164,7 +158,7 @@
 			<div style="display: none; justify-content: space-between">
 				<span id="vtbag-ui-names-old" class="button">old</span
 				><span
-					><input id="vtbag-ui-visible-only" type="checkbox" checked />
+					><input id="vtbag-ui-visible-only" type="checkbox" checked>
 					<label for="vtbag-ui-visible-only">in viewport</label></span
 				><span id="vtbag-ui-names-new" class="button">new</span>
 			</div>
@@ -177,50 +171,49 @@
 			<h4>Filter Names:</h4>
 			<ul>
 				<li>
-					<input type="radio" name="vtbag-c-rg" id="vtbag-c-all" checked /><label for="vtbag-c-all"
+					<input type="radio" name="vtbag-c-rg" id="vtbag-c-all" checked><label for="vtbag-c-all"
 						><span style="color: var(--vtbag-background-accent)">█</span
 						><span style="color: var(--vtbag-background-accent)">█</span> Show all names</label
 					>
 				</li>
 				<li>
-					<input type="radio" name="vtbag-c-rg" id="vtbag-c-old" /><label for="vtbag-c-old"
+					<input type="radio" name="vtbag-c-rg" id="vtbag-c-old"><label for="vtbag-c-old"
 						><span style="color: darkslateblue">█</span
 						><span style="color: var(--vtbag-background-accent)">█</span> On old page</label
 					>
 				</li>
 				<li>
-					<input type="radio" name="vtbag-c-rg" id="vtbag-c-new" /><label for="vtbag-c-new"
+					<input type="radio" name="vtbag-c-rg" id="vtbag-c-new"><label for="vtbag-c-new"
 						><span style="color: var(--vtbag-background-accent)">█</span
 						><span style="color: darkolivegreen">█</span> On new page</label
 					>
 				</li>
 				<li>
-					<input type="radio" name="vtbag-c-rg" id="vtbag-c-old-only" /><label
+					<input type="radio" name="vtbag-c-rg" id="vtbag-c-old-only"><label
 						for="vtbag-c-old-only"
 						><span style="color: darkslateblue">█</span
 						><span style="color: transparent">█</span> Only on old page</label
 					>
 				</li>
 				<li>
-					<input type="radio" name="vtbag-c-rg" id="vtbag-c-new-only" /><label
+					<input type="radio" name="vtbag-c-rg" id="vtbag-c-new-only"><label
 						for="vtbag-c-new-only"
 						><span style="color: transparent">█</span
 						><span style="color: darkolivegreen">█</span> Only on new page</label
 					>
 				</li>
 				<li>
-					<input type="radio" name="vtbag-c-rg" id="vtbag-c-both" /><label for="vtbag-c-both"
+					<input type="radio" name="vtbag-c-rg" id="vtbag-c-both"><label for="vtbag-c-both"
 						><span style="color: darkslateblue">█</span
 						><span style="color: darkolivegreen">█</span> On both pages</label
 					>
 				</li>
 			</ul>
 			<form style="view-transition-name: narrow">
-				<label for="narrow">Narrow to:</label><br /><input
+				<label for="narrow">Narrow to:</label><br><input
 					id="narrow"
 					type="text"
-					placeholder="Fragment"
-				/>
+					placeholder="Fragment">
 			</form>
 			<button title="Reset filters">Reset</button>
 		</div>
@@ -282,8 +275,7 @@
 				id="vtbag-ui-opacity"
 				style="height: 1ex; width: calc(100% - 5ex); padding: 0; margin: 0"
 				value="97"
-				min="20"
-			/>
+				min="20">
 		</div>
 		<div
 			id="vtbag-ui-resize"
