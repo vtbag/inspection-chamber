@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.22 - 2025-0709
+
+### Patch Changes
+
+- 42936d9: Fixes an issue with image visibility in Bypass mode.
+
 ## 1.0.21 - 2025-02-05
 
 ### Patch Changes
