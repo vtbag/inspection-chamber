@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resizable Panel Grid</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <script>
+    if (window.top === window.self) {
+      const body = document.body;
+      body.dataset.vtbagChamberOrientation = localStorage.getItem('vtbagChamberOrientation') || 'horizontal';
+      body.dataset.vtbagChamberSide = localStorage.getItem('vtbagChamberSide') || 'right';
+      document.body.innerHTML = `<iframe src="' + location.href + '"></iframe><draggable-divider></draggable-divider><inspection-chamber></inspection-chamber>`;
+    } else {
+
+    }
+  </script>
+
+  <div class="controls">
+    <button id="addPanel">Add Panel</button>
+    <button id="toggleOrientation">Toggle Orientation</button>
+  </div>
+  <panel-grid>
+
+  </panel-grid>
+  <script type="module">
+    import "./src/components/panel-grid.ts";
+    import "./src/components/resizable-panel.ts";
+    import "./src/components/panel-resizer.ts";
+  </script>
+</body>
+
+</html>
