@@ -1,0 +1,32 @@
+---
+export interface Props {
+  title: string;
+}
+
+const {title} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0" />
+    <title>{title}</title>
+    <script is:inline>
+      const originalStartViewTransition = Element.prototype.startViewTransition;
+      Element.prototype.startViewTransition = (param) => {
+        console.log("startViewTransition", param);
+        return originalStartViewTransition.call(Element.prototype, param);
+      }
+    </script>
+    <style>
+      @view-transition {
+        navigation: auto;
+      }
+    </style>
+    <slot name="head"></slot>
+  </head>
+  <body>
+    <slot></slot>
+  </body>
+</html>

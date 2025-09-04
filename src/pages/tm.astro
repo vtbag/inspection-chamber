@@ -1,0 +1,141 @@
+---
+import Layout from '../components/Layout.astro';
+---
+
+<Layout title="Animations">
+	<main>
+		<div>
+			<p>::</p>
+			<div class="group">
+				<p>(root)</p>
+				<div class="pair">
+					<div><p>pair</p></div>
+					<div>
+						<div class="old"><p>old</p></div>
+						<div class="new"><p>new</p></div>
+					</div>
+				</div>
+			</div>
+			<div class="group">
+				<p>(ul)</p>
+				<div class="children">
+					<div><p>children</p></div>
+					<div>
+						<div class="group">
+							<div><p>(l2)</p></div>
+							<div class="pair">
+								<div><p>pair</p></div>
+								<div>
+									<div class="old"><p>old</p></div>
+									<div class="new"><p>new</p></div>
+								</div>
+							</div>
+						</div>
+						<div class="group">
+							<div><p>(l3)</p></div>
+							<div class="pair">
+								<div><p>pair</p></div>
+								<div>
+									<div class="old"><p>old</p></div>
+									<div class="new"><p>new</p></div>
+								</div>
+							</div>
+						</div>
+						<div class="group">
+							<div><p>(l4)</p></div>
+							<div class="pair">
+								<div><p>pair</p></div>
+								<div>
+									<div class="old"><p>old</p></div>
+									<div class="new"><p>new</p></div>
+								</div>
+							</div>
+						</div>
+						<div class="group">
+							<div><p>(l5)</p></div>
+							<div class="pair">
+								<div><p>pair</p></div>
+								<div>
+									<div class="old"><p>old</p></div>
+									<div class="new"><p>new</p></div>
+								</div>
+							</div>
+						</div>
+						<div class="group">
+							<div><p>(l6)</p></div>
+							<div class="pair">
+								<div><p>pair</p></div>
+								<div>
+									<div class="old"><p>old</p></div>
+									<div class="new"><p>new</p></div>
+								</div>
+							</div>
+						</div>
+						<div class="group">
+							<div><p>(l7)</p></div>
+							<div class="pair">
+								<div><p>pair</p></div>
+								<div>
+									<div class="old"><p>old</p></div>
+									<div class="new"><p>new</p></div>
+								</div>
+							</div>
+						</div>
+						<div class="group">
+							<div><p>(l1)</p></div>
+							<div class="pair">
+								<div><p>pair</p></div>
+								<div>
+									<div class="old"><p>old</p></div>
+									<div class="new"><p>new</p></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="pair">
+					<div><p>pair</p></div>
+					<div>
+						<div class="old"><p>old</p></div>
+						<div class="new"><p>new</p></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+</Layout>
+<style>
+	div {
+		border: 1px dotted grey;
+		background-color: #8882;
+		padding: 2px;
+		margin: 2px;
+	}
+
+
+
+div.children  div {
+  display: grid;
+  grid-template-columns: auto auto auto auto;
+  div {
+    grid-template-columns: auto;
+  }
+}
+
+
+  main div.pair div:not(:first-child) {
+    display: grid;
+    grid-template-columns: auto auto;
+    div {
+      grid-template-columns: auto;
+    }
+}
+
+p {
+  margin: 0;
+  padding: 0;
+  font-family: monospace;
+  font-size: 12px;  
+  text-align: left; 
+}
+</style>

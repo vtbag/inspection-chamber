@@ -96,9 +96,8 @@ function pageSwap() {
 	addFrames(false, false);
 }
 
-function prePageReveal(e: Event) {
-	inspectionChamber.viewTransition =
-		('viewTransition' in e && (e.viewTransition as ViewTransition)) || undefined;
+function prePageReveal(e: PageRevealEvent) {
+	inspectionChamber.viewTransition = e.viewTransition || undefined;
 	pageReveal();
 }
 function pageReveal() {

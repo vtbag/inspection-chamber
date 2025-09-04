@@ -11,8 +11,9 @@
   "scripts": {
     "dev": "bin/bundle dev",
     "build": "npm run format; bin/bundle",
+    "start": "astro dev",
+    "test": "npx playwright test",
     "format": "prettier --write src | grep -v 'unchanged)$'",
-    "test": "bin/test",
     "changeset": "changeset",
     "release": "changeset publish"
   },
@@ -40,13 +41,14 @@
     "url": "https://github.com/sponsors/martrapp"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.5",
-    "@eslint/js": "^9.32.0",
+    "@changesets/cli": "^2.29.6",
+    "@eslint/js": "^9.34.0",
     "@types/dom-view-transitions": "^1.0.6",
-    "astro": "^5.12.3",
+    "astro": "^5.13.5",
+    "css-tree": "^3.1.0",
     "eruda": "^3.4.3",
-    "esbuild": "^0.25.8",
+    "esbuild": "^0.25.9",
     "prettier": "^3.6.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.2"
   }
 }

@@ -1,0 +1,41 @@
+<html>
+  <head>
+<style is:global>
+  #container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1em;
+    resize: both;
+    overflow: hidden;
+    border: 1px dotted blue;
+    justify-content: stretch;
+    align-items: stretch;
+  }
+  .card {
+    min-height: 100px;
+    min-width: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px;
+    border: 1px dashed green;
+    resize: both;
+    overflow: hidden;
+  }
+</style>
+  </head>
+  <body>
+    <div id="container">
+      <div class="card">A</div>
+      <div class="card">B</div>
+      <div class="card">C</div>
+      <div class="card">D</div>
+      <div class="card">E</div>
+      <div class="card">F</div>
+      <div class="card">G</div>
+      <div class="card">H</div>
+      <div class="card">I</div>
+      <div class="card">J</div>
+    </div>
+  </body>
+</html>
