@@ -1,5 +1,5 @@
 import { initDragging } from '../dragging';
-import { InspectionChamber } from '../types';
+import type { InspectionChamber } from '../types';
 import { mayViewTransition } from './transition';
 
 const INNER_POSITION = 2;

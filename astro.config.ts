@@ -18,7 +18,7 @@ export default defineConfig({
     build: {
       minify: false,
       cssMinify: false,
-
+      assetsInlineLimit: 40000000000,
     },
     server: {
       fs: {

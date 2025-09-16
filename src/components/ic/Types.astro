@@ -1,0 +1,136 @@
+---
+
+---
+
+<template id="vtbag-ic-types">
+	<div class="types-section">
+		<h3>Types</h3>
+		<div class="types-list">
+			<span class="type-item">
+				<span>name</span>
+				<button class="btn-small btn-disable">Disable</button>
+				<button class="btn-small btn-delete">×</button>
+			</span>
+		</div>
+		<div class="add-type">
+			<input type="text" placeholder="Add new type..." class="type-input" />
+			<button class="btn-small btn-add">Add</button>
+		</div>
+	</div>
+
+	<style>
+		.types-section h3 {
+			margin: 0 0 0.75rem 0;
+			font-size: 1rem;
+			font-weight: 600;
+			color: var(--text-primary);
+		}
+
+		.types-list {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+			margin-bottom: 1rem;
+		}
+
+		.type-item {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			padding: 0.5rem 0.75rem;
+			background-color: var(--bg-primary);
+			border: 1px solid var(--border-light);
+			border-radius: 6px;
+		}
+
+		.type-item span {
+			flex: 1;
+			font-size: 0.875rem;
+			color: var(--text-primary);
+			font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+		}
+
+		.add-type {
+			display: flex;
+			gap: 0.5rem;
+		}
+
+		.type-input {
+			flex: 1;
+			padding: 0.5rem 0.75rem;
+			border: 1px solid var(--border-color);
+			border-radius: 6px;
+			background-color: var(--bg-primary);
+			color: var(--text-primary);
+			font-size: 0.875rem;
+		}
+
+		.type-input::placeholder {
+			color: var(--text-muted);
+		}
+	</style>
+</template>
+<script>
+	declare namespace JSX {
+		interface IntrinsicElements {
+			'vtbag-ic-types': {
+				//name: string;
+				// 'data-id'?: string;
+				// Add other custom attributes here
+				// You can also use [key: string]: any; for arbitrary attributes
+			};
+		}
+	}
+
+	declare global {
+		interface VtbagIcTypesElement extends HTMLElement {
+			types: Set<string>;
+		}
+		interface HTMLElementTagNameMap {
+			'vtbag-ic-types': VtbagIcTypesElement;
+		}
+	}
+
+	class ICTypes extends HTMLElement {
+		#types: Set<string> = new Set<string>();
+		#item: HTMLElement;
+
+		constructor() {
+			super();
+			const root = this.attachShadow({ mode: 'open' });
+			root.appendChild(
+				(document.getElementById('vtbag-ic-types') as HTMLTemplateElement).content.cloneNode(true)
+			);
+			this.#item = root.querySelector('.type-item') as HTMLElement;
+		}
+
+		set types(types) {
+			this.#types = types;
+			this.render();
+		}
+		get types() {
+			return this.#types;
+		}
+
+		connectedCallback() {
+			console.log('ICTypes connected to the DOM');
+			this.render();
+		}
+		attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+			console.log(`Attribute ${name} has changed from ${oldValue} to ${newValue}.`);
+		}
+		render() {
+			if (this.isConnected) {
+				const root = this.shadowRoot!;
+				const list = root.querySelector('.types-list')!;
+				root.querySelectorAll<HTMLElement>('.type-item').forEach((i) => i.remove());
+				this.#types.forEach((t) => {
+					list
+						.appendChild<HTMLElement>(this.#item.cloneNode(true) as HTMLElement)
+						.querySelector('span')!.innerText = t;
+				});
+			}
+		}
+	}
+	if (!customElements.get('vtbag-ic-types')) customElements.define('vtbag-ic-types', ICTypes);
+</script>

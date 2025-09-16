@@ -1,9 +1,10 @@
 {
-  "extends": "astro/tsconfigs/strictest",
-  "exclude": ["node_modules", "test", "components/template"],
+  "extends": "astro/tsconfigs/strict",
+  "exclude": ["node_modules", "test", "components/template", "e2e"],
   "compilerOptions": {
     "allowJs": true,
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
     "jsx": "preserve"
-  },
-  "include": ["node_modules/@astrojs/language-server/types/astro-jsx.d.ts"]
+  }
 }

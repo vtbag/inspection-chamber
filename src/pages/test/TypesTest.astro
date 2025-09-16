@@ -1,0 +1,55 @@
+---
+import Types from '@/components/ic/Types.astro';
+import "@/styles/ic.css";
+import Layout from './_TestLayout.astro';
+---
+
+<Layout title='Types Test'>
+		<Types slot="head"/>
+
+	<div id="app">
+		<header class="header">
+			<h1>Control Board</h1>
+		</header>
+
+		<main class="control-board">
+			<!-- Root: document -->
+			<div class="root-card" data-expanded="false">
+				<div class="root-header">
+					<h2>document</h2>
+					<button class="expand-btn" aria-label="Expand card">⊞</button>
+				</div>
+
+				<div class="root-controls">
+					<div class="slider-section">
+						<label>Timeline: <span class="slider-value">250ms</span></label>
+						<input type="range" class="timeline-slider" min="0" max="500" value="250" />
+						<div class="slider-labels">
+							<span>0</span>
+							<span>500ms</span>
+						</div>
+					</div>
+
+					<div class="toggle-section">
+						<label class="toggle">
+							<input type="checkbox" checked />
+							<span class="toggle-slider"></span>
+							<span class="toggle-label">Use parent timeline</span>
+						</label>
+						<label class="toggle">
+							<input type="checkbox" checked />
+							<span class="toggle-slider"></span>
+							<span class="toggle-label">Active</span>
+						</label>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+	<script>
+		const types = document.createElement('vtbag-ic-types') as VtbagIcTypesElement;
+		types.types = new Set(['Hallo', 'Welt']);
+		document.querySelector(".root-controls")!.appendChild(types);
+	</script>
+
+</Layout>

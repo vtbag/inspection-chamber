@@ -1,0 +1,26 @@
+:root {
+	font-family: sans-serif;
+	line-height: 1.6;
+	font-weight: 400;
+	color-scheme: dark light;
+
+	--bg-primary: light-dark(#fafafa, #0a0a0a);
+	--bg-secondary: light-dark(#ffffff, #171717);
+	--bg-tertiary: light-dark(#f4f4f5, #262626);
+	--text-primary: light-dark(#18181b, #fafafa);
+	--text-secondary: light-dark(#71717a, #a1a1aa);
+	--border: light-dark(#e4e4e7, #404040);
+	--border-hover: light-dark(#d4d4d8, #525252);
+	--shadow: 2px 4px 2px -1px #46c4;
+	--shadow-lg: 2px 2px 14px #46c4;
+	--accent: light-dark(#3b82f6, #60a5fa);
+	--accent-hover: light-dark(#2563eb, #3b82f6);
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+* {
+	box-sizing: border-box;
+}

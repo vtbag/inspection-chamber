@@ -1,0 +1,471 @@
+---
+
+---
+
+<div class="window" id="demo-window">
+	<div class="window-header" id="window-header">
+		<div class="window-title">
+			<slot name="title" />
+		</div>
+		<div class="window-controls">
+			<button class="control-btn minimize" id="minimize-btn" title="Minimize">&lt;</button>
+		</div>
+	</div>
+	<div class="window-content">
+		<slot />
+	</div>
+	<div class="resize-handle edge n"></div>
+	<div class="resize-handle edge s"></div>
+	<div class="resize-handle edge e"></div>
+	<div class="resize-handle edge w"></div>
+	<div class="resize-handle corner nw"></div>
+	<div class="resize-handle corner ne"></div>
+	<div class="resize-handle corner sw"></div>
+	<div class="resize-handle corner se"></div>
+</div>
+
+<style is:global>
+	* {
+		box-sizing: border-box;
+	}
+	:root {
+		font-family: monospace;
+		line-height: 1.6;
+		font-weight: 400;
+		color-scheme: dark light;
+
+		--bg-primary: light-dark(#fafafa, #0a0a0a);
+		--bg-secondary: light-dark(#ffffff, #171717);
+		--bg-tertiary: light-dark(#f4f4f5, #262626);
+		--text-primary: light-dark(#18181b, #fafafa);
+		--text-secondary: light-dark(#71717a, #a1a1aa);
+		--border: light-dark(#e4e4e7, #404040);
+		--border-hover: light-dark(darkgreen, #525252);
+		--shadow: 2px 4px 2px -1px #46c4;
+		--shadow-lg: 2px 2px 14px #46c4;
+		--accent: light-dark(#3b82f6, #60a5fa);
+		--accent-hover: light-dark(#2563eb, #3b82f6);
+		--vt-root: teal;
+		--vt-group: darkgoldenrod;
+		--vt-image-pair: darkslategray;
+		--vt-old: darkslateblue;
+		--vt-new: darkolivegreen;
+		--vt-group-children: maroon;
+		font-synthesis: none;
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	.window {
+		pointer-events: all;
+		position: fixed;
+		width: var(--window-width, 400px);
+		height: var(--window-height, 300px);
+		left: var(--window-left, 100px);
+		top: var(--window-top, 100px);
+		background: var(--bg-secondary);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		box-shadow: var(--shadow-lg);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		backdrop-filter: blur(8px);
+		transition-behavior: allow-discrete;
+		transition-property: width, height, display;
+		transition-duration: 100ms;
+	}
+
+	.window.minimized {
+		height: 50px;
+		min-height: 50px;
+		width: 104px;
+		min-width: 104px;
+	}
+
+	.window.window-changing {
+		transition: none;
+	}
+
+	.window.window-hidden {
+		display: none;
+	}
+
+	.window.window-visible {
+		display: flex;
+	}
+	.window-header {
+		background: var(--bg-tertiary);
+		border-bottom: 1px solid var(--border);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		cursor: move;
+		user-select: none;
+		padding: 0.2em 0.5em;
+
+		background: linear-gradient(
+			-66deg,
+			#888 0%,
+			/* dark edge */ #b4b4b4 10%,
+			/* light streak */ #f0f0f0 30%,
+			/* brightest highlight */ #c9c9c9 50%,
+			/* midtone */ #e4e4e4 70%,
+			/* another highlight */ #b4b4b4 85%,
+			/* return to light */ #888 100% /* dark edge */
+		);
+		border-radius: 12px;
+		box-shadow:
+			0 2px 16px rgba(30, 30, 30, 0.15),
+			0 1px 0 #fff inset;
+		border: 1.5px solid #adadad;
+	}
+
+	.window-title {
+		font-weight: 600;
+		font-size: 0.875rem;
+		color: var(--text-primary);
+	}
+
+	.window-controls {
+		display: flex;
+		gap: 8px;
+	}
+
+	.control-btn {
+		color: light-dark(#a86, #864);
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		border: none;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 12px;
+		font-weight: bold;
+	}
+
+	.control-btn.minimize {
+		background-color: light-dark(#ddd, #444);
+		&:hover {
+			background-color: #888;
+		}
+	}
+
+	.window-content {
+		flex: 1 1 auto;
+		padding: 24px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.25rem;
+		font-weight: 500;
+		color: var(--text-primary);
+		background: var(--bg-secondary);
+		overflow: scroll;
+	}
+
+	.window.minimized .window-content {
+		height: 0;
+		font-size: 0;
+	}
+	:is(.window.minimized, .window.window-changing) .resize-handle {
+		display: none;
+	}
+
+	.resize-handle {
+		position: absolute;
+		background: transparent;
+	}
+
+	.resize-handle.corner {
+		width: 12px;
+		height: 12px;
+	}
+
+	.resize-handle.edge {
+		background: transparent;
+	}
+
+	.resize-handle.n {
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 8px;
+		cursor: n-resize;
+	}
+
+	.resize-handle.s {
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 8px;
+		cursor: s-resize;
+	}
+
+	.resize-handle.e {
+		top: 0;
+		right: 0;
+		bottom: 0;
+		width: 8px;
+		cursor: e-resize;
+	}
+
+	.resize-handle.w {
+		top: 0;
+		left: 0;
+		bottom: 0;
+		width: 8px;
+		cursor: w-resize;
+	}
+
+	.resize-handle.nw {
+		top: 0;
+		left: 0;
+		cursor: nw-resize;
+	}
+
+	.resize-handle.ne {
+		top: 0;
+		right: 0;
+		cursor: ne-resize;
+	}
+
+	.resize-handle.sw {
+		bottom: 0;
+		left: 0;
+		cursor: sw-resize;
+	}
+
+	.resize-handle.se {
+		bottom: 0;
+		right: 0;
+		cursor: se-resize;
+	}
+
+	.resize-handle:hover {
+		background: var(--border-hover);
+	}
+</style>
+
+<script>
+	interface DragState {
+		isDragging: boolean;
+		startX: number;
+		startY: number;
+		startLeft: number;
+		startTop: number;
+	}
+
+	interface ResizeState {
+		isResizing: boolean;
+		startX: number;
+		startY: number;
+		startWidth: number;
+		startHeight: number;
+		startLeft: number;
+		startTop: number;
+		direction: string;
+		longTap?: NodeJS.Timeout;
+	}
+
+	function setupWindow() {
+		const theWindow = document.getElementById('demo-window') as HTMLElement;
+		const header = document.getElementById('window-header') as HTMLElement;
+		const minimizeBtn = document.getElementById('minimize-btn') as HTMLElement;
+
+		if (!theWindow || !header || !minimizeBtn) return;
+
+		let dragState: DragState = {
+			isDragging: false,
+			startX: 0,
+			startY: 0,
+			startLeft: 0,
+			startTop: 0,
+		};
+
+		let resizeState: ResizeState = {
+			isResizing: false,
+			startX: 0,
+			startY: 0,
+			startWidth: 0,
+			startHeight: 0,
+			startLeft: 0,
+			startTop: 0,
+			direction: '',
+		};
+
+		let isMinimized = false;
+		let previousHeight = '';
+
+		// Dragging functionality
+		header.addEventListener('pointerdown', (e: PointerEvent) => {
+			if ((e.target as HTMLElement).closest('.window-controls')) return;
+
+			dragState.isDragging = true;
+			dragState.startX = e.clientX;
+			dragState.startY = e.clientY;
+
+			const rect = theWindow.getBoundingClientRect();
+			dragState.startLeft = rect.left;
+			dragState.startTop = rect.top;
+
+			document.addEventListener('pointermove', handleDrag);
+			document.addEventListener('pointerup', stopDrag);
+			header.setPointerCapture(e.pointerId);
+			e.preventDefault();
+		});
+
+		function handleDrag(e: PointerEvent) {
+			if (!dragState.isDragging) return;
+
+			const deltaX = e.clientX - dragState.startX;
+			const deltaY = e.clientY - dragState.startY;
+
+			const newLeft = dragState.startLeft + deltaX;
+			const newTop = dragState.startTop + deltaY;
+
+			const finalLeft = Math.max(
+				dragState.startLeft - dragState.startX,
+				Math.min(newLeft, innerWidth - 20)
+			);
+			const finalTop = Math.max(
+				dragState.startTop - dragState.startY,
+				Math.min(newTop, innerHeight - 20)
+			);
+
+			theWindow.style.setProperty('--window-left', finalLeft + 'px');
+			theWindow.style.setProperty('--window-top', finalTop + 'px');
+			theWindow.classList.add('window-changing');
+		}
+
+		function stopDrag() {
+			dragState.isDragging = false;
+			theWindow.classList.remove('window-changing');
+			document.removeEventListener('pointermove', handleDrag);
+			document.removeEventListener('pointerup', stopDrag);
+		}
+
+		const resizeHandles = theWindow.querySelectorAll<HTMLDivElement>('.resize-handle');
+
+		resizeHandles.forEach((handle) => {
+			handle.addEventListener('pointerdown', (e: PointerEvent) => {
+				if (isMinimized) return;
+
+				resizeState.isResizing = true;
+				resizeState.startX = e.clientX;
+				resizeState.startY = e.clientY;
+				resizeState.startWidth = theWindow.offsetWidth;
+				resizeState.startHeight = theWindow.offsetHeight;
+				resizeState.startLeft = theWindow.offsetLeft;
+				resizeState.startTop = theWindow.offsetTop;
+				resizeState.direction = (handle as HTMLElement).className.split(' ').pop() || '';
+
+				document.addEventListener('pointermove', handleResize);
+				document.addEventListener('pointerup', stopResize);
+				resizeState.longTap = setTimeout(() => {
+					resizeState.longTap = undefined;
+					stopResize();
+					dispatchEvent(new CustomEvent('longTap', { detail: { side: resizeState.direction } }));
+				}, 500);
+				e.preventDefault();
+				e.stopPropagation();
+
+				console.log('Pointer down on header', handle);
+				handle.setPointerCapture(e.pointerId);
+			});
+		});
+
+		function handleResize(e: PointerEvent) {
+			if (!resizeState.isResizing) return;
+
+			const deltaX = Math.min(Math.max(2, e.clientX), innerWidth - 2) - resizeState.startX;
+			const deltaY = Math.min(Math.max(2, e.clientY), innerHeight - 2) - resizeState.startY;
+			if (resizeState.longTap && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+				clearTimeout(resizeState.longTap);
+				resizeState.longTap = undefined;
+			}
+			let newWidth = resizeState.startWidth;
+			let newHeight = resizeState.startHeight;
+			let newLeft = resizeState.startLeft;
+			let newTop = resizeState.startTop;
+
+			const minWidth = 300;
+			const minHeight = 200;
+
+			switch (resizeState.direction) {
+				case 'e':
+					newWidth = Math.max(minWidth, resizeState.startWidth + deltaX);
+					break;
+				case 'w':
+					newWidth = Math.max(minWidth, resizeState.startWidth - deltaX);
+					newLeft = resizeState.startLeft + (resizeState.startWidth - newWidth);
+					break;
+				case 's':
+					newHeight = Math.max(minHeight, resizeState.startHeight + deltaY);
+					break;
+				case 'n':
+					newHeight = Math.max(minHeight, resizeState.startHeight - deltaY);
+					newTop = resizeState.startTop + (resizeState.startHeight - newHeight);
+					break;
+				case 'se':
+					newWidth = Math.max(minWidth, resizeState.startWidth + deltaX);
+					newHeight = Math.max(minHeight, resizeState.startHeight + deltaY);
+					break;
+				case 'sw':
+					newWidth = Math.max(minWidth, resizeState.startWidth - deltaX);
+					newHeight = Math.max(minHeight, resizeState.startHeight + deltaY);
+					newLeft = resizeState.startLeft + (resizeState.startWidth - newWidth);
+					break;
+				case 'ne':
+					newWidth = Math.max(minWidth, resizeState.startWidth + deltaX);
+					newHeight = Math.max(minHeight, resizeState.startHeight - deltaY);
+					newTop = resizeState.startTop + (resizeState.startHeight - newHeight);
+					break;
+				case 'nw':
+					newWidth = Math.max(minWidth, resizeState.startWidth - deltaX);
+					newHeight = Math.max(minHeight, resizeState.startHeight - deltaY);
+					newLeft = resizeState.startLeft + (resizeState.startWidth - newWidth);
+					newTop = resizeState.startTop + (resizeState.startHeight - newHeight);
+					break;
+			}
+
+			theWindow.style.setProperty('--window-width', newWidth + 'px');
+			theWindow.style.setProperty('--window-height', newHeight + 'px');
+			theWindow.style.setProperty('--window-left', newLeft + 'px');
+			theWindow.style.setProperty('--window-top', newTop + 'px');
+			theWindow.classList.add('window-changing');
+		}
+
+		function stopResize() {
+			resizeState.isResizing = false;
+			theWindow.classList.remove('window-changing');
+			document.removeEventListener('pointermove', handleResize);
+			document.removeEventListener('pointerup', stopResize);
+			resizeState.longTap && clearTimeout(resizeState.longTap);
+			resizeState.longTap = undefined;
+		}
+
+		// Minimize functionality
+		minimizeBtn.addEventListener('click', () => {
+			isMinimized = !isMinimized;
+
+			if (isMinimized) {
+				previousHeight = theWindow.style.getPropertyValue('--window-height') || '300px';
+				theWindow.classList.add('minimized');
+				minimizeBtn.innerHTML = '>';
+				minimizeBtn.title = 'Restore';
+			} else {
+				theWindow.classList.remove('minimized');
+				theWindow.style.setProperty('--window-height', previousHeight);
+				minimizeBtn.innerHTML = '<';
+				minimizeBtn.title = 'Minimize';
+			}
+		});
+	}
+
+	// Initialize the window functionality
+	setupWindow();
+</script>

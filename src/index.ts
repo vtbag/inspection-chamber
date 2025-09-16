@@ -4,7 +4,7 @@ import bench from './bench.txt';
 import { setTransitionNames } from './stylesheets';
 import { initDragging } from './dragging';
 import { showReopener, STANDBY } from './reopener';
-import { Modus, updateMessage } from './panel/modus';
+import { type Modus, updateMessage } from './panel/modus';
 import { addFrames } from './styles';
 import {
 	clearVtActive,
@@ -53,7 +53,7 @@ function initSpecimen() {
 		const originalStartViewTransition = top!.document.startViewTransition;
 		if (!originalStartViewTransition) return;
 
-		const rewrite = (cb?: UpdateCallback) => async () => {
+		const rewrite = (cb?: ViewTransitionUpdateCallback | null) => async () => {
 			await Promise.resolve();
 			cb && (await cb());
 			pageReveal();
@@ -61,15 +61,17 @@ function initSpecimen() {
 
 		if (CSS.supports('selector(:active-view-transition-type(x))')) {
 			// level 2 signature
-			frameDocument.startViewTransition = (obj: StartViewTransitionParameter | UpdateCallback) => {
-				const param: StartViewTransitionParameter = { types: [], update: undefined };
+			frameDocument.startViewTransition = (
+				obj: StartViewTransitionOptions | ViewTransitionUpdateCallback
+			) => {
+				const param: StartViewTransitionOptions = { types: [], update: undefined };
 				('@vtbag');
 				pageSwap();
 
 				if (!obj || obj instanceof Function) {
 					param.update = rewrite(obj);
 				} else {
-					param.types = obj.types;
+					obj.types !== undefined && (param.types = obj.types);
 					param.update = rewrite(obj.update);
 				}
 				return (inspectionChamber.viewTransition = originalStartViewTransition.call(
@@ -79,7 +81,7 @@ function initSpecimen() {
 			};
 		} else {
 			// level 1 signature
-			frameDocument.startViewTransition = (cb: UpdateCallback) => {
+			frameDocument.startViewTransition = (cb: ViewTransitionUpdateCallback) => {
 				'@vtbag';
 				pageSwap();
 				return (inspectionChamber.viewTransition = originalStartViewTransition.call(
@@ -110,7 +112,6 @@ function pageReveal() {
 
 function beforeUpdateCallbackDone() {
 	setVtActive();
-	const root = top!.document.documentElement;
 	const viewTransition = inspectionChamber.viewTransition!;
 	const modusFunction: Record<Modus, () => void> = {
 		bypass: () => {},
@@ -315,9 +316,10 @@ function switchOrientation() {
 function updateTurner() {
 	const turner = top!.document.querySelector<HTMLButtonElement>('#vtbag-ui-turn')!;
 	const classes = top!.document.documentElement.classList;
-	turner.innerText = '⤪⤨⤩⤧'[
-		(classes.contains('vtbag-ui-column') ? 2 : 0) + (classes.contains('vtbag-ui-tl') ? 1 : 0)
-	];
+	turner.innerText =
+		'⤪⤨⤩⤧'[
+			(classes.contains('vtbag-ui-column') ? 2 : 0) + (classes.contains('vtbag-ui-tl') ? 1 : 0)
+		] ?? '?';
 }
 function initPanelHandlers() {
 	const turner = top!.document.querySelector('#vtbag-ui-turn')!;

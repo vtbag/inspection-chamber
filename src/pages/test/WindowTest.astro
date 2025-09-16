@@ -1,0 +1,25 @@
+---
+
+import Layout from './_TestLayout.astro';
+import Window from "@/components/Window.astro";
+---
+
+<Layout title='Window Test'>
+  <Window>
+			<div slot="title" style="display: flex; flex-direction: row; align-items: center">
+				<p>JUHU! Welcome to my window.</p>
+			</div>
+			<h1>Hi!</h1>
+      <style>
+        p {
+          margin: 0;
+          padding: 0.2em 0.5em;
+        }
+      </style>
+  </Window>
+  <script>
+    addEventListener('longTap', (e: Event) => {
+      e instanceof CustomEvent && alert('Long tap detected on side ' + e.detail.side);
+    });
+  </script>
+</Layout>
