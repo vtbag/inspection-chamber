@@ -1,0 +1,43 @@
+---
+import Layout from './_TestLayout.astro';
+import Animations from '@/components/ic/Animations.astro';
+---
+
+<Layout title="Animations Test">
+	{
+		/*
+	ALL
+	+-- Root ---------------------------> View Transition
+			+-- view transition name					+-- types
+					+-- element										+-- pseudo tree / groups / pair / old / new
+							+--view-transition-class	+-- group-children
+
+name 		0:1 group
+pseudos 0:n animations
+	 */
+	}
+	<Animations slot="head" />
+	<script>
+		import { setupHooks } from '@/ic2/hooks';
+		setupHooks();
+	</script>
+	<iframe id="ic-iframe" src="/iframe-src/"></iframe>
+	<vtbag-ic-animations></vtbag-ic-animations>
+	<style>
+		:root, body {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+			overflow: hidden;
+			background: white;
+			color: black;
+			font-family: system-ui, sans-serif;
+		}
+		vtbag-ic-animations {
+			display: block;
+			border-top: 1px solid #ccc;
+			box-sizing: border-box;
+			height: calc(100vh - 160px);
+		}
+	</style>
+</Layout>

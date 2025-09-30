@@ -28,7 +28,8 @@ export type IC2 = {
 				original: T
 		  ) => T)
 		| undefined;
-
+	animationStart?: (event: AnimationEvent) => void;
+	animationStop?: (event: AnimationEvent) => void;
 	pauseSheet?: CSSStyleSheet;
 };
 

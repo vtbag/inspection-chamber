@@ -1,0 +1,78 @@
+---
+import Pseudo from './Pseudo.astro';
+import GroupList from './GroupList.astro';
+import Style from '@/components/ic/Style.astro';
+---
+
+<Pseudo />
+<GroupList />
+<template id="vtbag-ic-scope">
+	<div class="section metal">
+		<h3 class="heading">Scope <span class="scope-path"></span></h3>
+		<vtbag-ic-pseudo></vtbag-ic-pseudo>
+		<vtbag-ic-group-list></vtbag-ic-group-list>
+	</div>
+<Style/>
+	<style is:inline is:global>
+		.section {
+			width: fit-content
+			max-width: 90%;
+			margin-inline: auto;
+		}
+	</style>
+</template>
+<script>
+import { getElementSelector } from "./element-selector";
+
+	class ICGroupList extends HTMLElement {
+		#groupList: VtbagIcGroupListElement;
+		#scope: HTMLElement | null = null;
+		#path: string|undefined = undefined;
+		#dirty = false;
+
+		constructor() {
+			super();
+			const root = this.attachShadow({ mode: 'open' });
+			root.appendChild(
+				(document.getElementById('vtbag-ic-scope') as HTMLTemplateElement).content.cloneNode(true)
+			);
+			this.#groupList = root.querySelector('vtbag-ic-group-list') as VtbagIcGroupListElement;
+		}
+
+		get path() {
+			return this.#path ??= getElementSelector(this.#scope!);
+		}
+
+		get element() {
+			return this.#scope;
+		}
+
+		set element(value) {
+			this.#scope = value;
+			this.#path = undefined;
+			this.#dirty = true;
+			this.render();
+		}
+
+		get animations() {
+			return this.#groupList.animations;
+		}
+
+		set animations(value: Animation[]) {
+			this.#groupList.animations = value;
+		}
+
+		connectedCallback() {
+			this.render();
+		}
+
+		render() {
+			if (this.isConnected && this.#dirty) {
+				this.#dirty = false;
+				const root = this.shadowRoot!;
+				root.querySelector<HTMLHeadElement>('.scope-path')!.innerText = this.path;
+			}
+		}
+	}
+	if (!customElements.get('vtbag-ic-scope')) customElements.define('vtbag-ic-scope', ICGroupList);
+</script>

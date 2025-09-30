@@ -1,0 +1,215 @@
+---
+import Scope from './Scope.astro';
+import Style from '@/components/ic/Style.astro';
+---
+
+<Scope />
+<template id="vtbag-ic-animations">
+	<div class="section metal">
+		<h2>Inspection Chamber</h2>
+		<div style="display:flex">
+			<div style="flex: 1 1 auto">
+				<h3 class="heading">Scopes:</h3>
+				<select class="scope-list"></select>
+			</div><div style="flex: 1 1 auto">
+				<label for="freeze-toggle">Pause</label>
+				<input type="checkbox" id="freeze-toggle" />
+			</div>
+		</div>
+		<div class="scope-container"></div>
+	</div>
+	<Style />
+	<style is:inline is:global>
+		h3 {
+			display: inline;
+		}
+		.scope-container {
+			padding: 4px;
+			margin-top: 4px;
+			border-top: 1px solid gray;
+			height: calc(100vh - 220px);
+			overflow-y: auto;
+			scrollbar-gutter: stable;
+		}
+	</style>
+</template>
+<script>
+import { capture } from "./capture";
+
+
+	let globalAnimations: Animation[] = [];
+	let scopes: Map<Element, VtbagIcScopeElement>;
+
+	class ICAnimations extends HTMLElement {
+		#throttleReRender = false;
+		#scopeList: HTMLSelectElement;
+		#scopeContainer: HTMLDivElement;
+		#freezeToggle: HTMLInputElement;
+
+		constructor() {
+			super();
+			scopes = new Map();
+			const root = this.attachShadow({ mode: 'open' });
+			root.appendChild(
+				(document.getElementById('vtbag-ic-animations') as HTMLTemplateElement).content.cloneNode(
+					true
+				)
+			);
+			this.#scopeList = root.querySelector('select.scope-list')!;
+			this.#scopeContainer = root.querySelector('div.scope-container')!;
+			this.#freezeToggle = root.querySelector('#freeze-toggle')!;
+			this.#freezeToggle.addEventListener('change', () => {
+				if (this.#freezeToggle.checked) {
+					globalAnimations.forEach((a) => a.pause());
+				} else {
+					globalAnimations.forEach((a) => a.play());
+				}
+			});
+			
+			this.#scopeList.addEventListener('change', (e) => {
+				const scope = [...scopes.values()].find((s) => s.path === this.#scopeList.value);
+				if (scope) {
+					scope.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				}
+			});
+
+			
+			this.#scopeList.addEventListener('pointerup', (e) => {
+				const scope = [...scopes.values()].find((s) => s.path === this.#scopeList.value);
+				if (scope) {
+					scope.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					scope.shadowRoot?.querySelector(".section")!.animate(
+						[
+							{ outline: '8px solid gray', offset: 0 },
+							{ outline: '0 solid gray', offset: 1 },
+						],
+						{ delay: 300, duration: 200, easing: 'ease-in' }
+					);
+				}
+			});
+		}
+
+		
+
+		connectedCallback() {
+			addEventListener('ic-after-capture-new', this.mayRender);
+			addEventListener('ic-animation-change', this.mayRender);
+		}
+
+		mayRender = (e?: Event) => {
+			let again = false;
+			if ((e as CustomEvent)?.detail?.type === 'animationend') {
+				setTimeout(() => this.mayRender(), 1);
+				return;
+			}
+			if (this.#throttleReRender) {
+				again = true;
+				return;
+			}
+			requestAnimationFrame(() => {
+				this.#throttleReRender = false;
+				if (again) this.render();
+			});
+			this.#throttleReRender = true;
+			this.render();
+		};
+
+		render() {
+			if (this.isConnected) {
+				const root = this.shadowRoot!;
+				const list = root.querySelector('.scope-list')!;
+
+				this.refreshAnimations();
+
+				[...this.#scopeContainer.children]
+					.sort((a, b) =>
+						a
+							.shadowRoot!.querySelector('span')!
+							.innerText.localeCompare(b.shadowRoot!.querySelector('span')!.innerText)
+					)
+					.forEach((c) => this.#scopeContainer.appendChild(c));
+
+				list.innerHTML = '';
+				[...scopes.values().map((s) => s.path)]
+					.sort((a,b) => a.localeCompare(b))
+					.forEach((path) =>
+						list.insertAdjacentHTML('beforeend', `<option value="${path}">${path}</option>`)
+					);
+			}
+		}
+		refreshAnimations() {
+			const animations = (top!.__vtbag?.ic2?.iframe?.contentDocument || document).getAnimations();
+			if (this.#freezeToggle.checked) {
+				animations.forEach((a) => a.pause());
+			}
+			if (
+				animations.length === globalAnimations.length &&
+				animations.every((a, i) => a === globalAnimations[i])
+			) {
+				console.log('no change in global animations');
+				return;
+			}
+			globalAnimations = animations;
+
+			const newScopes = new Map<Element, Animation[]>();
+			animations.forEach((a) => {
+				if (
+					a.effect?.pseudoElement?.startsWith('::view-transition') &&
+					// todo: deal with other types of animation
+					a.effect?.target
+				) {
+					const scope = a.effect!.target!;
+					let animations = newScopes.get(scope);
+					if (!animations) {
+						animations = [];
+						newScopes.set(scope, animations);
+					}
+					animations.push(a);
+				}
+			});
+			console.log('newScopes', newScopes);
+
+			newScopes.forEach((animations, elem) => {
+				this.refreshScope(elem, animations);
+			});
+			scopes.forEach((scope, element) => {
+				if (!newScopes.has(element)) {
+					scope.remove();
+					scopes.delete(element);
+				}
+			});
+		}
+
+		private refreshScope(element: Element, animations: Animation[]) {
+			let scope = scopes.get(element)!;
+			if (!scope) {
+				scope = document.createElement('vtbag-ic-scope');
+				scope.element = element;
+				this.#scopeContainer.appendChild(scope);
+				scopes.set(element, scope);
+			}
+			if (
+				scope.animations.length !== animations.length ||
+				scope.animations.some((a, i) => a !== animations[i])
+			) {
+				scope.animations = animations;
+			}
+		}
+	}
+
+	if (!customElements.get('vtbag-ic-animations'))
+		customElements.define('vtbag-ic-animations', ICAnimations);
+
+	['ic-before-capture-old', 'ic-before-capture-new'].forEach((event) =>
+		top!.addEventListener(event, capture)
+	);
+
+	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
+		top!.addEventListener(event, (e) =>
+			top!.__vtbag
+				.ic2!.iframe!.contentDocument!.body.querySelector('#vtbag-ic-temp-style')
+				?.remove()
+		)
+	);
+
+</script>

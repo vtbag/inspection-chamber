@@ -1,0 +1,99 @@
+---
+import Style from '@/components/ic/Style.astro';
+---
+
+<template id="vtbag-ic-pseudo">
+	<Style />
+	<style is:inline>
+		.flex {
+			display: flex;
+			gap: 0.5em;
+			align-items: center;
+			justify-content: space-between;
+		}
+		.section {
+			max-width: fit-content;
+		}
+	</style>
+	<div class="content"></div>
+</template>
+
+<script>
+	class ICPseudo extends HTMLElement {
+		#computedStyle: CSSStyleDeclaration | undefined;
+		#group: VtbagIcGroupElement | undefined;
+		#dirty = false;
+
+		constructor() {
+			super();
+			const root = this.attachShadow({ mode: 'open' });
+
+			root.appendChild(
+				(document.getElementById('vtbag-ic-pseudo') as HTMLTemplateElement).content.cloneNode(true)
+			);
+		}
+
+		static get observedAttributes() {
+			return ['name'];
+		}
+
+		get exists() {
+			return this.#computedStyle?.width !== 'auto';
+		}
+
+		attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+			if (oldValue !== newValue) {
+				this.#dirty = true;
+				this.render();
+			}
+		}
+
+		connectedCallback() {
+			this.render();
+		}
+		render() {
+			if (this.isConnected && this.#dirty) {
+				this.#dirty = false;
+				let scope;
+				let name = this.getAttribute('name');
+				if (!name) {
+					name = '::view-transition';
+					scope = ((this.getRootNode() as ShadowRoot).host as VtbagIcScopeElement).element;
+				} else {
+					this.#group = (this.getRootNode() as ShadowRoot).host as VtbagIcGroupElement;
+					name = `::view-transition-${name}(${this.#group.name})`;
+					scope = this.#group;
+					while (scope.tagName.toLowerCase() !== 'vtbag-ic-scope') {
+						scope = (scope.getRootNode() as ShadowRoot).host;
+					}
+					scope = (scope as VtbagIcScopeElement).element;
+				}
+				this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(scope, name);
+				
+				const root = this.shadowRoot!;
+				if (this.#computedStyle?.width.endsWith('px')) {
+					root.querySelector('.content')!.innerHTML = `<div class="section metal">
+	<span class="name">${this.getAttribute('name') || '::view-transition'}</span>
+	<div class="flex"><slot /></div>
+</div>
+		`;
+				}
+				/*
+				root.querySelector<HTMLHeadElement>('.scope-path')!.innerText =
+					this.getAttribute('path') || '';
+				const list = root.querySelector('.anim-list')!;
+				list.innerHTML = '';
+				this.#animations.forEach((anim) => {
+					const item = this.#item.cloneNode(true) as HTMLElement;
+					item.querySelector<HTMLSpanElement>('.pseudo-name')!.innerText =
+						anim.effect?.pseudoElement || 'none';
+					item.querySelector<HTMLSpanElement>('.anim-name')!.innerText =
+						(anim.constructor.name === 'CSSAnimation' && (anim as CSSAnimation).animationName) ||
+						'none';
+					list.appendChild(item);
+				});*/
+			}
+		}
+	}
+	if (!customElements.get('vtbag-ic-pseudo')) customElements.define('vtbag-ic-pseudo', ICPseudo);
+</script>

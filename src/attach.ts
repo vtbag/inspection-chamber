@@ -3,6 +3,7 @@ if (self !== top) {
 	// If the top window is not ready yet, we wait until it is.
 	console.log('init', top?.__vtbag);
 	if (top && top.__vtbag && top.__vtbag.ic2) {
+		console.log('top is ready, setup hooks', top.__vtbag.ic2);
 		const originalElementStartViewTransition = Element.prototype.startViewTransition;
 		if (originalElementStartViewTransition) {
 			Element.prototype.startViewTransition = top.__vtbag.ic2.monkey!(
@@ -16,8 +17,15 @@ if (self !== top) {
 		}
 		addEventListener('pageswap', top.__vtbag.ic2.pageswap!);
 		addEventListener('pagereveal', top.__vtbag.ic2.pagereveal!);
+		addEventListener('animationstart', top.__vtbag.ic2.animationStart!);
+		addEventListener('animationend', top.__vtbag.ic2.animationStop!);
 	} else {
-		setTimeout(() => (top!.__vtbag!.ic2!.iframe!.src = top!.__vtbag.ic2!.iframe!.src!), 100);
+		console.log('Waiting for top to be ready', top?.__vtbag);
+		setTimeout(() => {
+			const iframe = window.frameElement as HTMLIFrameElement;
+			if (iframe.src) iframe.contentWindow?.location.reload();
+			else iframe.srcdoc = iframe.srcdoc;
+		}, 10);
 	}
 } else {
 	// This is the top window

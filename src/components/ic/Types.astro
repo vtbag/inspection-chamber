@@ -18,7 +18,7 @@
 		</div>
 	</div>
 
-	<style>
+	<style is:inline is:global>
 		.types-section h3 {
 			margin: 0 0 0.75rem 0;
 			font-size: 1rem;
@@ -111,14 +111,11 @@
 		get types() {
 			return this.#types;
 		}
-
+		connectedMoveCallback() {}
 		connectedCallback() {
-			console.log('ICTypes connected to the DOM');
 			this.render();
 		}
-		attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-			console.log(`Attribute ${name} has changed from ${oldValue} to ${newValue}.`);
-		}
+	
 		render() {
 			if (this.isConnected) {
 				const root = this.shadowRoot!;
@@ -132,5 +129,6 @@
 			}
 		}
 	}
+
 	if (!customElements.get('vtbag-ic-types')) customElements.define('vtbag-ic-types', ICTypes);
 </script>

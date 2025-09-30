@@ -105,21 +105,6 @@
 		user-select: none;
 		padding: 0.2em 0.5em;
 
-		background: linear-gradient(
-			-66deg,
-			#888 0%,
-			/* dark edge */ #b4b4b4 10%,
-			/* light streak */ #f0f0f0 30%,
-			/* brightest highlight */ #c9c9c9 50%,
-			/* midtone */ #e4e4e4 70%,
-			/* another highlight */ #b4b4b4 85%,
-			/* return to light */ #888 100% /* dark edge */
-		);
-		border-radius: 12px;
-		box-shadow:
-			0 2px 16px rgba(30, 30, 30, 0.15),
-			0 1px 0 #fff inset;
-		border: 1.5px solid #adadad;
 	}
 
 	.window-title {
@@ -373,7 +358,6 @@
 				e.preventDefault();
 				e.stopPropagation();
 
-				console.log('Pointer down on header', handle);
 				handle.setPointerCapture(e.pointerId);
 			});
 		});

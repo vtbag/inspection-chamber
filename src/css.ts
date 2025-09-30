@@ -8,14 +8,17 @@ let root: HTMLElement;
 export function namedElements(viewTransitionRoot: HTMLElement = document.documentElement) {
 	root = viewTransitionRoot;
 	elements.length = 0;
+
+	elements.push({ element: root, pseudoElement: undefined! });
+	root
+		.querySelectorAll<HTMLElement>('[style*=view-transition-]')
+		.forEach((el) => elements.push({ element: el, pseudoElement: undefined! }));
 	animations.clear();
 	pseudoElements.clear();
-	[...document.styleSheets, ...document.adoptedStyleSheets].forEach((sheet) =>
+	[...root.ownerDocument.styleSheets, ...root.ownerDocument.adoptedStyleSheets].forEach((sheet) =>
 		namedElementsOfSheet(sheet)
 	);
-	console.log('Named elements:', elements);
-	console.log('Named animations:', animations);
-	console.log('Pseudo-elements:', pseudoElements);
+	return { elements, animations: [...animations], pseudoElements: [...pseudoElements] };
 }
 
 function namedElementsOfSheet(sheet: CSSStyleSheet) {
@@ -24,46 +27,50 @@ function namedElementsOfSheet(sheet: CSSStyleSheet) {
 }
 
 function namedElementsOfRule(rule: CSSRule, keyframeName?: string) {
+	const name = rule.constructor.name;
 	if (
-		rule instanceof CSSImportRule ||
-		rule instanceof CSSFontFaceRule ||
-		rule instanceof CSSPageRule ||
-		rule instanceof CSSNamespaceRule ||
-		rule instanceof CSSKeyframesRule ||
-		rule instanceof CSSCounterStyleRule ||
-		rule instanceof CSSFontFeatureValuesRule ||
-		rule instanceof CSSFontPaletteValuesRule ||
-		rule instanceof CSSLayerStatementRule ||
-		rule instanceof CSSPropertyRule ||
-		(window['CSSViewTransitionRule'] && rule instanceof CSSViewTransitionRule)
+		name === 'CSSImportRule' ||
+		name === 'CSSFontFaceRule' ||
+		name === 'CSSPageRule' ||
+		name === 'CSSNamespaceRule' ||
+		name === 'CSSKeyframesRule' ||
+		name === 'CSSCounterStyleRule' ||
+		name === 'CSSFontFeatureValuesRule' ||
+		name === 'CSSFontPaletteValuesRule' ||
+		name === 'CSSLayerStatementRule' ||
+		name === 'CSSPropertyRule' ||
+		name === 'CSSViewTransitionRule'
 	)
 		return;
 
-	if (rule instanceof CSSStyleRule) {
-		if (!rule.cssText.includes('view-transition-name')) return;
-		declNamedElements(rule.style);
+	if (name === 'CSSStyleRule') {
+		if (!rule.cssText.includes('view-transition-')) return;
+		declNamedElements((rule as CSSStyleRule).style);
 		// fall through to grouping rule to check nested rules
 	}
-	if (rule instanceof CSSGroupingRule || rule instanceof CSSStyleRule) {
-		[...rule.cssRules].forEach((rule) => namedElementsOfRule(rule));
+	if (name === 'CSSGroupingRule' || name === 'CSSStyleRule') {
+		[...(rule as CSSGroupingRule).cssRules].forEach((rule) => namedElementsOfRule(rule));
 		return;
 	}
 
-	if (rule instanceof CSSNestedDeclarations) return declNamedElements(rule.style);
+	if (name === 'CSSNestedDeclarations') return declNamedElements((rule as any).style);
 
-	if (rule instanceof CSSKeyframesRule) {
-		[...rule.cssRules].forEach((frame) => namedElementsOfRule(frame, rule.name));
+	if (name === 'CSSKeyframesRule') {
+		[...(rule as CSSKeyframesRule).cssRules].forEach((frame) =>
+			namedElementsOfRule(frame, (rule as CSSKeyframesRule).name)
+		);
 		return;
 	}
 
-	if (rule instanceof CSSKeyframeRule) return frameNamedElements(rule.style, keyframeName!);
+	if (name === 'CSSKeyframeRule')
+		return frameNamedElements((rule as CSSKeyframeRule).style, keyframeName!);
 
 	console.error('Unknown CSSRule', rule);
 }
 
 function frameNamedElements(style: CSSStyleDeclaration, keyframeName: string) {
 	for (let i = 0; i < style.length; ++i) {
-		if (style.item(i) === 'view-transition-name') {
+		if (style.item(i).startsWith('view-transition-')) {
 			animations.add(keyframeName);
 			console.log('animation', keyframeName);
 		}
@@ -72,7 +79,7 @@ function frameNamedElements(style: CSSStyleDeclaration, keyframeName: string) {
 
 function declNamedElements(style: CSSStyleDeclaration) {
 	for (let i = 0; i < style.length; ++i) {
-		if (style.item(i) === 'view-transition-name') return styledElements(style.parentRule);
+		if (style.item(i).startsWith('view-transition-')) return styledElements(style.parentRule);
 	}
 }
 
@@ -80,12 +87,15 @@ function styledElements(parent: CSSRule | null) {
 	let selectors: string[] = ['&'];
 
 	for (;;) {
-		while (parent && !(parent instanceof CSSStyleRule || parent instanceof CSSScopeRule)) {
+		while (
+			parent &&
+			!(parent.constructor.name === 'CSSStyleRule' || parent.constructor.name === 'CSSScopeRule')
+		) {
 			parent = parent.parentRule;
 		}
 
 		if (parent) {
-			selectors = collect(parent, selectors);
+			selectors = collect(parent as CSSStyleRule | CSSScopeRule, selectors);
 			parent = parent.parentRule;
 			continue;
 		}
@@ -97,7 +107,7 @@ function styledElements(parent: CSSRule | null) {
 				pseudoElements.add(pseudoElement!);
 				sel = generate(parsed).slice(0, -pseudoElement.length).trim();
 			}
-			[...document.querySelectorAll<HTMLElement>(sel)]
+			[...root.ownerDocument.querySelectorAll<HTMLElement>(sel)]
 				.filter((el) => root.contains(el))
 				.forEach((element) => elements.push({ element, pseudoElement }));
 		});
@@ -108,16 +118,17 @@ function styledElements(parent: CSSRule | null) {
 function collect(parent: CSSStyleRule | CSSScopeRule, selectors: string[]): string[] {
 	const nested = selectors;
 	selectors = [];
-	if (parent instanceof CSSStyleRule) {
-		splitSelectorList(parent.selectorText).forEach((sel) =>
+	if (parent.constructor.name === 'CSSStyleRule') {
+		splitSelectorList((parent as CSSStyleRule).selectorText).forEach((sel) =>
 			nested.forEach((nes) => selectors.push(nes.replaceAll(/&/g, sel)))
 		);
 	} else {
-		const scopes = parent.start
-			? splitSelectorList(parent.start)
+		const scopeRuleParent = parent as CSSScopeRule;
+		const scopes = scopeRuleParent.start
+			? splitSelectorList(scopeRuleParent.start)
 			: [
 					deriveCSSSelector(
-						parent.parentStyleSheet?.ownerNode?.parentElement ?? document.documentElement
+						parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
 					),
 				];
 

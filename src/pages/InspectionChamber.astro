@@ -25,7 +25,7 @@ import QuickCounts from '@/ic2/QuickCounts.astro';
 				display: block;
 			}
 
-			#iframe {
+			#ic-iframe {
 				border: none;
 				margin: 0;
 				padding: 0;
@@ -53,7 +53,7 @@ import QuickCounts from '@/ic2/QuickCounts.astro';
 			}
 
 			:active-view-transition-type(longTap) {
-				#iframe {
+				#ic-iframe {
 					view-transition-name: iframe;
 				}
 				.window {
@@ -72,7 +72,7 @@ import QuickCounts from '@/ic2/QuickCounts.astro';
 		</style>
 	</head>
 	<body>
-		<iframe id="iframe" src="/vtbag_inspection_chamber_src__/"></iframe>
+		<iframe id="ic-iframe" src="/vtbag_inspection_chamber_src__/"></iframe>
 
 		<div id="dragBar" style="display: none"></div>
 		<div id="dock" style="display: none"></div>
@@ -95,7 +95,7 @@ import QuickCounts from '@/ic2/QuickCounts.astro';
 			const DRAG_BAR_WIDTH = 10;
 			const DRAG_BAR_WIDTH_PX = DRAG_BAR_WIDTH + 'px';
 
-			const iframe = document.getElementById('iframe')!;
+			const iframe = document.getElementById('ic-iframe')!;
 			const dragBar = document.getElementById('dragBar')!;
 			const dock = document.getElementById('dock')!;
 			const win = dock!.nextElementSibling as HTMLElement;

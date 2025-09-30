@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>Animations Test iframe</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
+		<script is:inline src="/attach.js"></script>
+		<style is:global>
+			:root {
+				view-transition-group: contain;
+			}
+			body {
+				view-transition-name: match-element;
+			}
+			#button1 {
+				position: relative;
+				top: 10px;
+				view-transition-name: button1;
+				view-transition-group: root;
+				z-index: 1;
+			}
+			#button2 {
+				view-transition-name: button2;
+				&::before {
+					content: '> ';
+					view-transition-name: button2-before;
+				}
+				&::after {
+					content: ' <';
+					view-transition-name: button2-after;
+				}
+			}
+			div {
+				view-transition-name: div	;
+			}
+			#button3 {
+				contain: layout view-transition;
+			}
+			:active-view-transition-type(test-type) #button3 {
+				view-transition-name: button3;
+			}
+			#button4,
+			#button5 {
+				view-transition-name: match-element;
+				view-transition-group: nearest;
+			}
+			@view-transition {
+				navigation: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<button id="button1">[document]</button>
+		<button id="button2">:root</button>
+		<div>
+			<button id="button3">#button1</button>
+			<button id="button4">#2 & #3</button>
+		</div>
+		<button id="button5">all</button>
+		<a
+			style="color: darkslategrey;view-transition-name: link; background-color:aliceblue"
+			href="/iframe-src/?a=5">click</a
+		>
+		<script>
+			const error = (e: unknown) => console.error('View Transition Error', e);
+			const button1 = document.querySelector('#button1')!;
+			const button2 = document.querySelector('#button2')!;
+			const button3 = document.querySelector('#button3')!;
+			const button4 = document.querySelector('#button4')!;
+			const button5 = document.querySelector('#button5')!;
+			button1.addEventListener('click', () =>
+				document.startViewTransition!(() =>
+					button5.hasAttribute('hidden')
+						? button5.removeAttribute('hidden')
+						: button5.setAttribute('hidden', '')
+				).ready.catch(error)
+			);
+			button2.addEventListener('click', () =>
+				document.documentElement.startViewTransition!({ types: ['test-type'] }).ready.catch(error)
+			);
+			button3.addEventListener('click', () => button1.startViewTransition!().ready.catch(error));
+			button4.addEventListener('click', () => {
+				console.log('STARTING 2');
+				button2.startViewTransition!().ready.catch(error);
+				console.log('STARTING 3');
+				button3.startViewTransition!().ready.catch(error);
+			});
+			button5.addEventListener('click', () => {
+				button3.startViewTransition!({ types: ['test-type'] }).ready.catch(error);
+				document.startViewTransition!().ready.catch(error);
+				button1.startViewTransition!().ready.catch(error);
+				button2.startViewTransition!().ready.catch(error);
+				button4.startViewTransition!().ready.catch(error);
+				button5.startViewTransition!().ready.catch(error);
+			});
+
+			declare global {
+				namespace CSS {
+					const paintWorklet: {
+						addModule(url: string): Promise<void>;
+					};
+				}
+			}
+		</script>
+	</body>
+</html>

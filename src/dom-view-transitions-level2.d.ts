@@ -35,12 +35,17 @@ declare global {
 
 	interface ViewTransition {
 		readonly types?: Set<string>;
+		readonly transitionRoot?: Element;
 	}
 	interface Window {
 		navigation?: Navigation;
 	}
 	interface Navigation {
 		activation: NavigationActivation;
+	}
+
+	interface CSSStyleDeclaration {
+		viewTransitionGroup: string;
 	}
 }
 export {};

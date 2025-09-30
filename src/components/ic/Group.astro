@@ -1,0 +1,84 @@
+---
+import Pseudo from './Pseudo.astro';
+import Style from '@/components/ic/Style.astro';
+---
+
+<Pseudo />
+<template id="vtbag-ic-group">
+	<div class="section metal">
+		<h3 class="heading"><span class="name"></span></h3>
+		<vtbag-ic-pseudo name="group">
+			<vtbag-ic-pseudo name="group-children"></vtbag-ic-pseudo>
+			<vtbag-ic-pseudo name="image-pair">
+				<vtbag-ic-pseudo name="old"></vtbag-ic-pseudo>
+				<vtbag-ic-pseudo name="new"></vtbag-ic-pseudo>
+			</vtbag-ic-pseudo></vtbag-ic-pseudo
+		>
+	</div>
+	<Style />
+	<style is:inline is:global>
+		.section {
+			max-width: 250px;
+		}
+		span.name > span {
+			font-size: 0.65em;
+			vertical-align: top;
+		}
+	</style>
+</template>
+<script>
+	class ICGroup extends HTMLElement {
+		#animations: Animation[] = [];
+		#dirty = false;
+
+		constructor() {
+			super();
+			const root = this.attachShadow({ mode: 'open' });
+			root.appendChild(
+				(document.getElementById('vtbag-ic-group') as HTMLTemplateElement).content.cloneNode(true)
+			);
+		}
+		get name() {
+			return this.getAttribute('name') || '';
+		}
+
+		set name(value) {
+			this.setAttribute('name', value);
+		}
+
+		get animations() {
+			return this.#animations;
+		}
+
+		set animations(value: Animation[]) {
+			this.#animations = value;
+			this.#dirty = true;
+			this.render();
+		}
+
+		connectedCallback() {
+			this.render();
+		}
+
+		render() {
+			if (this.isConnected && this.#dirty) {
+				let name = this.getAttribute('name') || '';
+				this.#dirty = false;
+				const root = this.shadowRoot!;
+				if (name.startsWith('-vtbag-auto-'))
+					name = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
+				if (name.startsWith('-vtbag-match-element-'))
+					name =
+						'match-element' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
+				const span = root.querySelector<HTMLHeadElement>('.name')!;
+				span.innerHTML = name;
+				if (!(root.querySelector('vtbag-ic-pseudo[name="group"]') as VtbagIcPseudoElement).exists) {
+					span.parentElement!.style.backgroundColor = 'darkred';
+					span.parentElement!.style.color = 'white';
+					console.error('Group not found:', this.name);
+				}
+			}
+		}
+	}
+	if (!customElements.get('vtbag-ic-group')) customElements.define('vtbag-ic-group', ICGroup);
+</script>
