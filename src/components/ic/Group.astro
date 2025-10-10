@@ -1,43 +1,39 @@
 ---
 import Pseudo from './Pseudo.astro';
-import Style from '@/components/ic/Style.astro';
 ---
 
 <Pseudo />
 <template id="vtbag-ic-group">
-	<div class="section metal">
-		<h3 class="heading"><span class="name"></span></h3>
-		<vtbag-ic-pseudo name="group">
-			<vtbag-ic-pseudo name="group-children"></vtbag-ic-pseudo>
-			<vtbag-ic-pseudo name="image-pair">
-				<vtbag-ic-pseudo name="old"></vtbag-ic-pseudo>
-				<vtbag-ic-pseudo name="new"></vtbag-ic-pseudo>
-			</vtbag-ic-pseudo></vtbag-ic-pseudo
-		>
-	</div>
-	<Style />
-	<style is:inline is:global>
-		.section {
-			max-width: 250px;
-		}
-		span.name > span {
-			font-size: 0.65em;
-			vertical-align: top;
-		}
-	</style>
+	<h3 class="heading"></h3>
+	<vtbag-ic-pseudo name="group">
+		<div>
+			<vtbag-ic-pseudo name="image-pair"><div></div></vtbag-ic-pseudo>
+		</div>
+	</vtbag-ic-pseudo>
 </template>
 <script>
 	class ICGroup extends HTMLElement {
+		#initialized = false;
 		#animations: Animation[] = [];
 		#dirty = false;
 
 		constructor() {
 			super();
-			const root = this.attachShadow({ mode: 'open' });
-			root.appendChild(
-				(document.getElementById('vtbag-ic-group') as HTMLTemplateElement).content.cloneNode(true)
-			);
 		}
+		connectedCallback() {
+			if (!this.#initialized) {
+				this.#initialized = true;
+				this.appendChild(
+					(document.getElementById('vtbag-ic-group') as HTMLTemplateElement).content.cloneNode(true)
+				);
+			}
+			this.render();
+		}
+
+		get scope() {
+			return this.closest('vtbag-ic-scope') as VtbagIcScopeElement;
+		}
+
 		get name() {
 			return this.getAttribute('name') || '';
 		}
@@ -56,27 +52,61 @@ import Style from '@/components/ic/Style.astro';
 			this.render();
 		}
 
-		connectedCallback() {
-			this.render();
-		}
-
 		render() {
 			if (this.isConnected && this.#dirty) {
-				let name = this.getAttribute('name') || '';
+				const name = this.getAttribute('name') || '';
+				let displayName = name;
 				this.#dirty = false;
-				const root = this.shadowRoot!;
+				this.style.viewTransitionName = CSS.escape(this.scope.path + '.' + name);
 				if (name.startsWith('-vtbag-auto-'))
-					name = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
+					displayName = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
 				if (name.startsWith('-vtbag-match-element-'))
-					name =
+					displayName =
 						'match-element' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
-				const span = root.querySelector<HTMLHeadElement>('.name')!;
-				span.innerHTML = name;
-				if (!(root.querySelector('vtbag-ic-pseudo[name="group"]') as VtbagIcPseudoElement).exists) {
-					span.parentElement!.style.backgroundColor = 'darkred';
-					span.parentElement!.style.color = 'white';
+				const heading = this.querySelector<HTMLHeadingElement>('h3')!;
+				heading.innerHTML = displayName;
+				if (!(this.querySelector('vtbag-ic-pseudo[name="group"]') as VtbagIcPseudoElement).exists) {
+					heading.parentElement!.style.backgroundColor = 'darkred';
+					heading.parentElement!.style.color = 'white';
 					console.error('Group not found:', this.name);
 				}
+
+				const noOld = getComputedStyle(
+					this.scope.element,
+					`::view-transition-new(${name})`
+				).getPropertyValue('--vtbag-ic-only-child');
+				const noNew = getComputedStyle(
+					this.scope.element,
+					`::view-transition-old(${name})`
+				).getPropertyValue('--vtbag-ic-only-child');
+				const noChildren = getComputedStyle(
+					this.scope.element,
+					`::view-transition-image-pair(${name})`
+				).getPropertyValue('--vtbag-ic-only-child');
+				const imagePair = this.querySelector(
+					'vtbag-ic-pseudo[name="image-pair"]'
+				) as VtbagIcPseudoElement;
+				console.log('Rendering group', this.name, {
+					noOld,
+					noNew,
+					noChildren,
+					imagePair,
+				});
+				noOld ||
+					imagePair.lastElementChild!.insertAdjacentHTML(
+						'beforeend',
+						'<vtbag-ic-pseudo name="old"></vtbag-ic-pseudo'
+					);
+				noNew ||
+					imagePair.lastElementChild!.insertAdjacentHTML(
+						'beforeend',
+						'<vtbag-ic-pseudo name="new"></vtbag-ic-pseudo>'
+					);
+				noChildren ||
+					imagePair.insertAdjacentHTML(
+						'afterend',
+						'<vtbag-ic-pseudo name="group-children"></vtbag-ic-pseudo'
+					);
 			}
 		}
 	}

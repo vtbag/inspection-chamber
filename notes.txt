@@ -1,0 +1,19 @@
+These are notes on the new development of the next generation of the Chamber.
+
+attach.ts:  
+- when run in an iframe: set up the hooks into the View Transition API
+- when run in the top-level window, replace the DOM with InspectionChamber.astro, where the original page is embedded using an iframe. See bin/bundle script for the htmlSting() function
+
+attach.astro
+- a test page for attach.ts with some buttons to start view transitions
+
+  others like this: test/AnimationsTest.astro
+
+InspectionChamber.astro
+- The controls with an embedded iframe. The src of the iframe and its title will be overridden if pulled by attach.ts. 
+- The page can be viewed stand alone, too. Then the embedded iframe defaults to attach.astro (via symbolic link in src/pages)
+
+Animations: The main driver. Provides hooks to be called from iframe. Idea: instead of expecting everything in top, use self.parent instead (would allow to inspect the inspection chamber with the inspection chamber) 
+
+
+todo: not all browsers might have group-children for nested transitions

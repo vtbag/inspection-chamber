@@ -1,4 +1,3 @@
-import { setupPauseSheet } from './pause-sheet';
 export function setupHooks() {
 	console.log('setupHooks');
 	top!.__vtbag ??= {};
@@ -13,23 +12,24 @@ export function setupHooks() {
 
 function pageswap(event: PageSwapEvent) {
 	console.log('enter pageswap', event);
-
-	top!.__vtbag!.ic2!.globalViewTransition = event.viewTransition;
-	if (event.viewTransition) {
+	const transition = event.viewTransition;
+	const root = (event.target as Window)?.document?.documentElement;
+	if (transition) {
 		requestAnimationFrame(() => {
-			beforeCaptureOld(event.viewTransition!);
-			setTimeout(() => afterCaptureOld(event.viewTransition!));
+			beforeCaptureOld(root, transition!);
+			setTimeout(() => afterCaptureOld(root, transition!));
 		});
 	}
 }
 async function pagereveal(event: PageRevealEvent) {
 	console.log('enter pagereveal', event);
-
-	top!.__vtbag!.ic2!.globalViewTransition = event.viewTransition;
-	if (event.viewTransition) {
-		event.viewTransition.ready.finally(() => afterCaptureNew(event.viewTransition!));
+	const transition = event.viewTransition;
+	const root = (event.target as Window)?.document?.documentElement;
+	if (transition) {
+		transition.ready.finally(() => afterCaptureNew(root, transition));
+		transition.finished.finally(() => animationsWillFinish(root, transition));
 		await Promise.resolve(true);
-		beforeCaptureNew(event.viewTransition!);
+		beforeCaptureNew(root, transition);
 	}
 }
 
@@ -45,59 +45,78 @@ function monkey<
 		if (!original) {
 			throw new Error('startViewTransition is not defined on this context');
 		}
-
+		const root = this.constructor.name === HTMLDocument.name 
+		? (this as Document).documentElement 
+		: (this as HTMLElement);
+		
 		if (!arg) {
 			arg = async () => {
-				afterCaptureOld(transition);
-				beforeCaptureNew(transition);
+				afterCaptureOld(root, transition);
+				beforeCaptureNew(root, transition);
 			};
 		} else if (typeof arg === 'function') {
 			const oldArg = arg;
 			arg = async () => {
-				afterCaptureOld(transition);
+				afterCaptureOld(root, transition);
 				await (oldArg as Function)();
-				beforeCaptureNew(transition);
+				beforeCaptureNew(root, transition);
 			};
 		} else if ((arg as StartViewTransitionOptions).update) {
 			const oldUpdate = (arg as StartViewTransitionOptions).update;
 			arg.update = async () => {
-				afterCaptureOld(transition);
+				afterCaptureOld(root, transition);
 				await oldUpdate!();
-				beforeCaptureNew(transition);
+				beforeCaptureNew(root, transition);
 			};
 		} else {
 			(arg as StartViewTransitionOptions).update = () => {
-				afterCaptureOld(transition);
-				beforeCaptureNew(transition);
+				afterCaptureOld(root, transition);
+				beforeCaptureNew(root, transition);
 			};
 		}
 		transition = original.apply(this, [arg]);
-		requestAnimationFrame(() => beforeCaptureOld(transition));
-		transition.ready.finally(() => afterCaptureNew(transition));
+		requestAnimationFrame(() => beforeCaptureOld(root, transition));
+		transition.ready.finally(() => afterCaptureNew(root, transition));
+		transition.finished.finally(() => {
+			animationsWillFinish(root, transition);
+		});
 		return transition;
 	} as T;
 }
 
 function animationStart(event: AnimationEvent) {
-	top!.dispatchEvent(new CustomEvent('ic-animation-change', { detail: event }));
+	top!.dispatchEvent(new CustomEvent('ic-animation-change', {
+		detail: { root: event.target, event }
+	}));
 }
 function animationStop(event: AnimationEvent) {
-	top!.dispatchEvent(new CustomEvent('ic-animation-change', { detail: event }));
+	top!.dispatchEvent(new CustomEvent('ic-animation-change', {
+		detail: { root: event.target, event }
+	}));
 }
 
-function beforeCaptureOld(viewTransition: ViewTransition) {
-	//console.log('beforeCaptureOld', viewTransition);
-	top!.dispatchEvent(new CustomEvent('ic-before-capture-old', { detail: { viewTransition } }));
+function beforeCaptureOld(root: HTMLElement, viewTransition: ViewTransition) {
+	top!.dispatchEvent(new CustomEvent('ic-before-capture-old', {
+		detail: { root, viewTransition }
+	}));
 }
-function afterCaptureOld(viewTransition: ViewTransition) {
-	//console.log('afterCaptureOld', viewTransition);
-	top!.dispatchEvent(new CustomEvent('ic-after-capture-old', { detail: { viewTransition } }));
+function afterCaptureOld(root: HTMLElement, viewTransition: ViewTransition) {
+	top!.dispatchEvent(new CustomEvent('ic-after-capture-old', {
+		detail: { root, viewTransition }
+	}));
 }
-function beforeCaptureNew(viewTransition: ViewTransition) {
-	//console.log('beforeCaptureNew', viewTransition);
-	top!.dispatchEvent(new CustomEvent('ic-before-capture-new', { detail: { viewTransition } }));
+function beforeCaptureNew(root: HTMLElement, viewTransition: ViewTransition) {
+	top!.dispatchEvent(new CustomEvent('ic-before-capture-new', {
+		detail: { root, viewTransition }
+	}));
 }
-function afterCaptureNew(viewTransition: ViewTransition) {
-	//console.log('afterCaptureNew', viewTransition);
-	top!.dispatchEvent(new CustomEvent('ic-after-capture-new', { detail: { viewTransition } }));
+function afterCaptureNew(root: HTMLElement, viewTransition: ViewTransition) {
+	top!.dispatchEvent(new CustomEvent('ic-after-capture-new', {
+		detail: { root, viewTransition }
+	}));
+}
+function animationsWillFinish(root: HTMLElement, viewTransition: ViewTransition) {
+	top!.dispatchEvent(new CustomEvent('ic-about-to-finish', {
+		detail: { root, viewTransition }
+	}));
 }

@@ -1,0 +1,98 @@
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	margin: 0;
+	padding: 0;
+	font-weight: 400;
+	color: var(--text-primary);
+}
+* {
+	font-size: 0.8rem;
+}
+h1 {
+	font-size: 1rem;
+}
+h2 {
+	font-size: 0.9rem;
+}
+h3 {
+	font-size: 0.85rem;
+}
+sup {
+	vertical-align: super;
+	font-size: 0.75em;
+}
+vtbag-ic-animations,
+vtbag-ic-scope,
+vtbag-ic-group-list,
+vtbag-ic-group,
+vtbag-ic-pseudo {
+	display: block;
+	box-sizing: border-box;
+	padding: 2px 4px;
+	border-radius: 4px;
+	background: linear-gradient(
+		85deg,
+		#c7c6c6 0%,
+		/* dark edge */ #e0e0e480 10%,
+		/* light streak */ #f0f0f080 30%,
+		/* midtone */ #e4e4f080 70%,
+		/* return to light */ #ddd8 80%,
+		/* light streak */ #f0f0f480 100%
+	);
+	box-shadow:
+		0 2px 16px rgba(30, 30, 30, 0.15),
+		0 1px 0 #fff inset;
+	border: 1.5px solid #adadad20;
+}
+
+vtbag-ic-animations {
+	font-family: fantasy;
+	.scope-container {
+		padding: 4px;
+		margin-top: 4px;
+		border-top: 1px solid gray;
+		height: calc(100vh - 220px);
+		overflow-y: auto;
+		scrollbar-gutter: stable;
+
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0px;
+	}
+}
+
+vtbag-ic-scope {
+	width: 370px;
+}
+vtbag-ic-group-list {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+vtbag-ic-group {
+	width: 165px;
+	height: 108px;
+	h3 {
+		font-size: 0.95rem;
+		span {
+			font-size: 0.7em;
+			vertical-align: top;
+		}
+	}
+}
+
+::view-transition-group(*) {
+	animation-duration: 0.05s;
+}
+
+vtbag-ic-pseudo[name='image-pair'] .children {
+	display: flex;
+	transform: translateY(-0.5em);
+	gap: 0.5em;
+	align-items: center;
+	justify-content: flex-end;
+}

@@ -1,3 +1,4 @@
+import type { Group } from './capture';
 declare namespace JSX {
 	interface IntrinsicElements {
 		'vtbag-ic-animations': {};
@@ -11,10 +12,13 @@ declare namespace JSX {
 	}
 }
 declare global {
-	interface VtbagIcAnimationsElement extends HTMLElement {}
+	interface VtbagIcAnimationsElement extends HTMLElement {
+		groupMaps: Map<HTMLElement, Map<string, Group>>;
+	}
 	interface VtbagIcScopeElement extends HTMLElement {
+		init(element: HTMLElement, root: Group, animations: Animation[]): void;
+		get element(): HTMLElement;
 		get path(): string;
-		element: Element;
 		animations: Animation[];
 	}
 	interface VtbagIcGroupListElement extends HTMLElement {
@@ -22,6 +26,7 @@ declare global {
 	}
 	interface VtbagIcGroupElement extends HTMLElement {
 		name: string;
+		get scope(): VtbagIcScopeElement;
 		animations: Animation[];
 	}
 	interface VtbagIcPseudoElement extends HTMLElement {

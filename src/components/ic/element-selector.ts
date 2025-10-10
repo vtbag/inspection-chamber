@@ -1,5 +1,5 @@
 export function getElementSelector(element: HTMLElement): string {
-	if (element === (top?.__vtbag?.ic2?.iframe?.contentDocument || document).documentElement)
+	if (element.constructor.name === HTMLHtmlElement.name)
 		return ':root';
 
 	if (element.id) return '#' + element.id;

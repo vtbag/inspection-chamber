@@ -1,84 +1,75 @@
 ---
 import Scope from './Scope.astro';
-import Style from '@/components/ic/Style.astro';
+import './ic.css';
 ---
 
 <Scope />
 <template id="vtbag-ic-animations">
-	<div class="section metal">
-		<h2>Inspection Chamber</h2>
-		<div style="display:flex">
-			<div style="flex: 1 1 auto">
-				<h3 class="heading">Scopes:</h3>
-				<select class="scope-list"></select>
-			</div><div style="flex: 1 1 auto">
-				<label for="freeze-toggle">Pause</label>
-				<input type="checkbox" id="freeze-toggle" />
-			</div>
+	<h2>Inspection Chamber</h2>
+	<div style="display:flex">
+		<div style="flex: 1 1 auto">
+			<h3 class="heading" style="width: fit-content">Scopes:</h3>
+			<select name="scope-select"></select>
+		</div><div style="flex: 1 1 auto">
+			<label for="freeze-toggle">Pause</label>
+			<input type="checkbox" id="freeze-toggle" checked />
 		</div>
-		<div class="scope-container"></div>
 	</div>
-	<Style />
-	<style is:inline is:global>
-		h3 {
-			display: inline;
-		}
-		.scope-container {
-			padding: 4px;
-			margin-top: 4px;
-			border-top: 1px solid gray;
-			height: calc(100vh - 220px);
-			overflow-y: auto;
-			scrollbar-gutter: stable;
-		}
-	</style>
+	<div class="scope-container container"></div>
 </template>
 <script>
-import { capture } from "./capture";
+	import { capture } from './capture';
+	import { getElementSelector } from './element-selector';
+	import { type Group, size } from './group';
+	import { key } from './scope';
 
-
-	let globalAnimations: Animation[] = [];
-	let scopes: Map<Element, VtbagIcScopeElement>;
+	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
 
 	class ICAnimations extends HTMLElement {
+		#initialized = false;
 		#throttleReRender = false;
-		#scopeList: HTMLSelectElement;
-		#scopeContainer: HTMLDivElement;
-		#freezeToggle: HTMLInputElement;
+		#globalAnimations: Animation[] = [];
+		#scopes = new Map<HTMLElement, VtbagIcScopeElement>();
+		groupMaps: Map<Element, Map<string, Group>>;
 
 		constructor() {
 			super();
-			scopes = new Map();
-			const root = this.attachShadow({ mode: 'open' });
-			root.appendChild(
+			this.groupMaps = moduleGroupMaps;
+		}
+		connectedCallback() {
+			if (this.#initialized) return;
+			this.#initialized = true;
+
+			this.appendChild(
 				(document.getElementById('vtbag-ic-animations') as HTMLTemplateElement).content.cloneNode(
 					true
 				)
 			);
-			this.#scopeList = root.querySelector('select.scope-list')!;
-			this.#scopeContainer = root.querySelector('div.scope-container')!;
-			this.#freezeToggle = root.querySelector('#freeze-toggle')!;
-			this.#freezeToggle.addEventListener('change', () => {
-				if (this.#freezeToggle.checked) {
-					globalAnimations.forEach((a) => a.pause());
+			addEventListener('ic-after-capture-new', this.mayRender);
+			addEventListener('ic-animation-change', this.mayRender);
+
+			const freezeToggle = this.querySelector<HTMLInputElement>('#freeze-toggle')!;
+			freezeToggle.addEventListener('change', () => {
+				if (freezeToggle!.checked) {
+					this.#globalAnimations.forEach((a) => a.pause());
 				} else {
-					globalAnimations.forEach((a) => a.play());
-				}
-			});
-			
-			this.#scopeList.addEventListener('change', (e) => {
-				const scope = [...scopes.values()].find((s) => s.path === this.#scopeList.value);
-				if (scope) {
-					scope.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					this.#globalAnimations.forEach((a) => a.play());
 				}
 			});
 
-			
-			this.#scopeList.addEventListener('pointerup', (e) => {
-				const scope = [...scopes.values()].find((s) => s.path === this.#scopeList.value);
+			const scopeList = this.querySelector<HTMLSelectElement>('select[name="scope-select"]')!;
+
+			scopeList.addEventListener('change', (e) => {
+				const scope = [...this.#scopes.values()].find((s) => s.path === scopeList.value);
 				if (scope) {
-					scope.scrollIntoView({ behavior: 'smooth', block: 'center' });
-					scope.shadowRoot?.querySelector(".section")!.animate(
+					scope.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+			});
+
+			scopeList.addEventListener('pointerup', (e) => {
+				const scope = [...this.#scopes.values()].find((s) => s.path === scopeList.value);
+				if (scope) {
+					scope.animate(
 						[
 							{ outline: '8px solid gray', offset: 0 },
 							{ outline: '0 solid gray', offset: 1 },
@@ -89,17 +80,12 @@ import { capture } from "./capture";
 			});
 		}
 
-		
-
-		connectedCallback() {
-			addEventListener('ic-after-capture-new', this.mayRender);
-			addEventListener('ic-animation-change', this.mayRender);
-		}
-
-		mayRender = (e?: Event) => {
+		mayRender = (e: Event) => {
 			let again = false;
-			if ((e as CustomEvent)?.detail?.type === 'animationend') {
-				setTimeout(() => this.mayRender(), 1);
+			const detail = (e as CustomEvent).detail;
+			const root = detail.root;
+			if (detail.event?.type === 'animationend') {
+				setTimeout(() => this.mayRender(new CustomEvent('recall', { detail: { root } })), 1);
 				return;
 			}
 			if (this.#throttleReRender) {
@@ -108,50 +94,71 @@ import { capture } from "./capture";
 			}
 			requestAnimationFrame(() => {
 				this.#throttleReRender = false;
-				if (again) this.render();
+				if (again) this.animatedRender(root);
 			});
 			this.#throttleReRender = true;
-			this.render();
+			this.animatedRender(root);
 		};
 
-		render() {
+		animatedRender(root: HTMLElement) {
+			//mayStartViewTransition(() => this.render());
+			this.render(root);
+		}
+
+		render(root: HTMLElement) {
 			if (this.isConnected) {
-				const root = this.shadowRoot!;
-				const list = root.querySelector('.scope-list')!;
+				const select = this.querySelector('[name="scope-select"]')!;
 
-				this.refreshAnimations();
+				const newScopes = this.refreshAnimations(root.getAnimations({ subtree: true }));
+				if (!newScopes) return;
 
-				[...this.#scopeContainer.children]
-					.sort((a, b) =>
-						a
-							.shadowRoot!.querySelector('span')!
-							.innerText.localeCompare(b.shadowRoot!.querySelector('span')!.innerText)
-					)
-					.forEach((c) => this.#scopeContainer.appendChild(c));
+				const scopeContainer = this.querySelector<HTMLDivElement>('div.scope-container')!;
 
-				list.innerHTML = '';
-				[...scopes.values().map((s) => s.path)]
-					.sort((a,b) => a.localeCompare(b))
+				select.innerHTML = '';
+				[...this.#scopes.values().map((s) => s.path)]
+					.sort((a, b) => a.localeCompare(b))
 					.forEach((path) =>
-						list.insertAdjacentHTML('beforeend', `<option value="${path}">${path}</option>`)
+						select.insertAdjacentHTML('beforeend', `<option value="${path}">${path}</option>`)
 					);
+
+				let allScopesWeight = 0;
+				const scopeRoots: Group[] = [];
+				newScopes.forEach((_, scope) => {
+					const root = this.groupMaps.get(key(scope))!.get('@')!;
+					allScopesWeight += size(root);
+					root.scope = scope;
+					scopeRoots.push(root);
+				});
+				scopeRoots.sort((a, b) => size(b) - size(a));
+				console.log('allScopes :>> ', allScopesWeight);
+				scopeRoots.forEach((r) => console.log(r.scope!.id, size(r)));
+				const rect =
+					this.querySelector<HTMLDivElement>('.scope-container')!.getBoundingClientRect();
+				console.log(rect.width, rect.height);
+
+				[...scopeContainer.children]
+					.sort((a, b) =>
+						a.querySelector('span')!.innerText.localeCompare(b.querySelector('span')!.innerText)
+					)
+					.forEach((c) => scopeContainer.appendChild(c));
 			}
 		}
-		refreshAnimations() {
-			const animations = (top!.__vtbag?.ic2?.iframe?.contentDocument || document).getAnimations();
-			if (this.#freezeToggle.checked) {
+		refreshAnimations(animations: Animation[]) {
+			const freezeToggle = this.querySelector<HTMLInputElement>('#freeze-toggle')!;
+
+			if (freezeToggle.checked) {
 				animations.forEach((a) => a.pause());
 			}
 			if (
-				animations.length === globalAnimations.length &&
-				animations.every((a, i) => a === globalAnimations[i])
+				animations.length === this.#globalAnimations.length &&
+				animations.every((a, i) => a === this.#globalAnimations[i])
 			) {
 				console.log('no change in global animations');
 				return;
 			}
-			globalAnimations = animations;
+			this.#globalAnimations = animations;
 
-			const newScopes = new Map<Element, Animation[]>();
+			const newScopes = new Map<HTMLElement, Animation[]>();
 			animations.forEach((a) => {
 				if (
 					a.effect?.pseudoElement?.startsWith('::view-transition') &&
@@ -172,24 +179,25 @@ import { capture } from "./capture";
 			newScopes.forEach((animations, elem) => {
 				this.refreshScope(elem, animations);
 			});
-			scopes.forEach((scope, element) => {
-				if (!newScopes.has(element)) {
+			this.#scopes.forEach((scope, element) => {
+				if (!newScopes.has(scope.element)) {
 					scope.remove();
-					scopes.delete(element);
+					this.#scopes.delete(element);
 				}
 			});
+			return newScopes;
 		}
 
-		private refreshScope(element: Element, animations: Animation[]) {
-			let scope = scopes.get(element)!;
+		private refreshScope(element: HTMLElement, animations: Animation[]) {
+			let scope = this.#scopes.get(key(element))!;
 			if (!scope) {
 				scope = document.createElement('vtbag-ic-scope');
-				scope.element = element;
-				this.#scopeContainer.appendChild(scope);
-				scopes.set(element, scope);
+				scope.init(element, this.groupMaps.get(key(element))!.get('@')!, animations);
+				this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
+				this.#scopes.set(key(element), scope);
 			}
 			if (
-				scope.animations.length !== animations.length ||
+				scope.animations?.length !== animations.length ||
 				scope.animations.some((a, i) => a !== animations[i])
 			) {
 				scope.animations = animations;
@@ -201,15 +209,58 @@ import { capture } from "./capture";
 		customElements.define('vtbag-ic-animations', ICAnimations);
 
 	['ic-before-capture-old', 'ic-before-capture-new'].forEach((event) =>
-		top!.addEventListener(event, capture)
+		top!.addEventListener(event, (e) => {
+			const transitionRoot = (e as CustomEvent).detail.root;
+			const transitionRootKey = key(transitionRoot);
+			console.log(e.type, transitionRoot);
+			const groups =
+				e.type === 'ic-before-capture-old'
+					? new Map<string, Group>([
+							['@', { name: '@', className: '', children: [], ancestor: false }],
+						])
+					: moduleGroupMaps.get(transitionRootKey)!;
+			const sheet = capture(transitionRoot, groups);
+			moduleGroupMaps.set(transitionRootKey, groups);
+
+			const head = transitionRoot.ownerDocument.head;
+			head.insertAdjacentHTML(
+				'beforeend',
+				`<style id="vtbag-ic-temp-style-${CSS.escape(getElementSelector(transitionRoot))}">${sheet}</style>`
+			);
+		})
 	);
 
 	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
-		top!.addEventListener(event, (e) =>
-			top!.__vtbag
-				.ic2!.iframe!.contentDocument!.body.querySelector('#vtbag-ic-temp-style')
+		top!.addEventListener(event, (e) => {
+			(e as CustomEvent).detail.root.ownerDocument.body
+				.querySelector(`#vtbag-ic-temp-style-${CSS.escape(getElementSelector((e as CustomEvent).detail.root))}`)
 				?.remove()
-		)
+		})
 	);
 
+	top!.addEventListener('ic-before-capture-new', (e) =>
+		(e as CustomEvent).detail.root.ownerDocument.body.insertAdjacentHTML(
+			'beforeend',
+			`
+<style id="vtbag-ic-persistent-style">
+	::view-transition-image-pair(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+	--vtbag-ic-only-child: initial;
+
+}
+	::view-transition-image-pair(*):only-child,
+::view-transition-old(*):only-child,
+::view-transition-new(*):only-child {
+	--vtbag-ic-only-child: "1";
+}
+</style>
+`
+		)
+	);
+	top!.addEventListener('ic-about-to-finish', (e) =>
+		(e as CustomEvent).detail.root.ownerDocument.body
+			.querySelector('#vtbag-ic-persistent-style')
+			?.remove()
+	);
 </script>
