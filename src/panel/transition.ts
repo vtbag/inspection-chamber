@@ -20,7 +20,11 @@ export function mayViewTransition(fun: () => void, name: string, skip = false) {
 		fun();
 	} else {
 		outerName = name;
+		const error = (e: any) => console.error(e);
 		outerViewTransition = top!.document.startViewTransition(fun);
+		outerViewTransition.updateCallbackDone.catch(error);
+		outerViewTransition.ready.catch(error);
+		outerViewTransition.finished.catch(error);
 		outerViewTransition.finished.finally(() => (outerViewTransition = outerName = undefined));
 	}
 }
