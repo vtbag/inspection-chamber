@@ -19,13 +19,16 @@ declare global {
 		init(element: HTMLElement, root: Group, animations: Animation[]): void;
 		get element(): HTMLElement;
 		get path(): string;
+		get scopeId(): number;
 		animations: Animation[];
 	}
 	interface VtbagIcGroupListElement extends HTMLElement {
 		animations: Animation[];
+		sort(by: 'alpha' | 'paint-order'): void;
 	}
 	interface VtbagIcGroupElement extends HTMLElement {
 		name: string;
+		group?: Group;
 		get scope(): VtbagIcScopeElement;
 		animations: Animation[];
 	}

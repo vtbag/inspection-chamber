@@ -4,23 +4,41 @@ import Group from './Group.astro';
 
 <Group />
 <script>
-	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	import type { Group } from './group';
+	import { key } from './scope';
 
 	class ICGroupList extends HTMLElement {
 		#initialized = false;
 		#animations: Animation[] = [];
 		#dirty = false;
-		groups: Map<string, VtbagIcGroupElement>;
+		#observer?: ResizeObserver;
+		cards: Map<string, VtbagIcGroupElement>;
 
 		constructor() {
 			super();
-			this.groups = new Map();
+			this.cards = new Map();
 		}
 		connectedCallback() {
 			if (!this.#initialized) {
 				this.#initialized = true;
 			}
+			this.#observer = new ResizeObserver(() => {
+				this.layout();
+			});
+			this.layout();
 			this.render();
+		}
+		private layout() {
+			/*
+			const gap = parseFloat(getComputedStyle(this).columnGap);
+			([...this.children] as HTMLElement[]).forEach((child) => {
+				child.style.gridRowEnd = `span ${Math.round(child.getBoundingClientRect().height + gap)}`;
+			});
+			*/
+		}
+
+		disconnectCallback() {
+			this.#observer?.disconnect();
 		}
 
 		get animations() {
@@ -36,9 +54,12 @@ import Group from './Group.astro';
 		async render() {
 			if (this.isConnected && this.#dirty) {
 				this.#dirty = false;
-				const scope = this;
 
-				//	const transition = mayStartViewTransition!(	() => {
+				const scope = this.closest<VtbagIcScopeElement>('vtbag-ic-scope');
+				const groups = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!.groupMaps.get(
+					key(scope!.element)
+				)!;
+
 				const newGroups = new Map<string, Animation[]>();
 				this.#animations.forEach((anim) => {
 					const groupName = (anim.effect as any as KeyframeEffect).pseudoElement?.replace(
@@ -46,56 +67,57 @@ import Group from './Group.astro';
 						'$1'
 					);
 					if (groupName) {
-						let group = newGroups.get(groupName);
-						if (!group) {
-							group = [];
-							newGroups.set(groupName, group);
+						let groupAnimations = newGroups.get(groupName);
+						if (!groupAnimations) {
+							groupAnimations = [];
+							newGroups.set(groupName, groupAnimations);
 						}
-						group.push(anim);
+						groupAnimations.push(anim);
 					}
 				});
 
 				newGroups.forEach((group, name) => {
-					this.refreshGroup(name, group);
+					this.refreshGroup(name, group, groups.get(name)!);
 				});
-				this.groups.forEach((group, name) => {
+				this.cards.forEach((group, name) => {
 					if (!newGroups.has(name)) {
 						group.remove();
-						this.groups.delete(name);
+						this.cards.delete(name);
 					}
 				});
-				[...this.children]
-					.sort((a, b) =>
-						(a as VtbagIcGroupElement).name
-							.replace(/^(-vtbag-)/, '')
-							.localeCompare((b as VtbagIcGroupElement).name.replace(/^(-vtbag-)/, ''))
-					)
-					.forEach((c) => this.appendChild(c));
-				/*				},
-					{ collisionBehavior: 'chaining', scope }
+
+				this.sort(
+					scope!.querySelector<HTMLInputElement>('input[value="alpha"]')?.checked ? 'alpha' : 'paint-order'
 				);
-				transition.updateCallbackDone.catch((e) => console.error(e));
-				transition.updateCallbackDone.finally(() => console.log('updateCallbackDone'));
-				transition.ready.catch((e) => console.error(e));
-				transition.ready.finally(() =>
-					console.log('ready', scope.getAnimations({ subtree: true }))
-				);
-				transition.finished.catch((e) => console.error(e));
-				transition.finished.finally(() => console.log('finished'));*/
 			}
 		}
-		private refreshGroup(name: string, animations: Animation[]) {
-			let group = this.groups.get(name)!;
-			if (!group) {
+
+		sort(by: 'alpha' | 'paint-order') {
+			[...this.children]
+				.sort((a, b) => {
+					const ag = a as VtbagIcGroupElement;
+					const bg = b as VtbagIcGroupElement;
+					return by === 'paint-order'
+						? ag.group.preOrder - bg.group.preOrder
+						: ag.name.replace(/^-vtbag-/, '').localeCompare(bg.name.replace(/^-vtbag-/, ''));
+				})
+
+				.forEach((c) => this.appendChild(c));
+		}
+
+		private refreshGroup(name: string, animations: Animation[], group: Group) {
+			let card = this.cards.get(name)!;
+			if (!card) {
 				this.insertAdjacentHTML('beforeend', `<vtbag-ic-group name="${name}"></vtbag-ic-group>`);
-				group = this.lastElementChild! as VtbagIcGroupElement;
-				this.groups.set(name, group);
+				card = this.lastElementChild! as VtbagIcGroupElement;
+				card.group = group;
+				this.cards.set(name, card);
 			}
 			if (
-				group.animations.length !== animations.length ||
-				group.animations.some((a, i) => a !== animations[i])
+				card.animations.length !== animations.length ||
+				card.animations.some((a, i) => a !== animations[i])
 			) {
-				group.animations = animations;
+				card.animations = animations;
 			}
 		}
 	}

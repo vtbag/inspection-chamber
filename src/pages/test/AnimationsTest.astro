@@ -1,6 +1,6 @@
 ---
-import Layout from './_TestLayout.astro';
 import Animations from '@/components/ic/Animations.astro';
+import { Font } from 'astro:assets';
 ---
 
 <html data-ic="top" lang="en">
@@ -8,41 +8,38 @@ import Animations from '@/components/ic/Animations.astro';
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
 		<title>Animations Test</title>
-		<Animations/>
+
+		<Font cssVariable="--font-labels" preload />
+		<Font cssVariable="--font-logo" preload />
+
+		<style>
+			body {
+				font-family: var(--font-label);
+			}
+		</style>
+		<Animations />
 	</head>
 	<body>
-	{
-		/*
-	ALL
-	+-- Root ---------------------------> View Transition
-			+-- view transition name					+-- types
-					+-- element										+-- pseudo tree / groups / pair / old / new
-							+--view-transition-class	+-- group-children
-
-name 		0:1 group
-pseudos 0:n animations
-	 */
-	}
-	<script>
-		import { setupHooks } from '@/ic2/hooks';
-		setupHooks();
-	</script>
-	<iframe id="ic-iframe" src="/iframe-src/" width="600"></iframe>
-	<vtbag-ic-animations></vtbag-ic-animations>
-	<style>
-		:root, body {
-			margin: 0;
-			padding: 0;
-			height: 100%;
-			overflow: hidden;
-			color-scheme: light;
-		}
-		vtbag-ic-animations {
-			display: block;
-			border-top: 1px solid #ccc;
-			box-sizing: border-box;
-			height: calc(100vh - 160px);
-		}
-	</style>
-  </body>
-  </html>
+		<script>
+			import { setupHooks } from '@/ic2/hooks';
+			setupHooks();
+		</script>
+		<iframe id="ic-iframe" src="/iframe-src/" width="100%"></iframe>
+		<vtbag-ic-animations></vtbag-ic-animations>
+		<style>
+			:root,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				overflow: hidden;
+			}
+			vtbag-ic-animations {
+				display: block;
+				border-top: 1px solid #ccc;
+				box-sizing: border-box;
+				height: calc(100vh - 160px);
+			}
+		</style>
+	</body>
+</html>

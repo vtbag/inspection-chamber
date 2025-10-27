@@ -6,8 +6,10 @@ import GroupList from './GroupList.astro';
 <Pseudo />
 <GroupList />
 <script>
+	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { getElementSelector } from './element-selector';
-	import { type Group, size } from './group';
+	import { type Group, isSorted } from './group';
+	import { key } from './scope';
 
 	class ICScope extends HTMLElement {
 		#scope: HTMLElement | null = null;
@@ -15,6 +17,8 @@ import GroupList from './GroupList.astro';
 		#animations: Animation[] = [];
 		#path: string | undefined = undefined;
 		#dirty = false;
+		static #nextId = 0;
+		#id = ICScope.#nextId++;
 
 		constructor() {
 			super();
@@ -27,6 +31,9 @@ import GroupList from './GroupList.astro';
 			return (this.#path ??= getElementSelector(this.#scope!));
 		}
 
+		get scopeId() {
+			return this.#id;
+		}
 		get element() {
 			return this.#scope;
 		}
@@ -52,11 +59,56 @@ import GroupList from './GroupList.astro';
 		render() {
 			if (this.isConnected && this.#dirty) {
 				this.#dirty = false;
-				this.innerHTML = `
-	<h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>
+				let html = `<div class="scope-head"><div class="scope-head-main"><h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>`;
+
+				const group = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!
+					.groupMaps.get(key(this.#scope!))
+					?.get('@') as Group;
+				html += '<div name="children">Groups: ';
+				group.children.forEach((g) => {
+					html += `<button>${g.name.replace(
+						/-vtbag-match-element-([0-9]+)/,
+						(_, num) => `match-element<sup>(${num})</sup>`
+					)}</button>`;
+				});
+				html += '</div></div>';
+
+				if (!isSorted(group)) {
+					html += `
+				<div class="input-led-group">
+					<div class="input-led-item">
+						<input type="radio" name="sort-${this.#id}" value="alpha" id="scope-sort-${this.#id * 2}" checked	>
+						<label for="scope-sort-${this.#id * 2}">
+							<span class="led"></span>
+              <span class="radio-text">Alphabetical</span>
+						</label>
+					</div>
+					<div class="input-led-item">
+						<input type="radio" name="sort-${this.#id}" value="paint" id="scope-sort-${this.#id * 2 + 1}">
+						<label for="scope-sort-${this.#id * 2 + 1}">
+							<span class="led"></span>
+              <span class="radio-text">Paint Order</span>
+						</label>
+					</div>
+				</div>`;
+				}
+				html += '</div>';
+				this.innerHTML =
+					html +
+					`
 	<vtbag-ic-pseudo></vtbag-ic-pseudo>
 	<vtbag-ic-group-list></vtbag-ic-group-list>`;
-				(this.lastElementChild as VtbagIcGroupListElement).animations = this.animations;
+				const groupList = this.lastElementChild as VtbagIcGroupListElement;
+				groupList.animations = this.animations;
+				this.querySelector('.input-led-group')?.addEventListener('change', (e) => {
+					document.startViewTransition!(() =>
+						groupList.sort(
+							this.querySelector<HTMLInputElement>(`input[value="alpha"]`)!.checked
+								? 'alpha'
+								: 'paint-order'
+						)
+					);
+				});
 			}
 		}
 	}

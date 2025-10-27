@@ -45,10 +45,11 @@ function monkey<
 		if (!original) {
 			throw new Error('startViewTransition is not defined on this context');
 		}
-		const root = this.constructor.name === HTMLDocument.name 
-		? (this as Document).documentElement 
-		: (this as HTMLElement);
-		
+		const root =
+			this.constructor.name === HTMLDocument.name
+				? (this as Document).documentElement
+				: (this as HTMLElement);
+
 		if (!arg) {
 			arg = async () => {
 				afterCaptureOld(root, transition);
@@ -85,38 +86,52 @@ function monkey<
 }
 
 function animationStart(event: AnimationEvent) {
-	top!.dispatchEvent(new CustomEvent('ic-animation-change', {
-		detail: { root: event.target, event }
-	}));
+	top!.dispatchEvent(
+		new CustomEvent('ic-animation-change', {
+			detail: { root: event.target, event },
+		})
+	);
 }
 function animationStop(event: AnimationEvent) {
-	top!.dispatchEvent(new CustomEvent('ic-animation-change', {
-		detail: { root: event.target, event }
-	}));
+	top!.dispatchEvent(
+		new CustomEvent('ic-animation-change', {
+			detail: { root: event.target, event },
+		})
+	);
 }
 
 function beforeCaptureOld(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(new CustomEvent('ic-before-capture-old', {
-		detail: { root, viewTransition }
-	}));
+	top!.dispatchEvent(
+		new CustomEvent('ic-before-capture-old', {
+			detail: { root, viewTransition },
+		})
+	);
 }
 function afterCaptureOld(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(new CustomEvent('ic-after-capture-old', {
-		detail: { root, viewTransition }
-	}));
+	top!.dispatchEvent(
+		new CustomEvent('ic-after-capture-old', {
+			detail: { root, viewTransition },
+		})
+	);
 }
 function beforeCaptureNew(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(new CustomEvent('ic-before-capture-new', {
-		detail: { root, viewTransition }
-	}));
+	top!.dispatchEvent(
+		new CustomEvent('ic-before-capture-new', {
+			detail: { root, viewTransition },
+		})
+	);
 }
 function afterCaptureNew(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(new CustomEvent('ic-after-capture-new', {
-		detail: { root, viewTransition }
-	}));
+	top!.dispatchEvent(
+		new CustomEvent('ic-after-capture-new', {
+			detail: { root, viewTransition },
+		})
+	);
 }
 function animationsWillFinish(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(new CustomEvent('ic-about-to-finish', {
-		detail: { root, viewTransition }
-	}));
+	top!.dispatchEvent(
+		new CustomEvent('ic-about-to-finish', {
+			detail: { root, viewTransition },
+		})
+	);
 }

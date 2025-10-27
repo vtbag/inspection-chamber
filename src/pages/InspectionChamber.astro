@@ -1,6 +1,7 @@
 ---
 import Window from '@/components/Window.astro';
 import QuickCounts from '@/ic2/QuickCounts.astro';
+import { Font } from 'astro:assets';
 ---
 
 <html>
@@ -10,10 +11,8 @@ import QuickCounts from '@/ic2/QuickCounts.astro';
 			import { setupHooks } from '@/ic2/hooks';
 			setupHooks();
 		</script>
+		<Font cssVariable="--font-labels" preload />
 		<style is:global>
-			* {
-				box-sizing: border-box;
-			}
 			html,
 			body {
 				margin: 0;
@@ -21,7 +20,9 @@ import QuickCounts from '@/ic2/QuickCounts.astro';
 				width: 100vw;
 				height: 100vh;
 			}
+
 			body {
+				font-family: var(--font-labels);
 				display: block;
 			}
 

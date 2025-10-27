@@ -1,9 +1,4 @@
 :root {
-	font-family:
-		'Segoe UI',
-		system-ui,
-		-apple-system,
-		sans-serif;
 	line-height: 1.4;
 	font-weight: 400;
 
@@ -312,7 +307,6 @@ body {
 	flex: 1;
 	font-size: 0.875rem;
 	color: var(--text-primary);
-	font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
 }
 
 .add-type {
@@ -431,7 +425,6 @@ body {
 	font-size: 1rem;
 	font-weight: 600;
 	color: var(--text-primary);
-	font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
 }
 
 .depth-indicator {
@@ -492,7 +485,6 @@ body {
 	border-radius: 4px;
 	font-size: 0.75rem;
 	font-weight: 500;
-	font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
 }
 
 /* Pair Container */
@@ -585,7 +577,6 @@ body {
 	font-size: 0.875rem;
 	font-weight: 600;
 	color: var(--text-primary);
-	font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
 }
 
 .animation-params {

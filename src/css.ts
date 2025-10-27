@@ -1,7 +1,7 @@
 import { type Selector, type SelectorList, parse, generate } from 'css-tree';
 
 const animations = new Set<string>();
-const elements: { element: HTMLElement; pseudoElement: string }[] = [];
+const elements: { element: HTMLElement; pseudoElement: string; }[] = [];
 const pseudoElements = new Set<string>();
 let root: HTMLElement;
 
@@ -86,7 +86,7 @@ function declNamedElements(style: CSSStyleDeclaration) {
 function styledElements(parent: CSSRule | null) {
 	let selectors: string[] = ['&'];
 
-	for (;;) {
+	for (; ;) {
 		while (
 			parent &&
 			!(parent.constructor.name === 'CSSStyleRule' || parent.constructor.name === 'CSSScopeRule')
@@ -101,12 +101,15 @@ function styledElements(parent: CSSRule | null) {
 		}
 		selectors.forEach((sel) => {
 			let pseudoElement: string;
-			const parsed = parse(sel, { context: 'selector' }) as Selector;
-			if (parsed.children.last?.type === 'PseudoElementSelector') {
+			const original = sel;
+			let  parsed = parse(sel, { context: 'selector' }) as Selector;
+			while (parsed.children.last?.type === 'PseudoElementSelector') {
 				pseudoElement = generate(parsed.children.last);
 				pseudoElements.add(pseudoElement!);
 				sel = generate(parsed).slice(0, -pseudoElement.length).trim();
-			}
+				parsed = parse(sel, { context: 'selector' }) as Selector;
+			};
+			pseudoElement = original.slice(sel.length).trim();
 			[...root.ownerDocument.querySelectorAll<HTMLElement>(sel)]
 				.filter((el) => root.contains(el))
 				.forEach((element) => elements.push({ element, pseudoElement }));
@@ -127,10 +130,10 @@ function collect(parent: CSSStyleRule | CSSScopeRule, selectors: string[]): stri
 		const scopes = scopeRuleParent.start
 			? splitSelectorList(scopeRuleParent.start)
 			: [
-					deriveCSSSelector(
-						parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
-					),
-				];
+				deriveCSSSelector(
+					parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
+				),
+			];
 
 		scopes.forEach((scope) =>
 			nested.forEach((nes) => {

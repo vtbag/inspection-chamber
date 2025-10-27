@@ -12,12 +12,11 @@
 			body {
 				view-transition-name: match-element;
 				view-transition-class: body;
+				view-transition-group: contain;
 			}
 			#button1 {
-				position: static;
 				view-transition-name: button1;
 				view-transition-group: root;
-				z-index: 1;
 			}
 			#button2 {
 				view-transition-name: button2;
@@ -31,16 +30,24 @@
 				&::after {
 					content: ' <';
 					view-transition-name: button2-after;
+					view-transition-group: none;
 					background-color: darkslateblue;
+					display: list-item;
 				}
 			}
-			span {
+			spa {
 				view-transition-name: span;
 				margin: 0;
 				padding: 0;
 			}
-			#button3 {
-				contain: view-transition;
+			#div1 {view-transition-name: div1}
+			#div2 {view-transition-name: div2}
+			#div3 {view-transition-name: div3}
+			#div4 {view-transition-name: div4}
+			#div5 {view-transition-name: div5}
+			#div2 {
+				view-transition-name: div2;
+				view-transition-group: contain;
 			}
 			:active-view-transition-type(test-type) #button3 {
 				view-transition-name: button3;
@@ -67,6 +74,13 @@
 			}
 			::view-transition-group-children(button2) {
 				z-index: 1;
+			}
+			#div1 {
+				position:relative;
+				z-index: 1;
+			}
+			#div2 {
+				z-index: 2;
 			}
 			::view-transition-group(button1) {
 				animation: move 300ms;
@@ -118,15 +132,15 @@
 		<div id="div5"><button id="button5">all</button></div>
 		<button id="button6">toggle</button>
 		<a
-			style="color: darkslategrey;view-transition-name: link; background-color:aliceblue"
+			style="color: darkslategrey;view-transition-name: link; 	background-color:aliceblue"
 			href="/iframe-src/?a=5">click</a
 		>
 		<script>
 			const error = (e: unknown) => console.error('View Transition Error', e);
 			const div1 = document.querySelector('#div1')!;
-			const div2 = document.querySelector('#div1')!;
-			const div3 = document.querySelector('#div1')!;
-			const div5 = document.querySelector('#div1')!;
+			const div2 = document.querySelector('#div2')!;
+			const div3 = document.querySelector('#div3')!;
+			const div5 = document.querySelector('#div5')!;
 			const button1 = document.querySelector('#button1')!;
 			const button2 = document.querySelector('#button2')!;
 			const button3 = document.querySelector('#button3')!;
@@ -155,7 +169,7 @@
 				document.startViewTransition!().ready.catch(error);
 				div1.startViewTransition!().ready.catch(error);
 				div2.startViewTransition!().ready.catch(error);
-				div3.startViewTransition!().ready.catch(error);
+				div3.startViewTransition!({ types: ['test-type'] }).ready.catch(error);
 				div5.startViewTransition!().ready.catch(error);
 			});
 			button6.addEventListener('click', () => {

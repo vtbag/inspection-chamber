@@ -1,6 +1,5 @@
 export function getElementSelector(element: HTMLElement): string {
-	if (element.constructor.name === HTMLHtmlElement.name)
-		return ':root';
+	if (element.constructor.name === HTMLHtmlElement.name) return ':root';
 
 	if (element.id) return '#' + element.id;
 

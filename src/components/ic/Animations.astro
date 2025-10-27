@@ -1,18 +1,25 @@
 ---
 import Scope from './Scope.astro';
 import './ic.css';
+import './studio.css';
 ---
 
 <Scope />
 <template id="vtbag-ic-animations">
 	<h2>Inspection Chamber</h2>
-	<div style="display:flex">
-		<div style="flex: 1 1 auto">
-			<h3 class="heading" style="width: fit-content">Scopes:</h3>
-			<select name="scope-select"></select>
-		</div><div style="flex: 1 1 auto">
-			<label for="freeze-toggle">Pause</label>
-			<input type="checkbox" id="freeze-toggle" checked />
+	<div class="animations-head">
+		<div class="animations-head-main">
+			Scopes:
+			<span id="scope-buttons"></span>
+		</div>
+		<div class="input-led-group">
+			<div class="input-led-item">
+				<input type="checkbox" id="freeze-toggle" checked />
+				<label for="freeze-toggle">
+					<span class="led"></span>
+					<span class="radio-text">Freeze</span>
+				</label>
+			</div>
 		</div>
 	</div>
 	<div class="scope-container container"></div>
@@ -57,25 +64,20 @@ import './ic.css';
 				}
 			});
 
-			const scopeList = this.querySelector<HTMLSelectElement>('select[name="scope-select"]')!;
-
-			scopeList.addEventListener('change', (e) => {
-				const scope = [...this.#scopes.values()].find((s) => s.path === scopeList.value);
-				if (scope) {
-					scope.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				}
-			});
-
-			scopeList.addEventListener('pointerup', (e) => {
-				const scope = [...this.#scopes.values()].find((s) => s.path === scopeList.value);
-				if (scope) {
-					scope.animate(
-						[
-							{ outline: '8px solid gray', offset: 0 },
-							{ outline: '0 solid gray', offset: 1 },
-						],
-						{ delay: 300, duration: 200, easing: 'ease-in' }
-					);
+			this.querySelector<HTMLSelectElement>('#scope-buttons')!.addEventListener('click', (e) => {
+				const button = e.target as HTMLButtonElement;
+				if (button.tagName === 'BUTTON') {
+					const scope = [...this.#scopes.values()].find((s) => s.path === button.value);
+					if (scope) {
+						scope.animate(
+							[
+								{ outline: '8px solid gray', offset: 0 },
+								{ outline: '0 solid gray', offset: 1 },
+							],
+							{ delay: 300, duration: 200, easing: 'ease-in' }
+						);
+						scope.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+					}
 				}
 			});
 		}
@@ -107,19 +109,16 @@ import './ic.css';
 
 		render(root: HTMLElement) {
 			if (this.isConnected) {
-				const select = this.querySelector('[name="scope-select"]')!;
-
-				const newScopes = this.refreshAnimations(root.getAnimations({ subtree: true }));
-				if (!newScopes) return;
-
+				const buttons = this.querySelector('#scope-buttons')!;
+				const newScopes = this.refreshAnimations(root.ownerDocument.getAnimations())!;
 				const scopeContainer = this.querySelector<HTMLDivElement>('div.scope-container')!;
 
-				select.innerHTML = '';
+				buttons.innerHTML = '';
 				[...this.#scopes.values().map((s) => s.path)]
 					.sort((a, b) => a.localeCompare(b))
-					.forEach((path) =>
-						select.insertAdjacentHTML('beforeend', `<option value="${path}">${path}</option>`)
-					);
+					.forEach((path) => {
+						buttons.insertAdjacentHTML('beforeend', `<button value="${path}">${path}</button>`);
+					});
 
 				let allScopesWeight = 0;
 				const scopeRoots: Group[] = [];
@@ -130,11 +129,9 @@ import './ic.css';
 					scopeRoots.push(root);
 				});
 				scopeRoots.sort((a, b) => size(b) - size(a));
-				console.log('allScopes :>> ', allScopesWeight);
 				scopeRoots.forEach((r) => console.log(r.scope!.id, size(r)));
 				const rect =
 					this.querySelector<HTMLDivElement>('.scope-container')!.getBoundingClientRect();
-				console.log(rect.width, rect.height);
 
 				[...scopeContainer.children]
 					.sort((a, b) =>
@@ -149,16 +146,16 @@ import './ic.css';
 			if (freezeToggle.checked) {
 				animations.forEach((a) => a.pause());
 			}
+			const newScopes = new Map<HTMLElement, Animation[]>();
 			if (
 				animations.length === this.#globalAnimations.length &&
 				animations.every((a, i) => a === this.#globalAnimations[i])
 			) {
 				console.log('no change in global animations');
-				return;
+				return newScopes;
 			}
 			this.#globalAnimations = animations;
 
-			const newScopes = new Map<HTMLElement, Animation[]>();
 			animations.forEach((a) => {
 				if (
 					a.effect?.pseudoElement?.startsWith('::view-transition') &&
@@ -233,8 +230,10 @@ import './ic.css';
 	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
 		top!.addEventListener(event, (e) => {
 			(e as CustomEvent).detail.root.ownerDocument.body
-				.querySelector(`#vtbag-ic-temp-style-${CSS.escape(getElementSelector((e as CustomEvent).detail.root))}`)
-				?.remove()
+				.querySelector(
+					`#vtbag-ic-temp-style-${CSS.escape(getElementSelector((e as CustomEvent).detail.root))}`
+				)
+				?.remove();
 		})
 	);
 
@@ -249,7 +248,7 @@ import './ic.css';
 	--vtbag-ic-only-child: initial;
 
 }
-	::view-transition-image-pair(*):only-child,
+::view-transition-image-pair(*):only-child,
 ::view-transition-old(*):only-child,
 ::view-transition-new(*):only-child {
 	--vtbag-ic-only-child: "1";

@@ -12,10 +12,12 @@ import Pseudo from './Pseudo.astro';
 	</vtbag-ic-pseudo>
 </template>
 <script>
+import type { Group } from './group';
 	class ICGroup extends HTMLElement {
 		#initialized = false;
 		#animations: Animation[] = [];
 		#dirty = false;
+		group?: Group;
 
 		constructor() {
 			super();
@@ -46,6 +48,7 @@ import Pseudo from './Pseudo.astro';
 			return this.#animations;
 		}
 
+
 		set animations(value: Animation[]) {
 			this.#animations = value;
 			this.#dirty = true;
@@ -57,12 +60,13 @@ import Pseudo from './Pseudo.astro';
 				const name = this.getAttribute('name') || '';
 				let displayName = name;
 				this.#dirty = false;
-				this.style.viewTransitionName = CSS.escape(this.scope.path + '.' + name);
+				const escaped = "x" + this.scope.scopeId + "-" + this.group!.preOrder;
+				this.style.viewTransitionName = escaped;
 				if (name.startsWith('-vtbag-auto-'))
 					displayName = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
 				if (name.startsWith('-vtbag-match-element-'))
 					displayName =
-						'match-element' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
+						'match-element' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
 				const heading = this.querySelector<HTMLHeadingElement>('h3')!;
 				heading.innerHTML = displayName;
 				if (!(this.querySelector('vtbag-ic-pseudo[name="group"]') as VtbagIcPseudoElement).exists) {
@@ -86,12 +90,6 @@ import Pseudo from './Pseudo.astro';
 				const imagePair = this.querySelector(
 					'vtbag-ic-pseudo[name="image-pair"]'
 				) as VtbagIcPseudoElement;
-				console.log('Rendering group', this.name, {
-					noOld,
-					noNew,
-					noChildren,
-					imagePair,
-				});
 				noOld ||
 					imagePair.lastElementChild!.insertAdjacentHTML(
 						'beforeend',
