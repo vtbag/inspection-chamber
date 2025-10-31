@@ -7,6 +7,7 @@
 		<script is:inline src="/attach.js"></script>
 		<style is:global>
 			:root {
+				color-scheme: dark;
 				view-transition-group: contain;
 			}
 			body {
@@ -32,7 +33,6 @@
 					view-transition-name: button2-after;
 					view-transition-group: none;
 					background-color: darkslateblue;
-					display: list-item;
 				}
 			}
 			spa {
@@ -49,6 +49,9 @@
 				view-transition-name: div2;
 				view-transition-group: contain;
 			}
+			#button3 {
+				view-transition-name: noro;
+			}	
 			:active-view-transition-type(test-type) #button3 {
 				view-transition-name: button3;
 				view-transition-class: button3;
@@ -165,10 +168,10 @@
 				div3.startViewTransition!().ready.catch(error);
 			});
 			button5.addEventListener('click', () => {
-				button3.startViewTransition!({ types: ['test-type'] }).ready.catch(error);
-				document.startViewTransition!().ready.catch(error);
 				div1.startViewTransition!().ready.catch(error);
 				div2.startViewTransition!().ready.catch(error);
+				button3.startViewTransition!({ types: ['test-type'] }).ready.catch(error);
+				document.startViewTransition!().ready.catch(error);
 				div3.startViewTransition!({ types: ['test-type'] }).ready.catch(error);
 				div5.startViewTransition!().ready.catch(error);
 			});

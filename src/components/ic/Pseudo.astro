@@ -29,7 +29,6 @@
 				this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(scope, name);
 
 				// potentially "slotted" elements
-				this.firstElementChild?.classList.add('children');
 				this.insertAdjacentHTML(
 					'afterbegin',
 					`<span class="name">${this.getAttribute('name')?.replace('image-pair', 'pair').replace('group-children', 'children') || '::view-transition'}</span>`
@@ -40,9 +39,11 @@
 						.groupMaps.get(key(scope))
 						?.get(groupElement!.name) as Group;
 					let html = '<div name="children">';
+					let root = group;
+					while (root.parent) root = root.parent;
 					group.children.forEach(
 						(g) =>
-							(html += `<button id="${g.name}">${g.name.replace(
+							(html += `<button data-group="${g.preOrder}" style="border: 2px solid oklch(0.65 0.11 ${(360 / (root.postOrder! - root.preOrder! + 1)) * g.preOrder!}deg / 1)">${g.name.replace(
 								/-vtbag-match-element-([0-9]+)/,
 								(_, num) => `match-element<sup>(${num})</sup>`
 							)}</button>`)
@@ -89,6 +90,6 @@
 			}
 		}
 	}
-	
+
 	if (!customElements.get('vtbag-ic-pseudo')) customElements.define('vtbag-ic-pseudo', ICPseudo);
 </script>

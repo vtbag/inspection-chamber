@@ -16,21 +16,25 @@ declare global {
 		groupMaps: Map<HTMLElement, Map<string, Group>>;
 	}
 	interface VtbagIcScopeElement extends HTMLElement {
+		small: any;
 		init(element: HTMLElement, root: Group, animations: Animation[]): void;
 		get element(): HTMLElement;
 		get path(): string;
 		get scopeId(): number;
 		animations: Animation[];
+		get size(): string;
 	}
 	interface VtbagIcGroupListElement extends HTMLElement {
-		animations: Animation[];
 		sort(by: 'alpha' | 'paint-order'): void;
+		get animations(): Animation[];
+		set animations(animations: Animation[]);
 	}
 	interface VtbagIcGroupElement extends HTMLElement {
-		name: string;
 		group?: Group;
 		get scope(): VtbagIcScopeElement;
-		animations: Animation[];
+		get name(): string;
+		get animations(): Animation[];
+		set animations(animations: Animation[]);
 	}
 	interface VtbagIcPseudoElement extends HTMLElement {
 		exists: boolean;

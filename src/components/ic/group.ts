@@ -1,8 +1,8 @@
-import { g } from 'dist/_astro/element-selector.CDrCPMPL';
 import { type SparseDOMNode, print as printSDN } from './sparse-dom';
 import { idText } from 'typescript';
 
 export type Group = {
+	parent?: Group;
 	name: string;
 	className: string;
 	ancestor: boolean;
@@ -37,15 +37,20 @@ export function nestGroups(
 			groups.set(node.viewTransitionName, group);
 			if (node.viewTransitionGroup === 'nearest') {
 				parent.children.push(group);
+				group.parent = parent;
 			} else if (node.viewTransitionGroup === 'normal' || node.viewTransitionGroup === 'contain') {
 				container.children.push(group);
+				group.parent = container;
 			} else {
 				const namedGroup = groups.get(node.viewTransitionGroup!);
 				if (namedGroup?.ancestor) {
 					namedGroup.children.push(group);
+					group.parent = namedGroup;
 					return;
 				}
-				groups.get('@')!.children.push(group); // fallback and viewTransitionGroup = "none"
+				const root = groups.get('@')!;
+				root.children.push(group); // fallback and viewTransitionGroup = "none"
+				group.parent = root;
 			}
 		}
 		node.children.forEach((child) =>
@@ -55,7 +60,7 @@ export function nestGroups(
 	}
 }
 
-export function numberGroupsDFS(group: Group, counter = { value: 0 }) {
+export function numberGroupsDFS(group: Group, counter = { value: 1 }) {
 	group.preOrder = counter.value++;
 	group.children.forEach((child) => numberGroupsDFS(child, counter));
 	group.postOrder = counter.value++;
@@ -82,5 +87,6 @@ function linear(group: Group, arr: Group[] = []): Group[] {
 }
 
 export function isSorted(group: Group): boolean {
-	return linear(group).every((g, idx, arr) => idx === 0 || arr[idx - 1].name <= g.name);
+	console.log('linear(group) :>> ', linear(group));
+	return linear(group).every((g, idx, arr) => idx === 0 || arr[idx - 1].name.replace(/^-vtbag-/,"").localeCompare(g.name.replace(/^-vtbag-/,"")) <= 0);
 }

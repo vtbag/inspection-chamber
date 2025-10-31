@@ -1,7 +1,7 @@
-import { namedElements } from '@/css';
+import { namedElements, allRoots } from '@/css';
 import { getElementSelector } from './element-selector';
 import { nestGroups, numberGroupsDFS, type Group } from './group';
-import { linkToParent, paintGroup, print, sort, type SparseDOMNode } from './sparse-dom';
+import { linkToParent, sort, type SparseDOMNode } from './sparse-dom';
 
 const ids = new WeakMap<Element, string>();
 let idCount = 0;
@@ -13,6 +13,7 @@ export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>)
 	const sparseDOM: SparseDOMNode[] = [];
 
 	const { elements: named } = namedElements(transitionRoot);
+	allRoots.add(transitionRoot);
 	const style = getComputedStyle(transitionRoot);
 	let rootNode: SparseDOMNode = {
 		viewTransitionName: 'none',
@@ -72,12 +73,9 @@ export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>)
 
 	rootNode = elementMap.get(transitionRoot)!;
 	rootNode.paintGroup = rootNode.zIndex = 0;
-	
+
 	sparseDOM.forEach(linkToParent.bind(null, elementMap, transitionRoot));
-	print(rootNode);
 	sort(rootNode);
-	console.log("sorted");
-	print(rootNode);
 
 	const groupRoot = groups.get('@')!;
 	nestGroups(rootNode, groupRoot, groupRoot, groups);

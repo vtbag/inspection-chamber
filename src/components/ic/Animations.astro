@@ -28,9 +28,12 @@ import './studio.css';
 	import { capture } from './capture';
 	import { getElementSelector } from './element-selector';
 	import { type Group, size } from './group';
+import { highlight } from './highlight';
 	import { key } from './scope';
+	import {allRoots } from '@/css';
 
 	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
+	const roots:Set<HTMLElement> = new Set();
 
 	class ICAnimations extends HTMLElement {
 		#initialized = false;
@@ -68,16 +71,7 @@ import './studio.css';
 				const button = e.target as HTMLButtonElement;
 				if (button.tagName === 'BUTTON') {
 					const scope = [...this.#scopes.values()].find((s) => s.path === button.value);
-					if (scope) {
-						scope.animate(
-							[
-								{ outline: '8px solid gray', offset: 0 },
-								{ outline: '0 solid gray', offset: 1 },
-							],
-							{ delay: 300, duration: 200, easing: 'ease-in' }
-						);
-						scope.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-					}
+					highlight(scope);
 				}
 			});
 		}
@@ -257,9 +251,10 @@ import './studio.css';
 `
 		)
 	);
-	top!.addEventListener('ic-about-to-finish', (e) =>
+	top!.addEventListener('ic-about-to-finish', (e) =>{
+		allRoots.delete((e as CustomEvent).detail.root);
 		(e as CustomEvent).detail.root.ownerDocument.body
 			.querySelector('#vtbag-ic-persistent-style')
 			?.remove()
-	);
+	});
 </script>

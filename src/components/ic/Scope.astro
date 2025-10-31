@@ -9,7 +9,8 @@ import GroupList from './GroupList.astro';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { getElementSelector } from './element-selector';
 	import { type Group, isSorted } from './group';
-	import { key } from './scope';
+	import { highlight } from './highlight';
+	import { ledGroup, type LEDs } from './led-group';
 
 	class ICScope extends HTMLElement {
 		#scope: HTMLElement | null = null;
@@ -19,12 +20,47 @@ import GroupList from './GroupList.astro';
 		#dirty = false;
 		static #nextId = 0;
 		#id = ICScope.#nextId++;
+		#sortLEDs: LEDs;
+		#sizeLEDs: LEDs;
 
 		constructor() {
 			super();
+
+			this.#sortLEDs = {
+				className: 'sort',
+				groupName: `scope-sort-${this.#id}`,
+				checked: "paint-order",
+				alternatives: [{
+					label: 'Alphabetical',
+					value: 'alpha',
+					id:`scope-sort-${this.#id}-alpha`,
+				}, {
+					label: 'Paint Order',
+					value: 'paint-order',
+					id: `scope-sort-${this.#id}-paint-order`
+				}]
+			};
+			this.#sizeLEDs = {
+				className: 'size',
+				groupName: `scope-size-${this.#id}`,
+				checked: 'large',
+				alternatives: [{
+					label: 'Small',
+					value: 'small',
+					id: `scope-size-${this.#id}-small`,
+				}, {
+					label: 'Large',
+					value: 'large',
+					id: `scope-size-${this.#id}-large`,
+				}]
+			};
 		}
 		connectedCallback() {
 			this.render();
+		}
+
+		get size() {
+			return this.#sizeLEDs.checked;
 		}
 
 		get path() {
@@ -59,57 +95,123 @@ import GroupList from './GroupList.astro';
 		render() {
 			if (this.isConnected && this.#dirty) {
 				this.#dirty = false;
-				let html = `<div class="scope-head"><div class="scope-head-main"><h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>`;
+				let html = `<div class="scope-head" style="view-transition-name: s-${this.#id}"><div class="scope-head-main"><h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>`;
 
-				const group = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!
-					.groupMaps.get(key(this.#scope!))
-					?.get('@') as Group;
-				html += '<div name="children">Groups: ';
-				group.children.forEach((g) => {
-					html += `<button>${g.name.replace(
-						/-vtbag-match-element-([0-9]+)/,
-						(_, num) => `match-element<sup>(${num})</sup>`
-					)}</button>`;
-				});
-				html += '</div></div>';
+				html += this.topLevelGroups(this.#group!, false);
+				html += '</div>';
 
-				if (!isSorted(group)) {
-					html += `
-				<div class="input-led-group">
-					<div class="input-led-item">
-						<input type="radio" name="sort-${this.#id}" value="alpha" id="scope-sort-${this.#id * 2}" checked	>
-						<label for="scope-sort-${this.#id * 2}">
-							<span class="led"></span>
-              <span class="radio-text">Alphabetical</span>
-						</label>
-					</div>
-					<div class="input-led-item">
-						<input type="radio" name="sort-${this.#id}" value="paint" id="scope-sort-${this.#id * 2 + 1}">
-						<label for="scope-sort-${this.#id * 2 + 1}">
-							<span class="led"></span>
-              <span class="radio-text">Paint Order</span>
-						</label>
-					</div>
-				</div>`;
+				if (!isSorted(this.#group!)) {
+					html += ledGroup(this.#sortLEDs);
 				}
+				html += ledGroup(this.#sizeLEDs);
+
 				html += '</div>';
 				this.innerHTML =
 					html +
 					`
-	<vtbag-ic-pseudo></vtbag-ic-pseudo>
+	<vtbag-ic-pseudo style="view-transition-name: sroot-${this.#id}"></vtbag-ic-pseudo>
 	<vtbag-ic-group-list></vtbag-ic-group-list>`;
 				const groupList = this.lastElementChild as VtbagIcGroupListElement;
 				groupList.animations = this.animations;
-				this.querySelector('.input-led-group')?.addEventListener('change', (e) => {
-					document.startViewTransition!(() =>
-						groupList.sort(
-							this.querySelector<HTMLInputElement>(`input[value="alpha"]`)!.checked
-								? 'alpha'
-								: 'paint-order'
-						)
+
+				const error = (e: any) => console.error('View Transition error:', e);
+
+				this.querySelector('.input-led-group.sort')?.addEventListener('change', (e) => {
+					this.#sortLEDs.checked = (e.target as HTMLInputElement).value;
+					const transition = mayStartViewTransition!(
+						{
+							update: () => {
+								const alpha = this.querySelector<HTMLInputElement>(`input[value="alpha"]`)!.checked;
+								groupList.sort(alpha ? 'alpha' : 'paint-order');
+								const children = this.querySelector('.children')!;
+								children.insertAdjacentHTML('afterend', this.topLevelGroups(this.#group!, alpha));
+								children.remove();
+							},
+							types: ['sort'],
+						},
+						{ useTypesPolyfill: 'always' }
+					);
+					transition.updateCallbackDone.catch(error);
+					transition.ready.catch(error);
+				});
+
+				this.querySelector('.input-led-group.size')?.addEventListener('change', (e) => {
+					this.#sizeLEDs.checked = (e.target as HTMLInputElement).value;
+
+					const styles: string[] = [];
+					document.querySelectorAll<VtbagIcGroupElement>('vtbag-ic-group').forEach((g) => {
+						styles.push(`
+::view-transition-group(${g.style.viewTransitionName}) {
+	outline: ${g.style.outline};
+	border-radius: 4px;	
+}`);
+					});
+					document.head.insertAdjacentHTML(
+						'beforeend',
+						`
+<style data-vtbag="size-vt">
+${styles.join('\n')}
+</style>`
+					);
+					console.log(document.head.lastElementChild);
+					const transition = mayStartViewTransition!(
+						{
+							update: () => {
+								const small = this.querySelector<HTMLInputElement>(`input[value="small"]`)!.checked;
+								this.querySelectorAll<VtbagIcGroupElement>(
+									'vtbag-ic-group vtbag-ic-pseudo[name="group"]'
+								).forEach((pseudo) => (pseudo.style.height = small ? '0px' : ''));
+							},
+							types: ['resize'],
+						},
+						{ useTypesPolyfill: 'always' }
+					);
+					transition.updateCallbackDone.catch(error);
+					transition.ready.catch(error);
+					transition.finished.then(() =>
+						document.head.querySelector('style[data-vtbag="size-vt"]')?.remove()
 					);
 				});
+
+				this.addEventListener('click', (e) => {
+					const button = e.target as HTMLButtonElement;
+					let id: string | undefined;
+					if (button.tagName === 'BUTTON' || button.tagName === 'H3') {
+						id = button.dataset.group;
+						if (!id) return;
+					} else {
+						return;
+					}
+					const group =
+						id === '1'
+							? (this.querySelector('.scope-head-main') as HTMLDivElement)
+							: [...this.querySelectorAll<VtbagIcGroupElement>('vtbag-ic-group')].find(
+									(g) => g.group?.preOrder == id
+								);
+
+					highlight(group);
+				});
 			}
+		}
+		topLevelGroups(group: Group, alpha = false) {
+			let html = '<div class="children">Groups: ';
+			const buttons = [...group.children];
+
+			if (alpha) {
+				buttons.sort((a, b) =>
+					a.name.replace(/^-vtbag-/, '').localeCompare(b.name.replace(/^-vtbag-/, ''))
+				);
+			}
+
+			buttons.forEach((g) => {
+				const name = g.name.replace(
+					/-vtbag-match-element-([0-9]+)/,
+					(_, num) => `match-element<sup>(${num})</sup>`
+				);
+				html += `<button data-group="${g.preOrder}" style="view-transition-name: s-${this.#id}-b-${g.preOrder}; border: 2px solid oklch(0.65 0.11 ${(360 / (group.postOrder! - group.preOrder! + 1)) * g.preOrder!}deg / 1)">${name}</button>`;
+			});
+			html += '</div>';
+			return html;
 		}
 	}
 	if (!customElements.get('vtbag-ic-scope')) customElements.define('vtbag-ic-scope', ICScope);

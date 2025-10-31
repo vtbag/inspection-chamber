@@ -21,11 +21,19 @@ h2 {
 	font-size: 1rem;
 	font-family: var(--font-logo);
 	color: #bdf;
+	margin: 4px 2px 6px 4px;
 }
 
 h3 {
 	font-size: 0.95rem;
 }
+vtbag-ic-group h3 {
+	cursor: pointer;
+	&:hover {
+		text-shadow: 1px 1px light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
+	}
+}
+
 sup {
 	vertical-align: super;
 	font-size: 0.7em;
@@ -55,7 +63,7 @@ vtbag-ic-group,
 vtbag-ic-pseudo {
 	display: block;
 	box-sizing: border-box;
-	padding: 2px 4px;
+	padding: 0px 4px;
 	margin: 1px;
 	border-radius: 4px;
 	@media (prefers-color-scheme: light) {
@@ -79,6 +87,7 @@ vtbag-ic-pseudo {
 	background-blend-mode: overlay;
 	background-size: 4px 100%;
 	color: var(--label-color);
+	overflow: clip;
 }
 
 .animations-head,
@@ -96,8 +105,8 @@ vtbag-ic-pseudo {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
-	padding: 0.3rem 0.75rem;
-
+	padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+	margin: 0 4px 0 2px;
 	background: light-dark(#1a1a1a, #0a0a0a);
 	border-radius: 4px;
 	border: 1px solid light-dark(#3a3a3a, #2a2a2a);
@@ -109,7 +118,9 @@ vtbag-ic-pseudo {
 }
 
 vtbag-ic-group {
-	border: 2px dotted #88f4;
+	border: 1px dotted #88f4;
+	height: 20px;
+	overflow: hidden;
 }
 vtbag-ic-scope {
 	margin-top: 8px;
@@ -143,23 +154,16 @@ vtbag-ic-animations .scope-container {
 	padding: 4px;
 	margin-top: 4px;
 	border-top: 1px solid gray;
-	height: calc(100vh - 220px);
+	height: calc(100vh - 120px);
 	overflow-y: auto;
-	/* scrollbar-gutter: stable; */
+	scrollbar-gutter: stable;	
 	display: grid;
 	flex-wrap: wrap;
 	gap: 0px;
+	background: black;
 }
 
-vtbag-ic-group {
-	height: auto;
-}
-
-::view-transition-group(*) {
-	animation-duration: 250ms;
-}
-
-vtbag-ic-pseudo[name='image-pair'] .children {
+vtbag-ic-pseudo[name='image-pair'] .old-new {
 	display: flex;
 	transform: translateY(-0.5em);
 	gap: 0.5em;
@@ -169,8 +173,9 @@ vtbag-ic-pseudo[name='image-pair'] .children {
 
 vtbag-ic-group-list {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
 	gap: 8px;
+	padding: 4px;
 	/*grid-auto-flow: dense;
 	grid-auto-rows: 0px;
 	row-gap: 1px;
@@ -180,30 +185,104 @@ vtbag-ic-group-list {
 	}*/
 }
 
-.brick {
-	display: flex;
-	flex-flow: column;
-	gap: 1rem;
-	border: 1px solid #8884;
-	padding: 1rem;
-	border-radius: 0.5rem;
-}
-
 button {
 	border-radius: 12px;
-	background-color: #222;
+	background-color: #333;
 	color: var(--content-color);
 	font-size: 0.85rem;
 	border: 1px solid #ccc8;
 	padding: 3px 6px;
 	margin: 1px;
+	cursor: pointer;
+	&:hover {
+		background-color: #222;
+	}
 }
 
-#ic-iframe,h2,.animations-head {
+.animations-head-main button {
+	border-radius: 6px;
+	background-color: #222;
+	&:hover {
+		background-color: #111;
+	}
+}
+
+#ic-iframe,
+h2,
+.animations-head {
 	view-transition-name: match-element;
 	view-transition-class: lift;
 }
+#ic-iframe,
+.animations-head,
+h2 {
+	background-color: light-dark(#f0f0f0, #0a0a0a);
+	outline: 4px solid light-dark(#f0f0f0, #0a0a0a);
+}
+::view-transition-group(*) {
+	animation-duration: 250ms;
+}
 
 ::view-transition-group(.lift) {
-	z-index: 1;
+	z-index: 100;
+}
+
+::view-transition-group(.card-inner) {
+	overflow: clip;
+}
+
+::view-transition-old(.card) ::view-transition-old(.card-inner) {
+	display: none;
+}
+::view-transition-old(.card),
+::view-transition-old(.card-inner),
+::view-transition-new(.card),
+::view-transition-new(.card-inner) {
+	animation-name: none;
+}
+
+::view-transition-new(.blind) {
+	z-index: -1;
+}
+
+vtbag-ic-group {
+	height: auto;
+}
+
+
+:active-view-transition-type(resize) {
+	vtbag-ic-group {
+		view-transition-class: card;
+		height: auto;
+		.group-content {
+			view-transition-name: match-element;
+			view-transition-class: card-inner;
+		}
+	}
+	&::view-transition-group(.card) {
+		overflow: clip;
+	}
+	&::view-transition-new(.card) {
+		height: 100%;
+		width: 100%;
+	}
+}
+
+:active-view-transition-type(sort) {
+	vtbag-ic-group {
+		view-transition-class: card;
+		height: auto;
+		.group-content {
+			view-transition-name: match-element;
+			view-transition-class: card-inner;
+		}
+	}
+	&::view-transition-old(.card),
+	&::view-transition-new(.card) {
+		height: 100%;
+		width: 100%;
+	}
+	&::view-transition-old(.card-inner){
+		display: none;
+	}
 }

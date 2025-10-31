@@ -42,18 +42,19 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
-    "@eslint/js": "^9.37.0",
+    "@eslint/js": "^9.39.0",
     "@types/css-tree": "^2.3.11",
     "@types/dom-view-transitions": "^1.0.6",
-    "@vtbag/utensil-drawer": "^1.2.12",
-    "astro": "^5.14.3",
+    "@vtbag/utensil-drawer": "^1.2.13",
+    "astro": "^5.15.3",
     "css-tree": "^3.1.0",
     "eruda": "^3.4.3",
-    "esbuild": "^0.25.10",
+    "esbuild": "^0.25.11",
+    "postcss-active-view-transition-type": "^0.0.7",
     "prettier": "^3.6.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4"
+    "@astrojs/check": "^0.9.5"
   }
 }

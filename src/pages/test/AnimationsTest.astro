@@ -24,21 +24,25 @@ import { Font } from 'astro:assets';
 			import { setupHooks } from '@/ic2/hooks';
 			setupHooks();
 		</script>
-		<iframe id="ic-iframe" src="/iframe-src/" width="100%"></iframe>
-		<vtbag-ic-animations></vtbag-ic-animations>
+		<iframe id="ic-iframe" src="/iframe-src/" width="50%" height="100%"></iframe><vtbag-ic-animations></vtbag-ic-animations>
 		<style>
 			:root,
 			body {
 				margin: 0;
 				padding: 0;
 				height: 100%;
-				overflow: hidden;
+				overflow: clip;
 			}
 			vtbag-ic-animations {
-				display: block;
+				display: inline-block;
 				border-top: 1px solid #ccc;
 				box-sizing: border-box;
-				height: calc(100vh - 160px);
+				overflow: hidden;
+				height: 100%;
+				width:49vw;
+			}
+			iframe {
+				display: inline-block;
 			}
 		</style>
 	</body>

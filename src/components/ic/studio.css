@@ -185,12 +185,8 @@
 	color: var(--content-color);
 }
 
-/* Toggle switch with LED */
-.toggle-switch {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 1rem;
+.input-led-item :not(input:checked) + label .radio-text:hover {
+	color: color-mix(in srgb, var(--content-color), var(--label-color));
 }
 
 .toggle-switch input[type='checkbox'] {

@@ -5,11 +5,13 @@ const elements: { element: HTMLElement; pseudoElement: string; }[] = [];
 const pseudoElements = new Set<string>();
 let root: HTMLElement;
 
+export const allRoots: Set<HTMLElement> = new Set();
+
 export function namedElements(viewTransitionRoot: HTMLElement = document.documentElement) {
 	root = viewTransitionRoot;
 	elements.length = 0;
 
-	elements.push({ element: root, pseudoElement: undefined! });
+	allRoots.forEach(r => root.contains(r) && elements.push({ element: r, pseudoElement: undefined! }));
 	root
 		.querySelectorAll<HTMLElement>('[style*=view-transition-]')
 		.forEach((el) => elements.push({ element: el, pseudoElement: undefined! }));
@@ -102,7 +104,7 @@ function styledElements(parent: CSSRule | null) {
 		selectors.forEach((sel) => {
 			let pseudoElement: string;
 			const original = sel;
-			let  parsed = parse(sel, { context: 'selector' }) as Selector;
+			let parsed = parse(sel, { context: 'selector' }) as Selector;
 			while (parsed.children.last?.type === 'PseudoElementSelector') {
 				pseudoElement = generate(parsed.children.last);
 				pseudoElements.add(pseudoElement!);

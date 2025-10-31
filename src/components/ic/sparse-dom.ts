@@ -9,6 +9,7 @@ export type SparseDOMNode = {
 	paintGroup?: number;
 	context?: boolean;
 	zIndex?: number;
+	order?: any;
 	children: SparseDOMNode[];
 };
 
@@ -18,6 +19,7 @@ export function linkToParent(
 	node: SparseDOMNode
 ) {
 	if (node.style?.contain.includes('view-transition')) return;
+	console.log('linking', node.element, node.pseudoElement);
 	if (node.pseudoElement) {
 		// todo: if ever supported: handle ::before::marker as child of ::before
 		let parent = elementMap.get(node.element);
@@ -51,7 +53,11 @@ export function linkToParent(
 
 	let me = node;
 	let current = node.element;
+
+
 	while (current !== transitionRoot) {
+	console.log('linking', current);
+
 		let parent = elementMap.get(current.parentElement!);
 		if (parent) {
 			parent.children.push(me);
@@ -97,9 +103,11 @@ export function sort(node: SparseDOMNode) {
 			? (a.paintGroup! - b.paintGroup!)
 			: a.zIndex !== b.zIndex
 				? a.zIndex! - b.zIndex!
-				: a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_PRECEDING
-					? 1
-					: -1
+				: a.order !== b.order
+					? a.order! - b.order!
+					: a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_PRECEDING
+						? 1
+						: -1
 	);
 }
 
@@ -114,6 +122,7 @@ const allProps = [...noneProps, ...otherProps];
 
 export function paintGroup(node: SparseDOMNode, parentStyle: CSSStyleDeclaration) {
 	node.zIndex = getZIndex(node, parentStyle);
+	node.order = node.style.order ? parseInt(node.style.order, 10) : 0;
 	node.context = createsStackingContext(node, parentStyle);
 	if (node.zIndex < 0) return 1;
 	if (node.zIndex > 0) return 6;

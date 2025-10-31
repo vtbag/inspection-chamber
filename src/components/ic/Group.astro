@@ -3,51 +3,32 @@ import Pseudo from './Pseudo.astro';
 ---
 
 <Pseudo />
-<template id="vtbag-ic-group">
-	<h3 class="heading"></h3>
-	<vtbag-ic-pseudo name="group">
-		<div>
-			<vtbag-ic-pseudo name="image-pair"><div></div></vtbag-ic-pseudo>
-		</div>
-	</vtbag-ic-pseudo>
-</template>
 <script>
-import type { Group } from './group';
+	import type { Group } from './group';
 	class ICGroup extends HTMLElement {
-		#initialized = false;
 		#animations: Animation[] = [];
 		#dirty = false;
 		group?: Group;
+		#scope?: VtbagIcScopeElement;
 
 		constructor() {
 			super();
 		}
 		connectedCallback() {
-			if (!this.#initialized) {
-				this.#initialized = true;
-				this.appendChild(
-					(document.getElementById('vtbag-ic-group') as HTMLTemplateElement).content.cloneNode(true)
-				);
-			}
+			this.#scope = this.closest('vtbag-ic-scope') as VtbagIcScopeElement;
 			this.render();
 		}
 
-		get scope() {
-			return this.closest('vtbag-ic-scope') as VtbagIcScopeElement;
-		}
-
 		get name() {
-			return this.getAttribute('name') || '';
+			return this.group?.name;
 		}
-
-		set name(value) {
-			this.setAttribute('name', value);
+		get scope() {
+			return this.#scope;
 		}
 
 		get animations() {
 			return this.#animations;
 		}
-
 
 		set animations(value: Animation[]) {
 			this.#animations = value;
@@ -56,55 +37,63 @@ import type { Group } from './group';
 		}
 
 		render() {
-			if (this.isConnected && this.#dirty) {
-				const name = this.getAttribute('name') || '';
-				let displayName = name;
+			const name = this.group?.name || '';
+			if (!name) {
+				this.insertAdjacentHTML('afterbegin', `<div class="group-content"></div>`);
+				return;
+			}
+			if (this.isConnected && this.#dirty && this.group) {
 				this.#dirty = false;
-				const escaped = "x" + this.scope.scopeId + "-" + this.group!.preOrder;
-				this.style.viewTransitionName = escaped;
-				if (name.startsWith('-vtbag-auto-'))
-					displayName = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
-				if (name.startsWith('-vtbag-match-element-'))
-					displayName =
-						'match-element' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
-				const heading = this.querySelector<HTMLHeadingElement>('h3')!;
-				heading.innerHTML = displayName;
-				if (!(this.querySelector('vtbag-ic-pseudo[name="group"]') as VtbagIcPseudoElement).exists) {
-					heading.parentElement!.style.backgroundColor = 'darkred';
-					heading.parentElement!.style.color = 'white';
-					console.error('Group not found:', this.name);
-				}
 
-				const noOld = getComputedStyle(
-					this.scope.element,
-					`::view-transition-new(${name})`
-				).getPropertyValue('--vtbag-ic-only-child');
-				const noNew = getComputedStyle(
-					this.scope.element,
-					`::view-transition-old(${name})`
-				).getPropertyValue('--vtbag-ic-only-child');
+				this.style.viewTransitionName = 'c-' + this.#scope!.scopeId + '-' + this.group!.preOrder;
+
+				if (this.group?.children.length) this.style.gridColumn = 'span 2';
+				this.style.outline = outline(this.group!);
+
+				const { noOld, noNew, noChildren } = components(this.#scope!.element, name);
+
+				this.insertAdjacentHTML(
+					'afterbegin',
+					`
+	<div class="group-content"><h3 class="heading" data-group="${this.group!.parent?.preOrder}">${displayName(name)}</h3>
+		<vtbag-ic-pseudo name="group" ${this.#scope!.size === 'small' ? 'style="height: 0px"' : ''}'>
+			<vtbag-ic-pseudo name="image-pair"><div class="old-new">
+				${noOld ? '' : '<vtbag-ic-pseudo name="old"></vtbag-ic-pseudo>'}
+				${noNew ? '' : '<vtbag-ic-pseudo name="new"></vtbag-ic-pseudo>'}
+			</div></vtbag-ic-pseudo>
+			${noChildren ? '' : '<vtbag-ic-pseudo name="group-children"></vtbag-ic-pseudo>'}
+		</vtbag-ic-pseudo></div>
+					`
+				);
+			}
+
+			function displayName(name: string) {
+				if (name.startsWith('-vtbag-auto-'))
+					name = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
+				if (name.startsWith('-vtbag-match-element-'))
+					name = 'match-element' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
+				return name;
+			}
+
+			function outline(group: Group) {
+				let root = group;
+				while (root.parent) root = root.parent;
+				const outline = `4px inset oklch(0.7 0.04 ${(360 / (root.postOrder! - root.preOrder! + 1)) * group.preOrder!}deg / 1)`;
+				return outline;
+			}
+
+			function components(scope: HTMLElement, name: string) {
+				const noOld = getComputedStyle(scope, `::view-transition-new(${name})`).getPropertyValue(
+					'--vtbag-ic-only-child'
+				);
+				const noNew = getComputedStyle(scope, `::view-transition-old(${name})`).getPropertyValue(
+					'--vtbag-ic-only-child'
+				);
 				const noChildren = getComputedStyle(
-					this.scope.element,
+					scope,
 					`::view-transition-image-pair(${name})`
 				).getPropertyValue('--vtbag-ic-only-child');
-				const imagePair = this.querySelector(
-					'vtbag-ic-pseudo[name="image-pair"]'
-				) as VtbagIcPseudoElement;
-				noOld ||
-					imagePair.lastElementChild!.insertAdjacentHTML(
-						'beforeend',
-						'<vtbag-ic-pseudo name="old"></vtbag-ic-pseudo'
-					);
-				noNew ||
-					imagePair.lastElementChild!.insertAdjacentHTML(
-						'beforeend',
-						'<vtbag-ic-pseudo name="new"></vtbag-ic-pseudo>'
-					);
-				noChildren ||
-					imagePair.insertAdjacentHTML(
-						'afterend',
-						'<vtbag-ic-pseudo name="group-children"></vtbag-ic-pseudo'
-					);
+				return { noOld, noNew, noChildren };
 			}
 		}
 	}
