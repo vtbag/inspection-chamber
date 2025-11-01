@@ -45,7 +45,7 @@ import Pseudo from './Pseudo.astro';
 			if (this.isConnected && this.#dirty && this.group) {
 				this.#dirty = false;
 
-				this.style.viewTransitionName = 'c-' + this.#scope!.scopeId + '-' + this.group!.preOrder;
+				this.style.setProperty("--vtn", 'g-' + this.#scope!.scopeId + '-' + this.group!.preOrder);
 
 				if (this.group?.children.length) this.style.gridColumn = 'span 2';
 				this.style.outline = outline(this.group!);

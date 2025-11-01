@@ -147,7 +147,7 @@ import Group from './Group.astro';
 					if (span > 0) {
 						this.children[i].insertAdjacentHTML(
 							'afterend',
-							`<vtbag-ic-group style="grid-column: span ${span}; view-transition-name: p-${this.#scope!.scopeId}-${cnt++}; view-transition-class: blind"></vtbag-ic-group>`
+							`<vtbag-ic-group style="grid-column: span ${span}; --vtn: p-${this.#scope!.scopeId}-${cnt++}; view-transition-class: blind"></vtbag-ic-group>`
 						);
 					}
 				}
