@@ -61,7 +61,7 @@ export function control() {
 
 export function namesOfAnimation(animation: Animation) {
 	const names = animation.effect?.pseudoElement
-		?.replace(/::view-transition-(new|old|group|image-pair)\((.*)\)/, '$1 $2')
+		?.replace(/::view-transition-(group|image-pair|old|new|group-children)\((.*)\)/, '$1 $2')
 		.split(' ');
 	return { pseudoName: names?.[0], viewTransitionName: names?.[1] };
 }
