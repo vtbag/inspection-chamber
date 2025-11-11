@@ -111,11 +111,12 @@
 		get types() {
 			return this.#types;
 		}
-		connectedMoveCallback() {}
+		connectedMoveCallback() {
+			
+		}
 		connectedCallback() {
 			this.render();
 		}
-	
 		render() {
 			if (this.isConnected) {
 				const root = this.shadowRoot!;

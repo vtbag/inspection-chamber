@@ -19,7 +19,6 @@ export function linkToParent(
 	node: SparseDOMNode
 ) {
 	if (node.style?.contain.includes('view-transition')) return;
-	console.log('linking', node.element, node.pseudoElement);
 	if (node.pseudoElement) {
 		// todo: if ever supported: handle ::before::marker as child of ::before
 		let parent = elementMap.get(node.element);
@@ -56,7 +55,6 @@ export function linkToParent(
 
 
 	while (current !== transitionRoot) {
-	console.log('linking', current);
 
 		let parent = elementMap.get(current.parentElement!);
 		if (parent) {

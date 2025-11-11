@@ -7,9 +7,9 @@ import Group from './Group.astro';
 	import { getCurrentViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import type { Group } from './group';
 	import { key } from './scope';
+	import { addBlinds } from './blinds';
 
 	class ICGroupList extends HTMLElement {
-		#initialized = false;
 		#animations: Animation[] = [];
 		#dirty = false;
 		#observer?: ResizeObserver;
@@ -22,9 +22,6 @@ import Group from './Group.astro';
 			this.cards = new Map();
 		}
 		connectedCallback() {
-			if (!this.#initialized) {
-				this.#initialized = true;
-			}
 			this.#scope = this.closest<VtbagIcScopeElement>('vtbag-ic-scope')!;
 
 			this.#observer = new ResizeObserver(() => {
@@ -64,7 +61,6 @@ import Group from './Group.astro';
 			if (this.isConnected && this.#dirty) {
 				this.#dirty = false;
 
-				
 				const groups = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!.groupMaps.get(
 					key(this.#scope!.element)
 				)!;
@@ -88,16 +84,14 @@ import Group from './Group.astro';
 				});
 
 				newGroupAnimations.forEach((groupAnimations, groupName) => {
-					let group = groups.get(groupName);
-					this.refreshGroup(group, groupAnimations);
-				});
-				this.cards.forEach((groupElement, groupName) => {
-					if (!newGroupAnimations.has(groupName)) {
-						groupElement.remove();
-						this.cards.delete(groupName);
+					if (groupName === '::view-transition') {
+						// todo: push animation to pseudo-element
+					} else {
+						let group = groups.get(groupName);
+						console.log('groupName, group :>> ', groupName, group);
+						this.refreshGroup(group, groupAnimations);
 					}
 				});
-
 				this.sort(
 					this.#scope!.querySelector<HTMLInputElement>('input[value="alpha"]')?.checked
 						? 'alpha'
@@ -116,42 +110,17 @@ import Group from './Group.astro';
 				}
 			}
 			if (children.length === 0) return;
-			children
-				.sort((a, b) => {
-					const ag = a as VtbagIcGroupElement;
-					const bg = b as VtbagIcGroupElement;
-					return by === 'paint-order'
-						? ag.group.preOrder - bg.group.preOrder
-						: ag.name.replace(/^-vtbag-/, '').localeCompare(bg.name.replace(/^-vtbag-/, ''));
-				})
-				.forEach((c) => this.appendChild(c));
-			const container = this.getBoundingClientRect();
-			let prev = children[0]?.getBoundingClientRect();
-			const fix = [];
-			let columnWidth = prev.width;
-			children.forEach((g, idx) => {
-				const current = g.getBoundingClientRect();
-				columnWidth = Math.min(columnWidth, current.width);
-				if (idx > 0) {
-					if (current.top > prev.bottom) fix[idx - 1] = prev;
-				}
-				prev = current;
+			const sorted = children.sort((a, b) => {
+				const ag = a as VtbagIcGroupElement;
+				const bg = b as VtbagIcGroupElement;
+				return by === 'paint-order'
+					? ag.group.preOrder - bg.group.preOrder
+					: ag.name.replace(/^-vtbag-/, '').localeCompare(bg.name.replace(/^-vtbag-/, ''));
 			});
+			if ('moveBefore' in Element.prototype) sorted.forEach((s) => this.moveBefore(s, null));
+			else sorted.forEach((s) => this.appendChild(s));
 
-			fix[children.length - 1] = prev;
-			let cnt = 0;
-			for (let i = fix.length - 1; i >= 0; --i) {
-				const last = fix[i];
-				if (last) {
-					const span = ~~((container.right - last.right) / columnWidth);
-					if (span > 0) {
-						this.children[i].insertAdjacentHTML(
-							'afterend',
-							`<vtbag-ic-group style="grid-column: span ${span}; --vtn: p-${this.#scope!.scopeId}-${cnt++}; view-transition-class: blind"></vtbag-ic-group>`
-						);
-					}
-				}
-			}
+			addBlinds(this, 'vtbag-ic-group', '', '' + this.#scope!.scopeId, 'blind');
 		}
 		private refreshGroup(group: Group, animations: Animation[]) {
 			let card = this.cards.get(group.name)!;

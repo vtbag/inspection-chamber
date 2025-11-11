@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>Animations Test iframe</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
+		<script is:inline src="/attach.js"></script>
+		<style is:global>
+			:root {
+				color-scheme: dark;
+				view-transition-group: contain;
+			}
+			body {
+				view-transition-name: match-element;
+				view-transition-class: body;
+				view-transition-group: contain;
+			}
+			#button1 {
+				view-transition-name: button1;
+				view-transition-group: root;
+			}
+			#button2 {
+				view-transition-name: button2;
+				view-transition-group: contain;
+				background-color: darkgoldenrod;
+				&::before {
+					content: '> ';
+					view-transition-name: button2-before;
+					background-color: darkolivegreen;
+				}
+				&::after {
+					content: ' <';
+					view-transition-name: button2-after;
+					view-transition-group: none;
+					background-color: darkslateblue;
+				}
+			}
+			spa {
+				view-transition-name: span;
+				margin: 0;
+				padding: 0;
+			}
+			#div1 {
+				view-transition-name: div1;
+			}
+			#div2 {
+				view-transition-name: div2;
+			}
+			#div3 {
+				view-transition-name: div3;
+			}
+			#div4 {
+				view-transition-name: div4;
+			}
+			#div5 {
+				view-transition-name: div5;
+			}
+			#div2 {
+				view-transition-name: div2;
+				view-transition-group: contain;
+			}
+			#button3 {
+				view-transition-name: noro;
+			}
+			:active-view-transition-type(test-type) #button3 {
+				view-transition-name: button3;
+				view-transition-class: button3;
+			}
+			#button4,
+			#button5 {
+				view-transition-name: match-element;
+				view-transition-group: nearest;
+				view-transition-class: button4;
+			}
+			#button5 {
+				view-transition-class: button5;
+			}
+			@view-transition {
+				navigation: auto;
+			}
+			:root.theme {
+				background-color: lightblue;
+				color: maroon;
+				#button1 {
+					view-transition-group: nearest;
+				}
+			}
+			::view-transition-group-children(button2) {
+				z-index: 1;
+			}
+			#div1 {
+				position: relative;
+				z-index: 1;
+			}
+			#div2 {
+				z-index: 2;
+			}
+			::view-transition-group(button1) {
+				animation: move 300ms;
+			}
+			::view-transition-group(button2) {
+				animation: move 400ms;
+			}
+			::view-transition-group(button2-before) {
+				animation: move 500ms;
+			}
+			::view-transition-group(button2-after) {
+				animation: move 600ms;
+			}
+			::view-transition-group(.button3) {
+				animation: move 700ms;
+			}
+			::view-transition-group(.button4) {
+				animation: move 800ms;
+			}
+			::view-transition-group(.button5) {
+				animation: move 900ms;
+			}
+			::view-transition-group(span) {
+				animation: move 1000ms;
+			}
+			::view-transition-group(.body) {
+				animation: move 200ms;
+			}
+			@keyframes move {
+				0% {
+					transform: translateX(0);
+				}
+				50% {
+					transform: translateX(50px);
+				}
+				100% {
+					transform: translateX(0);
+				}
+				}
+			</style>
+		</head>
+		<body>
+			<div id="div1"><button id="button1">[document]</button></div>
+			<div id="div2"><button id="button2">:root</button></div>
+			<span>
+				<div id="div3"><button id="button3">animate #1</button></div>
+				<button id="button4">animate #2 & #3</button>
+			</span>
+			<div id="div5"><button id="button5">all</button></div>
+			<button id="button6">toggle</button>
+			<a
+				style="color: darkslategrey;view-transition-name: link; 	background-color:aliceblue"
+				href="/iframe-src/?a=5">click</a
+			>
+			<script>
+				const error = (e: unknown) => console.error('View Transition Error', e);
+				const div1 = document.querySelector('#div1')!;
+				const div2 = document.querySelector('#div2')!;
+				const div3 = document.querySelector('#div3')!;
+				const div5 = document.querySelector('#div5')!;
+				const button1 = document.querySelector('#button1')!;
+				const button2 = document.querySelector('#button2')!;
+				const button3 = document.querySelector('#button3')!;
+				const button4 = document.querySelector('#button4')!;
+				const button5 = document.querySelector('#button5')!;
+				const button6 = document.querySelector('#button6')!;
+				button1.addEventListener('click', () => {
+					const viewTransition = document.startViewTransition!(() =>
+						button5.hasAttribute('hidden')
+							? button5.removeAttribute('hidden')
+							: button5.setAttribute('hidden', '')
+					)
+					viewTransition.ready.catch(error);
+					viewTransition.finished.then(() => console.log('finished', document.getAnimations().length));
+				});
+				button2.addEventListener('click', () =>
+					document.documentElement.startViewTransition!({ types: ['test-type'] }).ready.catch(error)
+				);
+				button3.addEventListener('click', () => div1.startViewTransition!().ready.catch(error));
+				button4.addEventListener('click', () => {
+					console.log('STARTING 2');
+					div2.startViewTransition!().ready.catch(error);
+					console.log('STARTING 3');
+					div3.startViewTransition!().ready.catch(error);
+				});
+				button5.addEventListener('click', () => {
+					div1.startViewTransition!().ready.catch(error);
+					div2.startViewTransition!().ready.catch(error);
+					button3.startViewTransition!({ types: ['test-type'] }).ready.catch(error);
+					document.startViewTransition!().ready.catch(error);
+					div3.startViewTransition!({ types: ['test-type'] }).ready.catch(error);
+					div5.startViewTransition!().ready.catch(error);
+				});
+				button6.addEventListener('click', () => {
+					document.startViewTransition!(() => {
+						document.documentElement.classList.toggle('theme');
+					}).ready.catch(error);
+				});
+
+				declare global {
+					namespace CSS {
+						const paintWorklet: {
+							addModule(url: string): Promise<void>;
+						};
+					}
+				}
+			</script>
+		</body>
+	</html>

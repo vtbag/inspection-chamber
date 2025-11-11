@@ -87,14 +87,14 @@ function monkey<
 
 function animationStart(event: AnimationEvent) {
 	top!.dispatchEvent(
-		new CustomEvent('ic-animation-change', {
+		new CustomEvent('ic-animation-start', {
 			detail: { root: event.target, event },
 		})
 	);
 }
 function animationStop(event: AnimationEvent) {
 	top!.dispatchEvent(
-		new CustomEvent('ic-animation-change', {
+		new CustomEvent('ic-animation-stop', {
 			detail: { root: event.target, event },
 		})
 	);

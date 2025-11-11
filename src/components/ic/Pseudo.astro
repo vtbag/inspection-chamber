@@ -1,59 +1,28 @@
 <script>
-	import type { Group } from './group';
+import type { Group } from './group';
 	import { key } from './scope.ts';
 
 	class ICPseudo extends HTMLElement {
-		#initialized = false;
 		#computedStyle: CSSStyleDeclaration | undefined;
 		#dirty = false;
+		#animations: Animation[] = [];
 
 		constructor() {
 			super();
 		}
-		connectedCallback() {
-			if (!this.#initialized) {
-				this.#initialized = true;
 
-				let scope;
-				let groupElement;
-				let name = this.getAttribute('name');
-				if (!name) {
-					name = '::view-transition';
-					scope = (this.closest('vtbag-ic-scope') as VtbagIcScopeElement).element;
-				} else {
-					groupElement = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
-					name = `::view-transition-${name}(${groupElement.name})`;
-					scope = groupElement.scope.element;
-				}
-				// todo: simplify
-				this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(scope, name);
+		set animations(value: Animation[]) {
+			if (value.some((a) => !this.#animations.includes(a))) {
+				this.#animations = [...new Set<Animation>([...this.#animations, ...value])];
 
-				// potentially "slotted" elements
-				this.insertAdjacentHTML(
-					'afterbegin',
-					`<span class="name">${this.getAttribute('name')?.replace('image-pair', 'pair').replace('group-children', 'children') || '::view-transition'}</span>`
-				);
-
-				if (this.getAttribute('name') === 'group-children') {
-					const group = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!
-						.groupMaps.get(key(scope))
-						?.get(groupElement!.name) as Group;
-					let html = '<div name="children">';
-					let root = group;
-					while (root.parent) root = root.parent;
-					group.children.forEach(
-						(g) =>
-							(html += `<button data-group="${g.preOrder}" style="border: 2px solid oklch(0.65 0.11 ${(360 / (root.postOrder! - root.preOrder! + 1)) * g.preOrder!}deg / 1)">${g.name.replace(
-								/-vtbag-match-element-([0-9]+)/,
-								(_, num) => `match-element<sup>(${num})</sup>`
-							)}</button>`)
-					);
-					html += '</div>';
-					this.insertAdjacentHTML('beforeend', html);
-				}
+				this.#dirty = true;
+				this.render();
 			}
+		}
+		connectedCallback() {
 			this.render();
 		}
+
 		static get observedAttributes() {
 			return ['name'];
 		}
@@ -73,20 +42,46 @@
 			if (this.isConnected && this.#dirty) {
 				this.#dirty = false;
 
-				/*
-				root.querySelector<HTMLHeadElement>('.scope-path')!.innerText =
-					this.getAttribute('path') || '';
-				const list = root.querySelector('.anim-list')!;
-				list.innerHTML = '';
-				this.#animations.forEach((anim) => {
-					const item = this.#item.cloneNode(true) as HTMLElement;
-					item.querySelector<HTMLSpanElement>('.pseudo-name')!.innerText =
-						anim.effect?.pseudoElement || 'none';
-					item.querySelector<HTMLSpanElement>('.anim-name')!.innerText =
-						(anim.constructor.name === 'CSSAnimation' && (anim as CSSAnimation).animationName) ||
-						'none';
-					list.appendChild(item);
-				});*/
+				let scope;
+				let groupElement;
+				let name = this.getAttribute('name');
+				if (name === '::view-transition') {
+					scope = (this.closest('vtbag-ic-scope') as VtbagIcScopeElement).element;
+				} else {
+					groupElement = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
+					name = `::view-transition-${name}(${groupElement.name})`;
+					scope = groupElement.scope.element;
+				}
+				// todo: simplify
+				this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(scope, name);
+
+				// potentially "slotted" elements
+				this.insertAdjacentHTML(
+					'afterbegin',
+					`<span class="pseudo-head"><span class="name">${this.getAttribute('name')?.replace('image-pair', 'pair').replace('group-children', 'children') || '::view-transition'}</span><button class="toggle">🖽</button><button class="toggle visibility">
+  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#icon-eye-off"/>
+  </svg>
+</button></span>`
+				);
+
+				if (this.getAttribute('name') === 'group-children') {
+					const group = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!
+						.groupMaps.get(key(scope))
+						?.get(groupElement!.name) as Group;
+					let html = '<div name="children">';
+					let root = group;
+					while (root.parent) root = root.parent;
+					group.children.forEach(
+						(g) =>
+							(html += `<button data-group="${g.preOrder}" style="border: 2px solid oklch(0.7 0.07 ${(360 / (root.postOrder! - root.preOrder! + 1)) * g.preOrder!}deg / 1)">${g.name.replace(
+								/-vtbag-match-element-([0-9]+)/,
+								(_, num) => `match-element<sup>(${num})</sup>`
+							)}</button>`)
+					);
+					html += '</div>';
+					this.insertAdjacentHTML('beforeend', html);
+				}
 			}
 		}
 	}

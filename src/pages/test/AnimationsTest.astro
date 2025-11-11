@@ -12,7 +12,7 @@ import { Font } from 'astro:assets';
 		<Font cssVariable="--font-labels" preload />
 		<Font cssVariable="--font-logo" preload />
 
-		<style>
+		<style is:global>
 			body {
 				font-family: var(--font-label);
 			}
@@ -20,29 +20,55 @@ import { Font } from 'astro:assets';
 		<Animations />
 	</head>
 	<body>
+		<svg style="display: none;" aria-hidden="true">
+			<defs>
+				<symbol id="icon-eye-off" viewBox="0 0 24 24">
+					<path
+						d="M17.94 17.94A10.37 10.37 0 0 1 12 20C7 20 2.73 16.11 1 12c.73-1.63 1.8-3.06 3.06-4.23"
+					></path>
+					<path d="M9.9 9.9a3 3 0 1 1 4.24 4.24"></path>
+					<path d="M21 21L3 3"></path>
+					<path d="M14.12 14.12a3 3 0 0 1-4.24-4.24"></path>
+					<path d="M6.06 6.06A10.37 10.37 0 0 1 12 4c5 0 9.27 3.89 11 8-.73 1.63-1.8 3.06-3.06 4.23"
+					></path>
+				</symbol>
+				<symbol id="icon-eye-on" viewBox="0 0 24 24">
+					<path
+						d="M17.94 17.94A10.37 10.37 0 0 1 12 20C7 20 2.73 16.11 1 12c.73-1.63 1.8-3.06 3.06-4.23"
+					></path>
+					<path d="M9.9 9.9a3 3 0 1 1 4.24 4.24"></path>
+					<path d="M14.12 14.12a3 3 0 0 1-4.24-4.24"></path>
+					<path d="M6.06 6.06A10.37 10.37 0 0 1 12 4c5 0 9.27 3.89 11 8-.73 1.63-1.8 3.06-3.06 4.23"
+					></path>
+				</symbol>
+			</defs>
+		</svg>
+
 		<script>
 			import { setupHooks } from '@/ic2/hooks';
 			setupHooks();
 		</script>
-		<iframe id="ic-iframe" src="/iframe-src/" width="50%" height="100%"></iframe><vtbag-ic-animations></vtbag-ic-animations>
-		<style>
+		<iframe id="ic-iframe" src="/iframe-src/"></iframe><vtbag-ic-animations></vtbag-ic-animations>
+		<style is:global>
 			:root,
-			body {
+			body,
+			iframe {
 				margin: 0;
 				padding: 0;
 				height: 100%;
-				overflow: clip;
 			}
-			vtbag-ic-animations {
-				display: inline-block;
-				border-top: 1px solid #ccc;
-				box-sizing: border-box;
-				overflow: hidden;
-				height: 100%;
-				width:49vw;
+			vtbag-ic-animations,
+			iframe {
+				height: calc(100vh - 1px);
+				width: 50%;
+			}
+			body {
+				display: flex;
+				flex-direction: row;
+				gap: 0;
 			}
 			iframe {
-				display: inline-block;
+				border: 1px solid gray;
 			}
 		</style>
 	</body>

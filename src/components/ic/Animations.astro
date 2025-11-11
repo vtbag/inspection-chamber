@@ -9,17 +9,9 @@ import './studio.css';
 	<h2>Inspection Chamber</h2>
 	<div class="animations-head">
 		<div class="animations-head-main">
-			Scopes:
+			<span>View Transitions: <span id="view-transitions">0</span></span>
+			<span id="scopes">Scopes:</span>
 			<span id="scope-buttons"></span>
-		</div>
-		<div class="input-led-group">
-			<div class="input-led-item">
-				<input type="checkbox" id="freeze-toggle" checked />
-				<label for="freeze-toggle">
-					<span class="led"></span>
-					<span class="radio-text">Freeze</span>
-				</label>
-			</div>
 		</div>
 	</div>
 	<div class="scope-container"></div>
@@ -27,24 +19,33 @@ import './studio.css';
 <script>
 	import { capture } from './capture';
 	import { getElementSelector } from './element-selector';
-	import { type Group, size } from './group';
-import { highlight } from './highlight';
+	import { type Group } from './group';
+	import { highlight } from './highlight';
+	import { ledGroup } from './led-group';
 	import { key } from './scope';
-	import {allRoots } from '@/css';
+	import { allRoots } from '@/css';
 
 	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
-	const roots:Set<HTMLElement> = new Set();
 
 	class ICAnimations extends HTMLElement {
 		#initialized = false;
 		#throttleReRender = false;
-		#globalAnimations: Animation[] = [];
-		#scopes = new Map<HTMLElement, VtbagIcScopeElement>();
 		groupMaps: Map<Element, Map<string, Group>>;
+		#scopes = new Map<HTMLElement, VtbagIcScopeElement>();
 
 		constructor() {
 			super();
 			this.groupMaps = moduleGroupMaps;
+			top!.addEventListener('ic-about-to-finish', (e) => {
+				const root = (e as CustomEvent).detail.root;
+				const scopeKey = key(root);
+				const scope = this.#scopes.get(scopeKey)!;
+				this.#scopes.delete(scopeKey);
+				scope?.remove();
+				allRoots.delete(root);
+				this.renderHead();
+				document.documentElement.classList.remove('action');
+			});
 		}
 		connectedCallback() {
 			if (this.#initialized) return;
@@ -55,17 +56,62 @@ import { highlight } from './highlight';
 					true
 				)
 			);
-			addEventListener('ic-after-capture-new', this.mayRender);
-			addEventListener('ic-animation-change', this.mayRender);
-
-			const freezeToggle = this.querySelector<HTMLInputElement>('#freeze-toggle')!;
-			freezeToggle.addEventListener('change', () => {
-				if (freezeToggle!.checked) {
-					this.#globalAnimations.forEach((a) => a.pause());
-				} else {
-					this.#globalAnimations.forEach((a) => a.play());
+			this.querySelector<HTMLSpanElement>('#scopes')!.style.display = 'none';
+			this.querySelector<HTMLDivElement>('div.animations-head')!.insertAdjacentHTML(
+				'beforeend',
+				ledGroup({
+					className: 'freeze',
+					groupName: 'freeze',
+					checked: 'freeze',
+					alternatives: [
+						{
+							label: 'Freeze',
+							value: 'freeze',
+							id: 'freeze',
+						},
+						{
+							label: 'Next',
+							value: 'next',
+							id: 'next',
+						},
+						{
+							label: 'Run',
+							value: 'run',
+							id: 'run',
+						},
+					],
+				})
+			);
+			this.querySelector('.freeze')!.addEventListener('click', (e) => {
+				const clicked = e.target as HTMLInputElement;
+				if (clicked.tagName !== 'INPUT') return;
+				const top = clicked.closest('.input-led-group') as HTMLDivElement;
+				const freezeOption = this.querySelector<HTMLInputElement>(
+					'input[name="freeze"]:checked'
+				)?.value;
+				if (freezeOption)
+					this.querySelectorAll<HTMLInputElement>(
+						`.scope-container input[value=${freezeOption}]`
+					).forEach((input) => {
+						const top = input.closest('.input-led-group') as HTMLDivElement;
+						top.dataset.save = top.querySelector<HTMLInputElement>('input:checked')!.value;
+						input.click();
+					});
+				else {
+					this.querySelectorAll<HTMLInputElement>(
+						`.scope-container input[value=${freezeOption}]`
+					).forEach((input) => {
+						const top = input.closest('.input-led-group') as HTMLDivElement;
+						const saved = top.dataset.save;
+						if (saved === input.value) {
+							input.click();
+						}
+					});
 				}
 			});
+			addEventListener('ic-after-capture-new', this.mayRender);
+			addEventListener('ic-about-to-finish', this.mayRender);
+			addEventListener('ic-animation-start', this.mayRender);
 
 			this.querySelector<HTMLSelectElement>('#scope-buttons')!.addEventListener('click', (e) => {
 				const button = e.target as HTMLButtonElement;
@@ -77,78 +123,84 @@ import { highlight } from './highlight';
 		}
 
 		mayRender = (e: Event) => {
-			let again = false;
 			const detail = (e as CustomEvent).detail;
-			const root = detail.root;
-			if (detail.event?.type === 'animationend') {
-				setTimeout(() => this.mayRender(new CustomEvent('recall', { detail: { root } })), 1);
-				return;
-			}
+			let again = false;
 			if (this.#throttleReRender) {
 				again = true;
 				return;
 			}
+
+			const document = detail.root.ownerDocument;
+			this.animatedRender(document);
+
 			requestAnimationFrame(() => {
 				this.#throttleReRender = false;
-				if (again) this.animatedRender(root);
+				if (again) {
+					this.animatedRender(document);
+				}
+				again = false;
 			});
 			this.#throttleReRender = true;
-			this.animatedRender(root);
 		};
 
-		animatedRender(root: HTMLElement) {
-			//mayStartViewTransition(() => this.render());
-			this.render(root);
+		animatedRender(document: Document) {
+			this.render(document);
 		}
 
-		render(root: HTMLElement) {
+		render(document: Document) {
 			if (this.isConnected) {
-				const buttons = this.querySelector('#scope-buttons')!;
-				const newScopes = this.refreshAnimations(root.ownerDocument.getAnimations())!;
-				const scopeContainer = this.querySelector<HTMLDivElement>('div.scope-container')!;
+				if (!this.querySelector<HTMLInputElement>('#run')?.checked) {
+					//document.documentElement;
+					// .animate(
+					// 	[
+					// 		{ offset: 0, left: 0 },
+					// 		{ offset: 1, left: 0 },
+					// 	],
+					// 	{
+					// 		pseudoElement: '::view-transition',
+					// 		duration: 250 + 100,
+					// 		fill: 'forwards',
+					// 	}
+					// )
 
-				buttons.innerHTML = '';
-				[...this.#scopes.values().map((s) => s.path)]
-					.sort((a, b) => a.localeCompare(b))
-					.forEach((path) => {
-						buttons.insertAdjacentHTML('beforeend', `<button value="${path}">${path}</button>`);
-					});
-
-				let allScopesWeight = 0;
-				const scopeRoots: Group[] = [];
-				newScopes.forEach((_, scope) => {
-					const root = this.groupMaps.get(key(scope))!.get('@')!;
-					allScopesWeight += size(root);
-					root.scope = scope;
-					scopeRoots.push(root);
-				});
-				scopeRoots.sort((a, b) => size(b) - size(a));
-				scopeRoots.forEach((r) => console.log(r.scope!.id, size(r)));
-				const rect =
-					this.querySelector<HTMLDivElement>('.scope-container')!.getBoundingClientRect();
-
-				[...scopeContainer.children]
-					.sort((a, b) =>
-						a.querySelector('span')!.innerText.localeCompare(b.querySelector('span')!.innerText)
-					)
-					.forEach((c) => scopeContainer.appendChild(c));
+					this.refreshAnimations(document.getAnimations())!;
+				}
+				this.renderHead();
 			}
 		}
-		refreshAnimations(animations: Animation[]) {
-			const freezeToggle = this.querySelector<HTMLInputElement>('#freeze-toggle')!;
 
-			if (freezeToggle.checked) {
-				animations.forEach((a) => a.pause());
+		private renderHead() {
+			const firstScopeFreeze = this.querySelector<HTMLElement>('.scope-container .freeze');
+			const newDisplay = this.#scopes.size === 1 ? 'none' : 'flex';
+			if (firstScopeFreeze && firstScopeFreeze.style.display !== newDisplay) {
+				firstScopeFreeze.style.display = newDisplay;
+				firstScopeFreeze.closest('vtbag-ic-scope')!.updateHead();
 			}
+
+			const scopeContainer = this.querySelector<HTMLDivElement>('div.scope-container')!;
+			this.querySelector<HTMLSpanElement>('#view-transitions')!.innerText = '' + this.#scopes.size;
+			this.querySelector<HTMLSpanElement>('#scopes')!.style.display =
+				this.#scopes.size > 1 ? 'inline' : 'none';
+
+			const buttons = this.querySelector('#scope-buttons')!;
+			buttons.innerHTML = '';
+			[...this.#scopes.values().map((s) => s.path)]
+				.sort((a, b) => a.localeCompare(b))
+				.forEach((path) => {
+					buttons.insertAdjacentHTML('beforeend', `<button value="${path}">${path}</button>`);
+				});
+
+			const sorted = [...scopeContainer.children].sort((a, b) =>
+				a.querySelector('span')!.innerText.localeCompare(b.querySelector('span')!.innerText)
+			);
+
+			if ('moveBefore' in Element.prototype)
+				sorted.forEach((s) => scopeContainer.moveBefore(s, null));
+			else sorted.forEach((s) => scopeContainer.appendChild(s));
+		}
+
+		refreshAnimations(animations: Animation[]) {
 			const newScopes = new Map<HTMLElement, Animation[]>();
-			if (
-				animations.length === this.#globalAnimations.length &&
-				animations.every((a, i) => a === this.#globalAnimations[i])
-			) {
-				console.log('no change in global animations');
-				return newScopes;
-			}
-			this.#globalAnimations = animations;
 
 			animations.forEach((a) => {
 				if (
@@ -156,6 +208,7 @@ import { highlight } from './highlight';
 					// todo: deal with other types of animation
 					a.effect?.target
 				) {
+					if (a.constructor.name !== 'CSSAnimation') console.log('!!!', a);
 					const scope = a.effect!.target!;
 					let animations = newScopes.get(scope);
 					if (!animations) {
@@ -165,33 +218,41 @@ import { highlight } from './highlight';
 					animations.push(a);
 				}
 			});
-			console.log('newScopes', newScopes);
+			console.log('scopes in getAnimations()', newScopes);
 
-			newScopes.forEach((animations, elem) => {
-				this.refreshScope(elem, animations);
-			});
-			this.#scopes.forEach((scope, element) => {
-				if (!newScopes.has(scope.element)) {
-					scope.remove();
-					this.#scopes.delete(element);
+			newScopes.forEach((animations, element) => {
+				let scope = this.#scopes.get(key(element))!;
+				if (!scope) {
+					scope = document.createElement('vtbag-ic-scope');
+					scope.init(element, this.groupMaps.get(key(element))!.get('@')!, animations);
+					this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
+					this.#scopes.set(key(element), scope);
+				}
+				if (
+					scope.animations?.length !== animations.length ||
+					scope.animations.some((a, i) => a !== animations[i])
+				) {
+					scope.animations = animations;
 				}
 			});
 			return newScopes;
 		}
-
-		private refreshScope(element: HTMLElement, animations: Animation[]) {
-			let scope = this.#scopes.get(key(element))!;
-			if (!scope) {
-				scope = document.createElement('vtbag-ic-scope');
-				scope.init(element, this.groupMaps.get(key(element))!.get('@')!, animations);
-				this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
-				this.#scopes.set(key(element), scope);
-			}
-			if (
-				scope.animations?.length !== animations.length ||
-				scope.animations.some((a, i) => a !== animations[i])
-			) {
-				scope.animations = animations;
+		updateHead() {
+			const color = { red: true, green: true };
+			this.#scopes.forEach(
+				(scope) =>
+					(color[
+						scope.querySelector<HTMLInputElement>(`input[value^="run"]`)?.checked ? 'red' : 'green'
+					] = false)
+			);
+			this.querySelector('.animations-head input[name=freeze]:checked')!.classList.remove(
+				'red',
+				'orange'
+			);
+			if (color.red)
+				this.querySelector('.animations-head input[name=freeze]:checked')!.classList.add('red');
+			if (color.red === color.green) {
+				this.querySelector('.animations-head input[name=freeze]:checked')!.classList.add('orange');
 			}
 		}
 	}
@@ -199,17 +260,16 @@ import { highlight } from './highlight';
 	if (!customElements.get('vtbag-ic-animations'))
 		customElements.define('vtbag-ic-animations', ICAnimations);
 
-	['ic-before-capture-old', 'ic-before-capture-new'].forEach((event) =>
-		top!.addEventListener(event, (e) => {
+	['ic-before-capture-old', 'ic-before-capture-new'].forEach((eventName) =>
+		top!.addEventListener(eventName, (e) => {
 			const transitionRoot = (e as CustomEvent).detail.root;
+			if (transitionRoot.tagName === 'HTML') document.documentElement.classList.add('action');
 			const transitionRootKey = key(transitionRoot);
-			console.log(e.type, transitionRoot);
 			const groups =
-				e.type === 'ic-before-capture-old'
-					? new Map<string, Group>([
-							['@', { name: '@', className: '', children: [], ancestor: false }],
-						])
-					: moduleGroupMaps.get(transitionRootKey)!;
+				moduleGroupMaps.get(transitionRootKey) ??
+				new Map<string, Group>([
+					['@', { name: '@', className: '', children: [], ancestor: false }],
+				]);
 			const sheet = capture(transitionRoot, groups);
 			moduleGroupMaps.set(transitionRootKey, groups);
 
@@ -231,10 +291,12 @@ import { highlight } from './highlight';
 		})
 	);
 
-	top!.addEventListener('ic-before-capture-new', (e) =>
-		(e as CustomEvent).detail.root.ownerDocument.body.insertAdjacentHTML(
-			'beforeend',
-			`
+	top!.addEventListener('ic-before-capture-new', (e) => {
+		const head = (e as CustomEvent).detail.root.ownerDocument.head;
+		head.querySelector('#vtbag-ic-persistent-style') ||
+			head.insertAdjacentHTML(
+				'beforeend',
+				`
 <style id="vtbag-ic-persistent-style">
 	::view-transition-image-pair(*),
 	::view-transition-old(*),
@@ -249,12 +311,6 @@ import { highlight } from './highlight';
 }
 </style>
 `
-		)
-	);
-	top!.addEventListener('ic-about-to-finish', (e) =>{
-		allRoots.delete((e as CustomEvent).detail.root);
-		(e as CustomEvent).detail.root.ownerDocument.body
-			.querySelector('#vtbag-ic-persistent-style')
-			?.remove()
+			);
 	});
 </script>

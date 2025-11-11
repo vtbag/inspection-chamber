@@ -1,8 +1,8 @@
 ---
-
+const {style} = Astro.props;
 ---
 
-<div class="window" id="demo-window">
+<div class="window" {style}>
 	<div class="window-header" id="window-header">
 		<div class="window-title">
 			<slot name="title" />
@@ -34,27 +34,6 @@
 		font-weight: 400;
 		color-scheme: dark light;
 
-		--bg-primary: light-dark(#fafafa, #0a0a0a);
-		--bg-secondary: light-dark(#ffffff, #171717);
-		--bg-tertiary: light-dark(#f4f4f5, #262626);
-		--text-primary: light-dark(#18181b, #fafafa);
-		--text-secondary: light-dark(#71717a, #a1a1aa);
-		--border: light-dark(#e4e4e7, #404040);
-		--border-hover: light-dark(darkgreen, #525252);
-		--shadow: 2px 4px 2px -1px #46c4;
-		--shadow-lg: 2px 2px 14px #46c4;
-		--accent: light-dark(#3b82f6, #60a5fa);
-		--accent-hover: light-dark(#2563eb, #3b82f6);
-		--vt-root: teal;
-		--vt-group: darkgoldenrod;
-		--vt-image-pair: darkslategray;
-		--vt-old: darkslateblue;
-		--vt-new: darkolivegreen;
-		--vt-group-children: maroon;
-		font-synthesis: none;
-		text-rendering: optimizeLegibility;
-		-webkit-font-smoothing: antialiased;
-		-moz-osx-font-smoothing: grayscale;
 	}
 
 	.window {
@@ -64,17 +43,15 @@
 		height: var(--window-height, 300px);
 		left: var(--window-left, 100px);
 		top: var(--window-top, 100px);
-		background: var(--bg-secondary);
-		border: 1px solid var(--border);
+		background-color: black;
 		border-radius: 12px;
-		box-shadow: var(--shadow-lg);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-		backdrop-filter: blur(8px);
-		transition-behavior: allow-discrete;
-		transition-property: width, height, display;
-		transition-duration: 100ms;
+		/* backdrop-filter: blur(8px); */
+		/* transition-behavior: allow-discrete; */
+		/* transition-property: width, height, display; */
+		/* transition-duration: 100ms; */
 	}
 
 	.window.minimized {
@@ -140,16 +117,7 @@
 	}
 
 	.window-content {
-		flex: 1 1 auto;
-		padding: 24px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 1.25rem;
-		font-weight: 500;
-		color: var(--text-primary);
-		background: var(--bg-secondary);
-		overflow: scroll;
+		width: 100%;
 	}
 
 	.window.minimized .window-content {
@@ -257,7 +225,7 @@
 	}
 
 	function setupWindow() {
-		const theWindow = document.getElementById('demo-window') as HTMLElement;
+		const theWindow = document.querySelector('.window') as HTMLElement;
 		const header = document.getElementById('window-header') as HTMLElement;
 		const minimizeBtn = document.getElementById('minimize-btn') as HTMLElement;
 

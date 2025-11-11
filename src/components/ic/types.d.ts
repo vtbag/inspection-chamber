@@ -13,16 +13,17 @@ declare namespace JSX {
 }
 declare global {
 	interface VtbagIcAnimationsElement extends HTMLElement {
+		updateHead(): unknown;
 		groupMaps: Map<HTMLElement, Map<string, Group>>;
 	}
 	interface VtbagIcScopeElement extends HTMLElement {
-		small: any;
 		init(element: HTMLElement, root: Group, animations: Animation[]): void;
 		get element(): HTMLElement;
 		get path(): string;
 		get scopeId(): number;
 		animations: Animation[];
 		get size(): string;
+		updateHead(): void;
 	}
 	interface VtbagIcGroupListElement extends HTMLElement {
 		sort(by: 'alpha' | 'paint-order'): void;
