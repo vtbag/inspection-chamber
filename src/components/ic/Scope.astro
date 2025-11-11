@@ -11,10 +11,12 @@ import GroupList from './GroupList.astro';
 	import { type Group, isSorted } from './group';
 	import { highlight } from './highlight';
 	import { ledGroup, type LEDs } from './led-group';
+	import { slider, setMaxValue } from './slider';
+	import { addBlinds } from './blinds';
 
 	class ICScope extends HTMLElement {
 		#scope: HTMLElement | null = null;
-		#group: Group | undefined = undefined;
+		#rootGroup: Group | undefined = undefined;
 		#animations: Animation[] = [];
 		#path: string | undefined = undefined;
 		#dirty = false;
@@ -22,6 +24,9 @@ import GroupList from './GroupList.astro';
 		#id = ICScope.#nextId++;
 		#sortLEDs: LEDs;
 		#sizeLEDs: LEDs;
+		#freezeLEDs: LEDs;
+		#timings: Map<Animation, ComputedEffectTiming> = new Map();
+		#longestDuration?: number;
 
 		constructor() {
 			super();
@@ -29,32 +34,62 @@ import GroupList from './GroupList.astro';
 			this.#sortLEDs = {
 				className: 'sort',
 				groupName: `scope-sort-${this.#id}`,
-				checked: "paint-order",
-				alternatives: [{
-					label: 'Alphabetical',
-					value: 'alpha',
-					id:`scope-sort-${this.#id}-alpha`,
-				}, {
-					label: 'Paint Order',
-					value: 'paint-order',
-					id: `scope-sort-${this.#id}-paint-order`
-				}]
+				checked: 'alpha',
+				alternatives: [
+					{
+						label: 'Alphabetical',
+						value: 'alpha',
+						id: `scope-sort-${this.#id}-alpha`,
+					},
+					{
+						label: 'Paint Order',
+						value: 'paint-order',
+						id: `scope-sort-${this.#id}-paint-order`,
+					},
+				],
 			};
 			this.#sizeLEDs = {
 				className: 'size',
 				groupName: `scope-size-${this.#id}`,
 				checked: 'large',
-				alternatives: [{
-					label: 'Small',
-					value: 'small',
-					id: `scope-size-${this.#id}-small`,
-				}, {
-					label: 'Large',
-					value: 'large',
-					id: `scope-size-${this.#id}-large`,
-				}]
+				alternatives: [
+					{
+						label: 'Small',
+						value: 'small',
+						id: `scope-size-${this.#id}-small`,
+					},
+					{
+						label: 'Large',
+						value: 'large',
+						id: `scope-size-${this.#id}-large`,
+					},
+				],
+			};
+			this.#freezeLEDs = {
+				className: 'freeze',
+				groupName: `freeze-${this.#id}`,
+				checked: 'none',
+				alternatives: [
+					{
+						label: 'Freeze',
+						value: 'freeze',
+						id: `freeze-${this.#id}`,
+					},
+					{
+						label: 'Next',
+						value: 'next',
+						id: `next${this.#id}`,
+					},
+					{
+						label: 'Run',
+						value: 'run',
+						id: `run-${this.#id}`,
+					},
+				],
 			};
 		}
+
+		connectedMoveCallback() {}
 		connectedCallback() {
 			this.render();
 		}
@@ -76,20 +111,21 @@ import GroupList from './GroupList.astro';
 
 		init(element: HTMLElement, root: Group, animations: Animation[]) {
 			this.#scope = element;
-			this.#group = root;
+			this.#rootGroup = root;
 			this.#animations = animations;
 			this.#path = undefined;
 			this.#dirty = true;
-			this.render();
 		}
 
 		get animations() {
 			return this.#animations;
 		}
 		set animations(value: Animation[]) {
-			this.#animations = value;
-			this.#dirty = true;
-			this.render();
+			if (value.some((a) => !this.#animations.includes(a))) {
+				this.#animations = [...new Set<Animation>([...this.#animations, ...value])];
+				this.#dirty = true;
+				this.render();
+			}
 		}
 
 		render() {
@@ -97,82 +133,87 @@ import GroupList from './GroupList.astro';
 				this.#dirty = false;
 				let html = `<div class="scope-head"><div class="scope-head-main"><h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>`;
 
-				html += this.topLevelGroups(this.#group!, false);
+				html += this.topLevelGroups(this.#rootGroup!, true);
 				html += '</div>';
 
-				if (!isSorted(this.#group!)) {
+				html += slider(`slider-${this.#id}`, `slider-${this.#id}`);
+				if (!isSorted(this.#rootGroup!)) {
 					html += ledGroup(this.#sortLEDs);
 				}
 				html += ledGroup(this.#sizeLEDs);
 
+				this.#freezeLEDs.checked =
+					this.closest('vtbag-ic-animations')!.querySelector<HTMLInputElement>(
+						'.animations-head input[name="freeze"]:checked'
+					)?.value ?? 'none';
+
+				html += ledGroup(this.#freezeLEDs);
 				html += '</div>';
-				this.innerHTML =
-					html +
-					`
-	<vtbag-ic-pseudo></vtbag-ic-pseudo>
-	<vtbag-ic-group-list></vtbag-ic-group-list>`;
-				const groupList = this.lastElementChild as VtbagIcGroupListElement;
-				groupList.animations = this.animations;
 
-				const error = (e: any) => console.error('View Transition error:', e);
+				this.innerHTML = html;
 
-				this.querySelector('.input-led-group.sort')?.addEventListener('change', (e) => {
-					this.#sortLEDs.checked = (e.target as HTMLInputElement).value;
-					const transition = mayStartViewTransition!(
-						{
-							update: () => {
-								const alpha = this.querySelector<HTMLInputElement>(`input[value="alpha"]`)!.checked;
-								groupList.sort(alpha ? 'alpha' : 'paint-order');
-								const children = this.querySelector('.children')!;
-								children.insertAdjacentHTML('afterend', this.topLevelGroups(this.#group!, alpha));
-								children.remove();
-							},
-							types: ['sort'],
-						},
-						{ useTypesPolyfill: 'always' }
+				if (this.querySelector<HTMLInputElement>(`input[value="next"]`)!.checked) {
+					const input = this.querySelector<HTMLInputElement>(`input[value="freeze"]`)!;
+					input.click();
+					input.clientHeight;
+				}
+
+				if (this.querySelector<HTMLInputElement>(`input[value="freeze"]`)!.checked) {
+					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.add(
+						'red'
 					);
-					transition.updateCallbackDone.catch(error);
-					transition.ready.catch(error);
-				});
-
-				this.querySelector('.input-led-group.size')?.addEventListener('change', (e) => {
-					this.#sizeLEDs.checked = (e.target as HTMLInputElement).value;
-
-					const styles: string[] = [];
-					document.querySelectorAll<VtbagIcGroupElement>('vtbag-ic-group').forEach((g) => {
-						styles.push(`
-::view-transition-group(${g.style.getPropertyValue('--vtn')}) {
-	outline: ${g.style.outline};
-	border-radius: 4px;	
-}`);
+					this.animations.forEach((a) => {
+						a.pause();
+						a.currentTime = 0;
 					});
-					document.head.insertAdjacentHTML(
-						'beforeend',
-						`
-<style data-vtbag="size-vt">
-${styles.join('\n')}
-</style>`
+				}
+				if (this.querySelector<HTMLInputElement>(`input[value="run"]`)!.checked) {
+					// todo: do we need this? Animation should not be paused on enter
+					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
+						'red'
 					);
-					const transition = mayStartViewTransition!(
-						{
-							update: () => {
-								const small = this.querySelector<HTMLInputElement>(`input[value="small"]`)!.checked;
-								this.querySelectorAll<VtbagIcGroupElement>(
-									'vtbag-ic-group vtbag-ic-pseudo[name="group"]'
-								).forEach((pseudo) => (pseudo.style.height = small ? '0px' : ''));
-							},
-							types: ['resize'],
-						},
-						{ useTypesPolyfill: 'always' }
-					);
-					transition.updateCallbackDone.catch(error);
-					transition.ready.catch(error);
-					transition.finished.then(() =>
-						document.head.querySelector('style[data-vtbag="size-vt"]')?.remove()
-					);
-				});
+					this.animations.forEach((a) => a.play());
+				}
 
-				this.addEventListener('click', (e) => {
+				(this.closest('vtbag-ic-animations') as VtbagIcAnimationsElement).updateHead();
+				this.updateHead();
+
+				this.insertAdjacentHTML(
+					'beforeend',
+					'<vtbag-ic-pseudo name="::view-transition"></vtbag-ic-pseudo>'
+				);
+
+				const groupList = document.createElement('vtbag-ic-group-list') as VtbagIcGroupListElement;
+				groupList.animations = this.animations;
+				this.appendChild(groupList);
+
+				const error = (e: any) => console.error('View Transition error:', e, ' Cause:', e.cause);
+
+				this.setupSlider();
+				this.addSortListener(groupList, error);
+				this.addResizeListener(error);
+				this.addFreezeListener();
+				this.addButtonListener();
+			}
+		}
+		setupSlider() {
+			this.#animations.forEach((a) => this.#timings.set(a, a.effect!.getComputedTiming()));
+			this.#longestDuration = this.#animations.reduce(
+				(max, a) => Math.max(max, this.#timings.get(a)!.duration as number),
+				0
+			);
+			setMaxValue(`slider-${this.#id}`, this.#longestDuration, (e) => {
+				this.animations.forEach((a) => {
+					a.currentTime = parseInt((e.target as HTMLInputElement).value);
+				});
+			});
+		}
+		updateHead() {
+			addBlinds(this.querySelector('.scope-head')!, 'div', 'head-blind');
+		}
+		private addButtonListener() {
+			[this.children[0], this.children[2]].forEach((x) =>
+				x.addEventListener('click', (e) => {
 					const button = e.target as HTMLButtonElement;
 					let id: string | undefined;
 					if (button.tagName === 'BUTTON' || button.tagName === 'H3') {
@@ -189,12 +230,99 @@ ${styles.join('\n')}
 								);
 
 					highlight(group);
-				});
-			}
+				})
+			);
 		}
-		topLevelGroups(group: Group, alpha = false) {
+
+		private addResizeListener(error: (e: any) => void) {
+			this.querySelector('.input-led-group.size')?.addEventListener('change', (e) => {
+				this.#sizeLEDs.checked = (e.target as HTMLInputElement).value;
+
+				const styles: string[] = [];
+				document.querySelectorAll<VtbagIcGroupElement>('vtbag-ic-group').forEach((g) => {
+					styles.push(`
+::view-transition-group(${g.style.getPropertyValue('--vtn')}) {
+	outline: ${g.style.outline};
+	border-radius: 4px;	
+}`);
+				});
+				document.head.insertAdjacentHTML(
+					'beforeend',
+					`
+<style data-vtbag="size-vt">
+${styles.join('\n')}
+</style>`
+				);
+				const transition = mayStartViewTransition!(
+					{
+						update: () => {
+							const small = this.querySelector<HTMLInputElement>(`input[value="small"]`)!.checked;
+							this.querySelectorAll<VtbagIcGroupElement>(
+								'vtbag-ic-group vtbag-ic-pseudo[name="group"]'
+							).forEach((pseudo) => (pseudo.style.height = small ? '0px' : ''));
+						},
+						types: ['resize'],
+					},
+					{ useTypesPolyfill: 'always' }
+				);
+				transition.updateCallbackDone.catch(error);
+				transition.ready.catch(error);
+				transition.finished.then(() =>
+					document.head.querySelector('style[data-vtbag="size-vt"]')?.remove()
+				);
+			});
+		}
+
+		private addSortListener(groupList: VtbagIcGroupListElement, error: (e: any) => void) {
+			this.querySelector('.input-led-group.sort')?.addEventListener('change', (e) => {
+				this.#sortLEDs.checked = (e.target as HTMLInputElement).value;
+				const transition = mayStartViewTransition!(
+					{
+						update: () => {
+							const alpha = this.querySelector<HTMLInputElement>(`input[value="alpha"]`)!.checked;
+							groupList.sort(alpha ? 'alpha' : 'paint-order');
+							const children = this.querySelector('.children')!;
+							children.insertAdjacentHTML('afterend', this.topLevelGroups(this.#rootGroup!, alpha));
+							children.remove();
+						},
+						types: ['sort'],
+					},
+					{ useTypesPolyfill: 'always' }
+				);
+				transition.updateCallbackDone.catch(error);
+				transition.ready.catch(error);
+			});
+		}
+
+		private addFreezeListener() {
+			this.querySelector('.input-led-group.freeze')?.addEventListener('change', (e) => {
+				if ((e.target as HTMLElement)?.tagName !== 'INPUT') return;
+				if (this.querySelector<HTMLInputElement>(`input[value="freeze"]:checked`)) {
+					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)?.classList.add(
+						'red'
+					);
+					this.#animations.forEach((a) => a.pause());
+				}
+				if (
+					this.querySelector<HTMLInputElement>(
+						`input[value="run"]:checked, input[value="next"]:checked`
+					)
+				) {
+					this.#animations.forEach((a) => {
+						this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
+							'red'
+						);
+						a.currentTime === this.#longestDuration && (a.currentTime = this.#longestDuration - 1);
+						a.play();
+					});
+				}
+				(this.closest('vtbag-ic-animations') as VtbagIcAnimationsElement).updateHead();
+			});
+		}
+
+		topLevelGroups(rootGroup: Group, alpha = true) {
 			let html = '<div class="children">Groups: ';
-			const buttons = [...group.children];
+			const buttons = [...rootGroup.children];
 
 			if (alpha) {
 				buttons.sort((a, b) =>
@@ -207,7 +335,7 @@ ${styles.join('\n')}
 					/-vtbag-match-element-([0-9]+)/,
 					(_, num) => `match-element<sup>(${num})</sup>`
 				);
-				html += `<button data-group="${g.preOrder}" style="--vtn: b-${this.#id}-${g.preOrder}; border: 2px solid oklch(0.65 0.11 ${(360 / (group.postOrder! - group.preOrder! + 1)) * g.preOrder!}deg / 1)">${name}</button>`;
+				html += `<button data-group="${g.preOrder}" style="--vtn: b-${this.#id}-${g.preOrder}; border: 2px solid oklch(0.7 0.07 ${(360 / (rootGroup.postOrder! - rootGroup.preOrder! + 1)) * g.preOrder!}deg / 1)">${name}</button>`;
 			});
 			html += '</div>';
 			return html;

@@ -1,0 +1,108 @@
+---
+
+---
+
+<html lang="en">
+	<head>
+		<title>Animations Test iframe</title>
+		<meta charset="UTF-8" />
+		<style is:inline>
+			:root {
+				color-scheme: dark;
+				view-transition-name: holla;
+				background-color: #222;
+			}
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			header p {
+				view-transition-name: a-very-long-name-for-a-paragraph-element;
+			}
+		</style>
+		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
+		<script is:inline src="/attach.js"></script>
+	</head>
+	<body>
+		<main
+			style="max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif;"
+		>
+			<header style="text-align: center; margin-bottom: 3rem;">
+				<h1
+					style="view-transition-name: h1; font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
+				>
+					Welcome to Our Platform
+				</h1>
+				<p style="font-size: 1.25rem; color: #a0aec0; max-width: 600px; margin: 0 auto;">
+					Discover amazing features and unlock your potential with our innovative solutions.
+				</p>
+			</header>
+			<div style="text-align: center; margin-bottom: 2rem;">
+				<img
+					id="featured-image"
+					src="/bot1.png"
+					alt="Featured"
+					style="view-transition-name: img; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; height: auto;"
+				/>
+			</div>
+
+			<div style="text-align: center;">
+				<button
+					id="expand-btn"
+					style="view-transition-name: button; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1rem 2rem; font-size: 1.1rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.2s;"
+				>
+					Expand Image
+				</button>
+			</div>
+
+			<section style="view-transition-name: section; margin-bottom: 3rem;">
+				<h2 style="font-size: 2rem; margin-bottom: 1rem; color: #e2e8f0;">Why Choose Us?</h2>
+				<p style="line-height: 1.8; color: #cbd5e0; margin-bottom: 1rem;">
+					We believe in creating exceptional experiences that make a difference. Our platform is
+					designed with you in mind, offering intuitive tools and powerful features that help you
+					achieve your goals faster.
+				</p>
+				<p style="line-height: 1.8; color: #cbd5e0;">
+					Join thousands of satisfied users who have transformed their workflow and discovered new
+					possibilities with our cutting-edge technology.
+				</p>
+			</section>
+		</main>
+
+		<script>
+			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+
+			const btn = document.getElementById('expand-btn');
+			const img = document.getElementById('featured-image');
+			let isExpanded = false;
+
+			btn?.addEventListener('click', () => {
+				mayStartViewTransition({
+					update() {
+						if (isExpanded) {
+							img?.setAttribute('src', '/bot1.png');
+							if (btn) btn.textContent = 'Expand Image';
+						} else {
+							img?.setAttribute('src', '/heroine.png');
+							if (btn) btn.textContent = 'Shrink Image';
+						}
+						isExpanded = !isExpanded;
+						const header = document.querySelector('header');
+						console.log(header, header?.firstElementChild)
+						header?.appendChild(header.firstElementChild!);
+					},
+					types: ['image-expand'],
+				});
+			});
+
+			btn?.addEventListener('mouseenter', () => {
+				if (btn) btn.style.transform = 'translateY(-2px)';
+			});
+
+			btn?.addEventListener('mouseleave', () => {
+				if (btn) btn.style.transform = 'translateY(0)';
+			});
+		</script>
+	</body>
+</html>
