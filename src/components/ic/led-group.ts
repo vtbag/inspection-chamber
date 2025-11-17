@@ -10,7 +10,7 @@ export type LEDs = {
 };
 export function ledGroup(leds: LEDs) {
 	return `
-		<div class="input-led-group ${leds.className}">
+		<div class="input-led-group ${leds.className}" style="view-transition-name:ilg-${leds.groupName}">
 		${leds.alternatives
 			.map(
 				(alt) => `

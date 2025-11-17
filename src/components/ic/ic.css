@@ -306,13 +306,7 @@ vtbag-ic-group-list {
 	gap: 8px;
 	padding: 4px;
 	contain: paint;
-	/*grid-auto-flow: dense;
-	grid-auto-rows: 0px;
-	row-gap: 1px;
-	> * {
-		align-self: start;
-		grid-column-end: span var(--span, 1);
-	}*/
+	/*grid-auto-flow: dense;*/
 }
 
 button {

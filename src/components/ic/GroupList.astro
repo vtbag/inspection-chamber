@@ -14,7 +14,7 @@ import Group from './Group.astro';
 		#dirty = false;
 		#observer?: ResizeObserver;
 		cards: Map<string, VtbagIcGroupElement>;
-		#requestedResort = false;
+		#resizeToggle = false;
 		#scope?: VtbagIcScopeElement;
 
 		constructor() {
@@ -25,18 +25,13 @@ import Group from './Group.astro';
 			this.#scope = this.closest<VtbagIcScopeElement>('vtbag-ic-scope')!;
 
 			this.#observer = new ResizeObserver(() => {
-				if (this.#requestedResort || getCurrentViewTransition()) {
+				if (this.#resizeToggle || getCurrentViewTransition()) {
 					return;
 				}
-				this.#requestedResort = true;
-
+				this.#resizeToggle = true;
 				requestAnimationFrame(() => {
-					this.sort(
-						this.#scope!.querySelector<HTMLInputElement>('input[value="alpha"]')?.checked
-							? 'alpha'
-							: 'paint-order'
-					);
-					this.#requestedResort = false;
+					addBlinds(this, 'vtbag-ic-group', 'nameless-group', '' + this.#scope!.scopeId, 'blind');
+					this.#resizeToggle = false;
 				});
 			});
 			this.#observer.observe(this);
@@ -88,7 +83,6 @@ import Group from './Group.astro';
 						// todo: push animation to pseudo-element
 					} else {
 						let group = groups.get(groupName);
-						console.log('groupName, group :>> ', groupName, group);
 						this.refreshGroup(group, groupAnimations);
 					}
 				});
@@ -120,7 +114,7 @@ import Group from './Group.astro';
 			if ('moveBefore' in Element.prototype) sorted.forEach((s) => this.moveBefore(s, null));
 			else sorted.forEach((s) => this.appendChild(s));
 
-			addBlinds(this, 'vtbag-ic-group', '', '' + this.#scope!.scopeId, 'blind');
+			addBlinds(this, 'vtbag-ic-group', 'nameless-group', '' + this.#scope!.scopeId, 'blind');
 		}
 		private refreshGroup(group: Group, animations: Animation[]) {
 			let card = this.cards.get(group.name)!;

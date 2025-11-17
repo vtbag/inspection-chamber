@@ -42,6 +42,7 @@ import './studio.css';
 				const root = (e as CustomEvent).detail.root;
 				const scopeKey = key(root);
 				const scope = this.#scopes.get(scopeKey)!;
+				scope && (scope.animations = []);
 				this.#scopes.delete(scopeKey);
 				scope?.remove();
 				allRoots.delete(root);
@@ -131,7 +132,6 @@ import './studio.css';
 				this.updateAnimationsHead();
 			});
 			addEventListener('ic-after-capture-new', this.mayRender);
-			addEventListener('ic-about-to-finish', this.mayRender);
 			addEventListener('ic-animation-start', this.mayRender);
 
 			this.querySelector<HTMLSelectElement>('#scope-buttons')!.addEventListener('click', (e) => {
@@ -180,7 +180,7 @@ import './studio.css';
 
 		private renderHead() {
 			const firstScopeFreeze = this.querySelector<HTMLElement>('.scope-container .freeze');
-			const newDisplay = this.#scopes.size === 1 ? 'none' : 'flex';
+			const newDisplay = this.#scopes.size <= 1 ? 'none' : 'flex';
 			if (firstScopeFreeze && firstScopeFreeze.style.display !== newDisplay) {
 				firstScopeFreeze.style.display = newDisplay;
 			}

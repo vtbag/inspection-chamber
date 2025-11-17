@@ -10,7 +10,7 @@ export type LEDs = {
 };
 export function slider(id: string, name: string): string {
 	return `
-<div class="horizontal-slider-container">
+<div class="horizontal-slider-container" style="view-transition-name: hsc-${id}">
 	<div class="slider-track">
 		<div class="slider-fill"></div>
 		<input type="range" id="${id}" name="${name}" min="0" max="500" value="0" step="1">
