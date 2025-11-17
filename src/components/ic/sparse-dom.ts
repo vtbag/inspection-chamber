@@ -1,4 +1,3 @@
-
 export type SparseDOMNode = {
 	viewTransitionName: string;
 	viewTransitionGroup?: string;
@@ -48,14 +47,12 @@ export function linkToParent(
 		root.children.push(node);
 		node.paintGroup = paintGroup(node, root.style);
 		return;
-	};
+	}
 
 	let me = node;
 	let current = node.element;
 
-
 	while (current !== transitionRoot) {
-
 		let parent = elementMap.get(current.parentElement!);
 		if (parent) {
 			parent.children.push(me);
@@ -81,7 +78,6 @@ export function linkToParent(
 }
 
 export function sort(node: SparseDOMNode) {
-
 	for (let i = 0; i < node.children.length; ++i) {
 		const child = node.children[i];
 		sort(child);
@@ -98,7 +94,7 @@ export function sort(node: SparseDOMNode) {
 	}
 	node.children.sort((a, b) =>
 		a.paintGroup !== b.paintGroup
-			? (a.paintGroup! - b.paintGroup!)
+			? a.paintGroup! - b.paintGroup!
 			: a.zIndex !== b.zIndex
 				? a.zIndex! - b.zIndex!
 				: a.order !== b.order
@@ -110,11 +106,27 @@ export function sort(node: SparseDOMNode) {
 }
 
 export function print(group: SparseDOMNode, depth = 0) {
-	console.log(`${' '.repeat(depth * 2)}- ${group.element.tagName} ${group.viewTransitionName} ${group.paintGroup} ${group.zIndex}`);
+	console.log(
+		`${' '.repeat(depth * 2)}- ${group.element.tagName} ${group.viewTransitionName} ${group.paintGroup} ${group.zIndex}`
+	);
 	group.children.forEach((child) => print(child, depth + 1));
 }
 
-const noneProps = ['backdrop-filter', 'clip-path', 'filter', 'mask', 'mask-image', 'perspective', 'rotate', 'scale', 'transform', 'translate', 'view-transition-name', 'webkit-transform', 'webkit-mask'];
+const noneProps = [
+	'backdrop-filter',
+	'clip-path',
+	'filter',
+	'mask',
+	'mask-image',
+	'perspective',
+	'rotate',
+	'scale',
+	'transform',
+	'translate',
+	'view-transition-name',
+	'webkit-transform',
+	'webkit-mask',
+];
 const otherProps = ['isolation', 'mix-blend-mode', 'opacity', 'position', 'container-type'];
 const allProps = [...noneProps, ...otherProps];
 
@@ -138,13 +150,19 @@ function createsStackingContext(node: SparseDOMNode, parentStyle: CSSStyleDeclar
 	}
 	if (element === document.documentElement) return true;
 	if (['fixed', 'sticky'].includes(style.position)) return true;
-	if (['layout', 'paint', 'strict', 'content'].some((val) => style.contain.includes(val))) return true;
+	if (['layout', 'paint', 'strict', 'content'].some((val) => style.contain.includes(val)))
+		return true;
 	if (style.containerType === 'size' || style.containerType === 'inline-size') return true;
 	if (style.isolation && style.isolation === 'isolate') return true;
 	if (style.mixBlendMode && style.mixBlendMode !== 'normal') return true;
 	if (parseFloat(style.opacity || '1') < 1) return true;
 
-	if (noneProps.some((prop) => style.getPropertyValue(prop) && style.getPropertyValue(prop) !== 'none')) return true;
+	if (
+		noneProps.some(
+			(prop) => style.getPropertyValue(prop) && style.getPropertyValue(prop) !== 'none'
+		)
+	)
+		return true;
 
 	if (allProps.some((val) => style.willChange.includes(val))) return true;
 	// @ts-expect-error
@@ -153,16 +171,18 @@ function createsStackingContext(node: SparseDOMNode, parentStyle: CSSStyleDeclar
 	return false;
 }
 
-
 export function getZIndex(node: SparseDOMNode, parentStyle: CSSStyleDeclaration): number {
 	const { style, element } = node;
-	if (element.matches(':fullscreen, :popover-open, dialog[open]')) return Number.MAX_SAFE_INTEGER; /* todo: record open event to identify correct paint order */
+	if (element.matches(':fullscreen, :popover-open, dialog[open]'))
+		return Number.MAX_SAFE_INTEGER; /* todo: record open event to identify correct paint order */
 
 	if (style.zIndex === 'auto') return 0;
-	if (!parentStyle.display.includes('flex') && !parentStyle.display.includes('grid') && style.position === 'static') return 0;
+	if (
+		!parentStyle.display.includes('flex') &&
+		!parentStyle.display.includes('grid') &&
+		style.position === 'static'
+	)
+		return 0;
 	const zValue = parseInt(style.zIndex, 10);
 	return isNaN(zValue) ? 0 : zValue;
 }
-
-
-

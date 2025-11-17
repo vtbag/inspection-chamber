@@ -1,4 +1,10 @@
-export function addBlinds(container: Element, tagName: string, className = "", viewTransitionName = "", viewTransitionClass="none" ) {
+export function addBlinds(
+	container: Element,
+	tagName: string,
+	className = '',
+	viewTransitionName = '',
+	viewTransitionClass = 'none'
+) {
 	let children = [...container.children];
 
 	if (className) {
@@ -29,7 +35,7 @@ export function addBlinds(container: Element, tagName: string, className = "", v
 			if (span > 0) {
 				container.children[i].insertAdjacentHTML(
 					'afterend',
-					`<${tagName} ${className ? `class="${className}"` : ""} style="grid-column: span ${span}; ${viewTransitionName ? `--vtn: p-${viewTransitionName}-${cnt++}; view-transition-class: ${viewTransitionClass}` : ""}"></${tagName}>`
+					`<${tagName} ${className ? `class="${className}"` : ''} style="grid-column: span ${span}; ${viewTransitionName ? `--vtn: p-${viewTransitionName}-${cnt++}; view-transition-class: ${viewTransitionClass}` : ''}"></${tagName}>`
 				);
 			}
 		}

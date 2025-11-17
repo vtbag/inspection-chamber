@@ -6,7 +6,7 @@ import './studio.css';
 
 <Scope />
 <template id="vtbag-ic-animations">
-	<h2>Inspection Chamber</h2>
+	<h2 class="ic-label">Inspection Chamber</h2>
 	<div class="animations-head">
 		<div class="animations-head-main">
 			<span>View Transitions: <span id="view-transitions">0</span></span>
@@ -32,22 +32,39 @@ import './studio.css';
 		#throttleReRender = false;
 		groupMaps: Map<Element, Map<string, Group>>;
 		#scopes = new Map<HTMLElement, VtbagIcScopeElement>();
+		#observer?: ResizeObserver;
+		#rootDocument?: Document;
 
 		constructor() {
 			super();
 			this.groupMaps = moduleGroupMaps;
-			top!.addEventListener('ic-about-to-finish', (e) => {
+			self.addEventListener('ic-about-to-finish', (e) => {
 				const root = (e as CustomEvent).detail.root;
 				const scopeKey = key(root);
 				const scope = this.#scopes.get(scopeKey)!;
 				this.#scopes.delete(scopeKey);
 				scope?.remove();
 				allRoots.delete(root);
+				parent.document.documentElement.classList.remove('action');
 				this.renderHead();
-				document.documentElement.classList.remove('action');
+				this.updateAnimationsHead();
 			});
 		}
+
+		disconnectCallback() {
+			this.#observer?.disconnect();
+		}
+
 		connectedCallback() {
+			this.#observer = new ResizeObserver(([entry]) => {
+				const { inlineSize: w, blockSize: h } = entry.contentBoxSize[0] ?? entry.contentRect;
+				const orientation = w > h ? 'landscape' : 'portrait';
+				if (orientation !== document.documentElement.dataset.orientation) {
+					document.documentElement.dataset.orientation = orientation;
+				}
+			});
+			this.#observer.observe(this.parentElement!);
+
 			if (this.#initialized) return;
 			this.#initialized = true;
 
@@ -85,11 +102,14 @@ import './studio.css';
 			this.querySelector('.freeze')!.addEventListener('click', (e) => {
 				const clicked = e.target as HTMLInputElement;
 				if (clicked.tagName !== 'INPUT') return;
-				const top = clicked.closest('.input-led-group') as HTMLDivElement;
 				const freezeOption = this.querySelector<HTMLInputElement>(
 					'input[name="freeze"]:checked'
 				)?.value;
-				if (freezeOption)
+				if (freezeOption) {
+					if (freezeOption === 'freeze' && this.#scopes.size === 0) {
+						this.refreshAnimations(this.#rootDocument!.getAnimations())!;
+						return;
+					}
 					this.querySelectorAll<HTMLInputElement>(
 						`.scope-container input[value=${freezeOption}]`
 					).forEach((input) => {
@@ -97,7 +117,7 @@ import './studio.css';
 						top.dataset.save = top.querySelector<HTMLInputElement>('input:checked')!.value;
 						input.click();
 					});
-				else {
+				} else {
 					this.querySelectorAll<HTMLInputElement>(
 						`.scope-container input[value=${freezeOption}]`
 					).forEach((input) => {
@@ -108,6 +128,7 @@ import './studio.css';
 						}
 					});
 				}
+				this.updateAnimationsHead();
 			});
 			addEventListener('ic-after-capture-new', this.mayRender);
 			addEventListener('ic-about-to-finish', this.mayRender);
@@ -130,40 +151,28 @@ import './studio.css';
 				return;
 			}
 
-			const document = detail.root.ownerDocument;
-			this.animatedRender(document);
+			this.#rootDocument = detail.root.ownerDocument;
+
+			this.animatedRender();
 
 			requestAnimationFrame(() => {
 				this.#throttleReRender = false;
 				if (again) {
-					this.animatedRender(document);
+					this.animatedRender();
 				}
 				again = false;
 			});
 			this.#throttleReRender = true;
 		};
 
-		animatedRender(document: Document) {
-			this.render(document);
+		animatedRender() {
+			this.render();
 		}
 
-		render(document: Document) {
+		render() {
 			if (this.isConnected) {
 				if (!this.querySelector<HTMLInputElement>('#run')?.checked) {
-					//document.documentElement;
-					// .animate(
-					// 	[
-					// 		{ offset: 0, left: 0 },
-					// 		{ offset: 1, left: 0 },
-					// 	],
-					// 	{
-					// 		pseudoElement: '::view-transition',
-					// 		duration: 250 + 100,
-					// 		fill: 'forwards',
-					// 	}
-					// )
-
-					this.refreshAnimations(document.getAnimations())!;
+					this.refreshAnimations(this.#rootDocument!.getAnimations())!;
 				}
 				this.renderHead();
 			}
@@ -174,8 +183,8 @@ import './studio.css';
 			const newDisplay = this.#scopes.size === 1 ? 'none' : 'flex';
 			if (firstScopeFreeze && firstScopeFreeze.style.display !== newDisplay) {
 				firstScopeFreeze.style.display = newDisplay;
-				firstScopeFreeze.closest('vtbag-ic-scope')!.updateHead();
 			}
+			firstScopeFreeze?.closest('vtbag-ic-scope')!.updateScopeHead();
 
 			const scopeContainer = this.querySelector<HTMLDivElement>('div.scope-container')!;
 			this.querySelector<HTMLSpanElement>('#view-transitions')!.innerText = '' + this.#scopes.size;
@@ -225,8 +234,8 @@ import './studio.css';
 				if (!scope) {
 					scope = document.createElement('vtbag-ic-scope');
 					scope.init(element, this.groupMaps.get(key(element))!.get('@')!, animations);
-					this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
 					this.#scopes.set(key(element), scope);
+					this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
 				}
 				if (
 					scope.animations?.length !== animations.length ||
@@ -237,17 +246,18 @@ import './studio.css';
 			});
 			return newScopes;
 		}
-		updateHead() {
-			const color = { red: true, green: true };
+
+		updateAnimationsHead() {
+			const color = { red: this.#scopes.size > 0, green: this.#scopes.size === 0 };
+
 			this.#scopes.forEach(
 				(scope) =>
 					(color[
 						scope.querySelector<HTMLInputElement>(`input[value^="run"]`)?.checked ? 'red' : 'green'
 					] = false)
 			);
-			this.querySelector('.animations-head input[name=freeze]:checked')!.classList.remove(
-				'red',
-				'orange'
+			this.querySelectorAll('.animations-head input[name=freeze]').forEach((e) =>
+				e.classList.remove('red', 'orange')
 			);
 			if (color.red)
 				this.querySelector('.animations-head input[name=freeze]:checked')!.classList.add('red');
@@ -261,9 +271,10 @@ import './studio.css';
 		customElements.define('vtbag-ic-animations', ICAnimations);
 
 	['ic-before-capture-old', 'ic-before-capture-new'].forEach((eventName) =>
-		top!.addEventListener(eventName, (e) => {
+		self.addEventListener(eventName, (e) => {
 			const transitionRoot = (e as CustomEvent).detail.root;
-			if (transitionRoot.tagName === 'HTML') document.documentElement.classList.add('action');
+			if (transitionRoot.tagName === 'HTML')
+				parent.document.documentElement.classList.add('action');
 			const transitionRootKey = key(transitionRoot);
 			const groups =
 				moduleGroupMaps.get(transitionRootKey) ??
@@ -282,7 +293,7 @@ import './studio.css';
 	);
 
 	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
-		top!.addEventListener(event, (e) => {
+		self.addEventListener(event, (e) => {
 			(e as CustomEvent).detail.root.ownerDocument.body
 				.querySelector(
 					`#vtbag-ic-temp-style-${CSS.escape(getElementSelector((e as CustomEvent).detail.root))}`
@@ -291,7 +302,7 @@ import './studio.css';
 		})
 	);
 
-	top!.addEventListener('ic-before-capture-new', (e) => {
+	self.addEventListener('ic-before-capture-new', (e) => {
 		const head = (e as CustomEvent).detail.root.ownerDocument.head;
 		head.querySelector('#vtbag-ic-persistent-style') ||
 			head.insertAdjacentHTML(

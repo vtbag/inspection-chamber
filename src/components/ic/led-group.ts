@@ -1,4 +1,3 @@
-
 export type LEDs = {
 	className: string;
 	groupName: string;
@@ -12,14 +11,17 @@ export type LEDs = {
 export function ledGroup(leds: LEDs) {
 	return `
 		<div class="input-led-group ${leds.className}">
-		${leds.alternatives.map(alt => `
+		${leds.alternatives
+			.map(
+				(alt) => `
 			<div class="input-led-item">
 				<input type="radio" name="${leds.groupName}" value="${alt.value}" id="${alt.id}" ${leds.checked === alt.value ? 'checked' : ''}>
 				<label for="${alt.id}">
 					<span class="led"></span>
             <span class="radio-text">${alt.label}</span>
 				</label>
-			</div>`).join('')
-		}
+			</div>`
+			)
+			.join('')}
 		</div>`;
 }

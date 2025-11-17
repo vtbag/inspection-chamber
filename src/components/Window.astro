@@ -44,10 +44,11 @@ const {style} = Astro.props;
 		left: var(--window-left, 100px);
 		top: var(--window-top, 100px);
 		background-color: black;
-		border-radius: 12px;
+		border-radius: 12px;	
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+		padding: 8px;
 		/* backdrop-filter: blur(8px); */
 		/* transition-behavior: allow-discrete; */
 		/* transition-property: width, height, display; */
@@ -55,10 +56,12 @@ const {style} = Astro.props;
 	}
 
 	.window.minimized {
-		height: 50px;
-		min-height: 50px;
-		width: 104px;
-		min-width: 104px;
+		height: 40px;
+		min-height: 40px;
+		width: 72px;
+		min-width: 72px;
+		border: 2px solid green;
+		padding: 0;
 	}
 
 	.window.window-changing {
@@ -73,8 +76,9 @@ const {style} = Astro.props;
 		display: flex;
 	}
 	.window-header {
-		background: var(--bg-tertiary);
-		border-bottom: 1px solid var(--border);
+		background-image: linear-gradient(to bottom, #9994, #7774);
+		border-bottom: 4px solid light-dark(white, black);
+		border-radius: 8px 8px 0 0;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -199,7 +203,7 @@ const {style} = Astro.props;
 	}
 
 	.resize-handle:hover {
-		background: var(--border-hover);
+		background: #5858;
 	}
 </style>
 
@@ -345,7 +349,7 @@ const {style} = Astro.props;
 			let newTop = resizeState.startTop;
 
 			const minWidth = 300;
-			const minHeight = 200;
+			const minHeight = 250;
 
 			switch (resizeState.direction) {
 				case 'e':

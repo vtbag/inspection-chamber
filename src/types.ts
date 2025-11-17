@@ -15,10 +15,11 @@ export type InspectionChamber = {
 	pushBack?: HTMLDivElement | null;
 };
 export type IC2 = {
-	iframe?: HTMLIFrameElement;
+	animationStart?: (event: AnimationEvent) => void;
+	animationStop?: (event: AnimationEvent) => void;
+	context?: Window;
 	globalViewTransition?: ViewTransition | null | undefined;
-	pageswap?: (event: PageSwapEvent) => void;
-	pagereveal?: (event: PageRevealEvent) => void;
+	iframe?: HTMLIFrameElement;
 	monkey?:
 		| (<
 				T extends
@@ -28,8 +29,8 @@ export type IC2 = {
 				original: T
 		  ) => T)
 		| undefined;
-	animationStart?: (event: AnimationEvent) => void;
-	animationStop?: (event: AnimationEvent) => void;
+	pagereveal?: (event: PageRevealEvent) => void;
+	pageswap?: (event: PageSwapEvent) => void;
 	pauseSheet?: CSSStyleSheet;
 };
 

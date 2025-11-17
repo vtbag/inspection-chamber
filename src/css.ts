@@ -1,7 +1,7 @@
 import { type Selector, type SelectorList, parse, generate } from 'css-tree';
 
 const animations = new Set<string>();
-const elements: { element: HTMLElement; pseudoElement: string; }[] = [];
+const elements: { element: HTMLElement; pseudoElement: string }[] = [];
 const pseudoElements = new Set<string>();
 let root: HTMLElement;
 
@@ -11,7 +11,9 @@ export function namedElements(viewTransitionRoot: HTMLElement = document.documen
 	root = viewTransitionRoot;
 	elements.length = 0;
 
-	allRoots.forEach(r => root.contains(r) && elements.push({ element: r, pseudoElement: undefined! }));
+	allRoots.forEach(
+		(r) => root.contains(r) && elements.push({ element: r, pseudoElement: undefined! })
+	);
 	root
 		.querySelectorAll<HTMLElement>('[style*=view-transition-]')
 		.forEach((el) => elements.push({ element: el, pseudoElement: undefined! }));
@@ -88,7 +90,7 @@ function declNamedElements(style: CSSStyleDeclaration) {
 function styledElements(parent: CSSRule | null) {
 	let selectors: string[] = ['&'];
 
-	for (; ;) {
+	for (;;) {
 		while (
 			parent &&
 			!(parent.constructor.name === 'CSSStyleRule' || parent.constructor.name === 'CSSScopeRule')
@@ -110,7 +112,7 @@ function styledElements(parent: CSSRule | null) {
 				pseudoElements.add(pseudoElement!);
 				sel = generate(parsed).slice(0, -pseudoElement.length).trim();
 				parsed = parse(sel, { context: 'selector' }) as Selector;
-			};
+			}
 			pseudoElement = original.slice(sel.length).trim();
 			[...root.ownerDocument.querySelectorAll<HTMLElement>(sel)]
 				.filter((el) => root.contains(el))
@@ -132,10 +134,10 @@ function collect(parent: CSSStyleRule | CSSScopeRule, selectors: string[]): stri
 		const scopes = scopeRuleParent.start
 			? splitSelectorList(scopeRuleParent.start)
 			: [
-				deriveCSSSelector(
-					parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
-				),
-			];
+					deriveCSSSelector(
+						parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
+					),
+				];
 
 		scopes.forEach((scope) =>
 			nested.forEach((nes) => {

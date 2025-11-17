@@ -87,5 +87,9 @@ function linear(group: Group, arr: Group[] = []): Group[] {
 }
 
 export function isSorted(group: Group): boolean {
-	return linear(group).every((g, idx, arr) => idx === 0 || arr[idx - 1].name.replace(/^-vtbag-/,"").localeCompare(g.name.replace(/^-vtbag-/,"")) <= 0);
+	return linear(group).every(
+		(g, idx, arr) =>
+			idx === 0 ||
+			arr[idx - 1].name.replace(/^-vtbag-/, '').localeCompare(g.name.replace(/^-vtbag-/, '')) <= 0
+	);
 }

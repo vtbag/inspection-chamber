@@ -1,6 +1,6 @@
 export function setupPauseSheet() {
-	const iframe = top!.__vtbag!.ic2!.iframe!;
-	const sheet = (top!.__vtbag!.ic2!.pauseSheet = new (iframe.contentWindow as any).CSSStyleSheet());
+	const iframe = self.__vtbag!.ic2!.iframe!;
+	const sheet = (self.__vtbag!.ic2!.pauseSheet = new (iframe.contentWindow as any).CSSStyleSheet());
 	sheet.replaceSync(`
 							::view-transition,
 							::view-transition-group(*),

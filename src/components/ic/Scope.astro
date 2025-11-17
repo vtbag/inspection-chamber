@@ -11,7 +11,7 @@ import GroupList from './GroupList.astro';
 	import { type Group, isSorted } from './group';
 	import { highlight } from './highlight';
 	import { ledGroup, type LEDs } from './led-group';
-	import { slider, setMaxValue } from './slider';
+	import { slider, setMaxValue, setCurrentValue } from './slider';
 	import { addBlinds } from './blinds';
 
 	class ICScope extends HTMLElement {
@@ -27,6 +27,7 @@ import GroupList from './GroupList.astro';
 		#freezeLEDs: LEDs;
 		#timings: Map<Animation, ComputedEffectTiming> = new Map();
 		#longestDuration?: number;
+		#clickTrack: Animation | undefined;
 
 		constructor() {
 			super();
@@ -51,17 +52,17 @@ import GroupList from './GroupList.astro';
 			this.#sizeLEDs = {
 				className: 'size',
 				groupName: `scope-size-${this.#id}`,
-				checked: 'large',
+				checked: 'detailed',
 				alternatives: [
 					{
-						label: 'Small',
-						value: 'small',
-						id: `scope-size-${this.#id}-small`,
+						label: 'Compact',
+						value: 'compact',
+						id: `scope-size-${this.#id}-compact`,
 					},
 					{
-						label: 'Large',
-						value: 'large',
-						id: `scope-size-${this.#id}-large`,
+						label: 'Detailed',
+						value: 'detailed',
+						id: `scope-size-${this.#id}-detailed`,
 					},
 				],
 			};
@@ -152,6 +153,9 @@ import GroupList from './GroupList.astro';
 
 				this.innerHTML = html;
 
+				this.querySelectorAll<HTMLInputElement>(`input[name^="freeze"]`).forEach((e) =>
+					e.classList.remove('orange', 'red')
+				);
 				if (this.querySelector<HTMLInputElement>(`input[value="next"]`)!.checked) {
 					const input = this.querySelector<HTMLInputElement>(`input[value="freeze"]`)!;
 					input.click();
@@ -164,19 +168,12 @@ import GroupList from './GroupList.astro';
 					);
 					this.animations.forEach((a) => {
 						a.pause();
-						a.currentTime = 0;
+						// a.currentTime = 0;
 					});
 				}
-				if (this.querySelector<HTMLInputElement>(`input[value="run"]`)!.checked) {
-					// todo: do we need this? Animation should not be paused on enter
-					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
-						'red'
-					);
-					this.animations.forEach((a) => a.play());
-				}
 
-				(this.closest('vtbag-ic-animations') as VtbagIcAnimationsElement).updateHead();
-				this.updateHead();
+				(this.closest('vtbag-ic-animations') as VtbagIcAnimationsElement).updateAnimationsHead();
+				this.updateScopeHead();
 
 				this.insertAdjacentHTML(
 					'beforeend',
@@ -202,13 +199,19 @@ import GroupList from './GroupList.astro';
 				(max, a) => Math.max(max, this.#timings.get(a)!.duration as number),
 				0
 			);
-			setMaxValue(`slider-${this.#id}`, this.#longestDuration, (e) => {
+			this.#clickTrack = this.#scope?.animate([{top: 0},{top: 0}],{duration: this.#longestDuration, pseudoElement: '::view-transition'})!;
+			this.#animations.push(this.#clickTrack);
+			if (this.#animations[0].playState==="paused") this.#clickTrack.pause();
+			setMaxValue(`slider-${this.#id}`, this.#longestDuration, this.#animations[0].currentTime as number, (e) => {
 				this.animations.forEach((a) => {
-					a.currentTime = parseInt((e.target as HTMLInputElement).value);
+					a.currentTime = Math.min(
+						parseInt((e.target as HTMLInputElement).value),
+						this.#longestDuration! - 1
+					);
 				});
 			});
 		}
-		updateHead() {
+		updateScopeHead() {
 			addBlinds(this.querySelector('.scope-head')!, 'div', 'head-blind');
 		}
 		private addButtonListener() {
@@ -256,10 +259,11 @@ ${styles.join('\n')}
 				const transition = mayStartViewTransition!(
 					{
 						update: () => {
-							const small = this.querySelector<HTMLInputElement>(`input[value="small"]`)!.checked;
+							const compact =
+								this.querySelector<HTMLInputElement>(`input[value="compact"]`)!.checked;
 							this.querySelectorAll<VtbagIcGroupElement>(
 								'vtbag-ic-group vtbag-ic-pseudo[name="group"]'
-							).forEach((pseudo) => (pseudo.style.height = small ? '0px' : ''));
+							).forEach((pseudo) => pseudo.classList[compact ? 'add' : 'remove']('compact'));
 						},
 						types: ['resize'],
 					},
@@ -308,16 +312,25 @@ ${styles.join('\n')}
 						`input[value="run"]:checked, input[value="next"]:checked`
 					)
 				) {
+					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
+						'red'
+					);
 					this.#animations.forEach((a) => {
-						this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
-							'red'
-						);
-						a.currentTime === this.#longestDuration && (a.currentTime = this.#longestDuration - 1);
+						(a.currentTime === this.#longestDuration ||
+							this.querySelector<HTMLInputElement>(`input[value="next"]:checked`)) &&
+							(a.currentTime = this.#longestDuration! - 1);
 						a.play();
+						this.autoMoveSlider();
 					});
 				}
-				(this.closest('vtbag-ic-animations') as VtbagIcAnimationsElement).updateHead();
+				(this.closest('vtbag-ic-animations') as VtbagIcAnimationsElement).updateAnimationsHead();
 			});
+		}
+
+		autoMoveSlider() {
+			const now = this.#clickTrack!.currentTime! as number;
+			setCurrentValue(`slider-${this.#id}`, now);
+			if (now < this.#longestDuration!) requestAnimationFrame(this.autoMoveSlider.bind(this));
 		}
 
 		topLevelGroups(rootGroup: Group, alpha = true) {

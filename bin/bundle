@@ -15,7 +15,7 @@ npx esbuild src/attach.ts --bundle $OPTS --target=ESnext --outfile=lib/attach.js
 
 sed '/__vtbag_inspection_chamber_DOM__/q' lib/attach.js > lib/attach.tmp
 echo 'function htmlString(src, title) {return `' >> lib/attach.tmp
-head -n -1 dist/InspectionChamber/index.html |tail -n +3 | sed -e 's/`/\\`/g' >> lib/attach.tmp
+head -n -1 dist/InspectionChamber/index.html |tail -n +3 | sed -e 's/`/\\`/g' -e 's/\$/\\\$/g' >> lib/attach.tmp
 echo '`.replace("__vtbag_inspection_chamber_title__", title).replace("/vtbag_inspection_chamber_src__/", src);}' >> lib/attach.tmp
 mv lib/attach.tmp lib/attach.js
 

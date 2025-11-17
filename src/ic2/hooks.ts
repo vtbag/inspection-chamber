@@ -1,13 +1,14 @@
-export function setupHooks() {
+export function setupHooks(context: Window) {
 	console.log('setupHooks');
-	top!.__vtbag ??= {};
-	top!.__vtbag.ic2 ??= {};
-	top!.__vtbag.ic2.pageswap = pageswap;
-	top!.__vtbag.ic2.pagereveal = pagereveal;
-	top!.__vtbag.ic2.monkey = monkey;
-	top!.__vtbag.ic2.iframe = top!.document.querySelector('#ic-iframe') as HTMLIFrameElement;
-	top!.__vtbag.ic2.animationStart = animationStart;
-	top!.__vtbag.ic2.animationStop = animationStop;
+	self.__vtbag ??= {};
+	self.__vtbag.ic2 ??= {};
+	self.__vtbag.ic2.context = context;
+	self.__vtbag.ic2.pageswap = pageswap;
+	self.__vtbag.ic2.pagereveal = pagereveal;
+	self.__vtbag.ic2.monkey = monkey;
+	self.__vtbag.ic2.iframe = self.document.querySelector('#ic-iframe') as HTMLIFrameElement;
+	self.__vtbag.ic2.animationStart = animationStart;
+	self.__vtbag.ic2.animationStop = animationStop;
 }
 
 function pageswap(event: PageSwapEvent) {
@@ -86,14 +87,14 @@ function monkey<
 }
 
 function animationStart(event: AnimationEvent) {
-	top!.dispatchEvent(
+	self.__vtbag.ic2!.context!.dispatchEvent(
 		new CustomEvent('ic-animation-start', {
 			detail: { root: event.target, event },
 		})
 	);
 }
 function animationStop(event: AnimationEvent) {
-	top!.dispatchEvent(
+	self.__vtbag.ic2!.context!.dispatchEvent(
 		new CustomEvent('ic-animation-stop', {
 			detail: { root: event.target, event },
 		})
@@ -101,35 +102,35 @@ function animationStop(event: AnimationEvent) {
 }
 
 function beforeCaptureOld(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(
+	self.__vtbag.ic2!.context!.dispatchEvent(
 		new CustomEvent('ic-before-capture-old', {
 			detail: { root, viewTransition },
 		})
 	);
 }
 function afterCaptureOld(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(
+	self.__vtbag.ic2!.context!.dispatchEvent(
 		new CustomEvent('ic-after-capture-old', {
 			detail: { root, viewTransition },
 		})
 	);
 }
 function beforeCaptureNew(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(
+	self.__vtbag.ic2!.context!.dispatchEvent(
 		new CustomEvent('ic-before-capture-new', {
 			detail: { root, viewTransition },
 		})
 	);
 }
 function afterCaptureNew(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(
+	self.__vtbag.ic2!.context!.dispatchEvent(
 		new CustomEvent('ic-after-capture-new', {
 			detail: { root, viewTransition },
 		})
 	);
 }
 function animationsWillFinish(root: HTMLElement, viewTransition: ViewTransition) {
-	top!.dispatchEvent(
+	self.__vtbag.ic2!.context!.dispatchEvent(
 		new CustomEvent('ic-about-to-finish', {
 			detail: { root, viewTransition },
 		})

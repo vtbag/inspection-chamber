@@ -18,7 +18,10 @@
 				padding: 0;
 			}
 			header p {
-				view-transition-name: a-very-long-name-for-a-paragraph-element;
+				view-transition-name: ¶;
+			}
+			::view-transition-group(*) {
+				animation-duration: calc(5 * var(--vtbag-ic-animation-speed, 1) * 1000ms);
 			}
 		</style>
 		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
@@ -40,10 +43,14 @@
 			</header>
 			<div style="text-align: center; margin-bottom: 2rem;">
 				<img
-					id="featured-image"
+					id="bot"
 					src="/bot1.png"
 					alt="Featured"
 					style="view-transition-name: img; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; height: auto;"
+				/><img
+					src="/heroine.png"
+					id="heroine"
+					style="display:none; view-transition-name: img; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; height: auto;"
 				/>
 			</div>
 
@@ -74,22 +81,24 @@
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 			const btn = document.getElementById('expand-btn');
-			const img = document.getElementById('featured-image');
+			const img1 = document.getElementById('bot')!;
+			const img2 = document.getElementById('heroine')!;
 			let isExpanded = false;
 
 			btn?.addEventListener('click', () => {
 				mayStartViewTransition({
 					update() {
 						if (isExpanded) {
-							img?.setAttribute('src', '/bot1.png');
+							img2.style.display = 'none';
+							img1.style.display = 'inline';
 							if (btn) btn.textContent = 'Expand Image';
 						} else {
-							img?.setAttribute('src', '/heroine.png');
+							img1.style.display = 'none';
+							img2.style.display = 'inline';
 							if (btn) btn.textContent = 'Shrink Image';
 						}
 						isExpanded = !isExpanded;
 						const header = document.querySelector('header');
-						console.log(header, header?.firstElementChild)
 						header?.appendChild(header.firstElementChild!);
 					},
 					types: ['image-expand'],

@@ -1,26 +1,28 @@
-if (self !== top) {
+if (parent !== self) {
 	// This is an iframe, let's throw the hooks
-	// If the top window is not ready yet, we wait until it is.
-	console.log('init', top?.__vtbag);
-	if (top && top.__vtbag && top.__vtbag.ic2) {
-		console.log('top is ready, setup hooks', top.__vtbag.ic2);
+	// If the parent window is not ready yet, we wait until it is.
+	console.log('init', parent.__vtbag);
+	if (parent.__vtbag && parent.__vtbag.ic2) {
+		console.log('parent is ready, setup hooks', parent.__vtbag.ic2);
 		const originalElementStartViewTransition = Element.prototype.startViewTransition;
 		if (originalElementStartViewTransition) {
-			Element.prototype.startViewTransition = top.__vtbag.ic2.monkey!(
+			Element.prototype.startViewTransition = parent.__vtbag.ic2.monkey!(
 				originalElementStartViewTransition
 			);
 		}
 
 		const originalDocumentStartViewTransition = document.startViewTransition;
 		if (originalDocumentStartViewTransition) {
-			document.startViewTransition = top.__vtbag.ic2.monkey!(originalDocumentStartViewTransition);
+			document.startViewTransition = parent.__vtbag.ic2.monkey!(
+				originalDocumentStartViewTransition
+			);
 		}
-		addEventListener('pageswap', top.__vtbag.ic2.pageswap!);
-		addEventListener('pagereveal', top.__vtbag.ic2.pagereveal!);
-		addEventListener('animationstart', top.__vtbag.ic2.animationStart!);
-		addEventListener('animationend', top.__vtbag.ic2.animationStop!);
+		addEventListener('pageswap', parent.__vtbag.ic2.pageswap!);
+		addEventListener('pagereveal', parent.__vtbag.ic2.pagereveal!);
+		addEventListener('animationstart', parent.__vtbag.ic2.animationStart!);
+		addEventListener('animationend', parent.__vtbag.ic2.animationStop!);
 	} else {
-		console.log('Waiting for top to be ready', top?.__vtbag);
+		console.log('Waiting for parent to be ready', parent?.__vtbag);
 		setTimeout(() => {
 			const iframe = window.frameElement as HTMLIFrameElement;
 			if (iframe.src) iframe.contentWindow?.location.reload();
@@ -28,7 +30,7 @@ if (self !== top) {
 		}, 10);
 	}
 } else {
-	// This is the top window
+	// This is the parent window
 	// Nothing is urgent here and we do not want to mess with loading.
 
 	addEventListener('DOMContentLoaded', () => {
