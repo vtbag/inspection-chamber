@@ -127,6 +127,7 @@ vtbag-ic-group h3 {
 
 vtbag-ic-animations {
 	width: 100%;
+	overflow: clip;
 }
 
 vtbag-ic-group-list {
@@ -347,6 +348,10 @@ h2 {
 	:root {
 		view-transition-name: root;
 	}
+	vtbag-ic-group[name="::view-transition"] {
+		view-transition-name: match-element;
+		view-transition-class: clip;
+	}
 	[style*='--vtn:']  {
 		view-transition-name: var(--vtn, none);
 	}
@@ -355,6 +360,7 @@ h2 {
 	}
 	&::view-transition-group(.led-group),
 	&::view-transition-group(.slider),
+	&::view-transition-group(.clip	),
 	&::view-transition-group(label) {
 		overflow: clip;
 	}
