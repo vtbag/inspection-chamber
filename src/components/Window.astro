@@ -1,5 +1,5 @@
 ---
-const {style} = Astro.props;
+const { style } = Astro.props;
 ---
 
 <div class="window" {style}>
@@ -33,21 +33,20 @@ const {style} = Astro.props;
 		line-height: 1.6;
 		font-weight: 400;
 		color-scheme: dark light;
-
 	}
 
 	.window {
 		pointer-events: all;
 		position: fixed;
-		width: var(--window-width, 400px);
-		height: var(--window-height, 300px);
-		left: var(--window-left, 100px);
-		top: var(--window-top, 100px);
+		width: var(--window-width, min(80vw, 300px));
+		height: var(--window-height, min(80vh, 300px));
+		left: var(--window-left, 50px);
+		top: var(--window-top, 50px);
 		background-color: black;
-		border-radius: 12px;	
+		border-radius: 12px;
 		display: flex;
 		flex-direction: column;
-		overflow: hidden;
+		overflow: clip;
 		padding: 8px;
 		/* backdrop-filter: blur(8px); */
 		/* transition-behavior: allow-discrete; */
@@ -56,12 +55,15 @@ const {style} = Astro.props;
 	}
 
 	.window.minimized {
-		height: 40px;
-		min-height: 40px;
+		height: 37px;
 		width: 72px;
-		min-width: 72px;
 		border: 2px solid green;
 		padding: 0;
+	}
+	:active-view-transition-type(minimize) {
+		.window.minimized {
+			border: none;
+		}
 	}
 
 	.window.window-changing {
@@ -85,7 +87,6 @@ const {style} = Astro.props;
 		cursor: move;
 		user-select: none;
 		padding: 0.2em 0.5em;
-
 	}
 
 	.window-title {
@@ -208,6 +209,12 @@ const {style} = Astro.props;
 </style>
 
 <script>
+	import {
+		getCurrentViewTransition,
+		mayStartViewTransition,
+	} from '@vtbag/utensil-drawer/may-start-view-transition';
+
+	const ANIM_TIMEOUT = 250;
 	interface DragState {
 		isDragging: boolean;
 		startX: number;
@@ -226,6 +233,7 @@ const {style} = Astro.props;
 		startTop: number;
 		direction: string;
 		longTap?: NodeJS.Timeout;
+		snapshot?: NodeJS.Timeout;
 	}
 
 	function setupWindow() {
@@ -253,11 +261,9 @@ const {style} = Astro.props;
 			startTop: 0,
 			direction: '',
 		};
-
 		let isMinimized = false;
 		let previousHeight = '';
 
-		// Dragging functionality
 		header.addEventListener('pointerdown', (e: PointerEvent) => {
 			if ((e.target as HTMLElement).closest('.window-controls')) return;
 
@@ -306,6 +312,7 @@ const {style} = Astro.props;
 		}
 
 		const resizeHandles = theWindow.querySelectorAll<HTMLDivElement>('.resize-handle');
+		let iframe: HTMLIFrameElement | null = null;
 
 		resizeHandles.forEach((handle) => {
 			handle.addEventListener('pointerdown', (e: PointerEvent) => {
@@ -319,6 +326,8 @@ const {style} = Astro.props;
 				resizeState.startLeft = theWindow.offsetLeft;
 				resizeState.startTop = theWindow.offsetTop;
 				resizeState.direction = (handle as HTMLElement).className.split(' ').pop() || '';
+				iframe = theWindow.querySelector('iframe');
+				iframe && initAnimation(iframe);
 
 				document.addEventListener('pointermove', handleResize);
 				document.addEventListener('pointerup', stopResize);
@@ -333,6 +342,53 @@ const {style} = Astro.props;
 				handle.setPointerCapture(e.pointerId);
 			});
 		});
+
+		function initAnimation(iframe: HTMLIFrameElement) {
+			const rect = iframe.getBoundingClientRect();
+			iframe.style.flex = '0 0 auto';
+			iframe.style.width = rect.width + 'px';
+			iframe.style.height = rect.height + 'px';
+			const bodyStyle = iframe!.contentDocument!.body.style;
+			bodyStyle.width = rect.width + 'px';
+			bodyStyle.height = rect.height + 'px';
+			resizeState.snapshot = setTimeout(() => showAnimation(iframe), ANIM_TIMEOUT);
+		}
+
+		function showAnimation(iframe: HTMLIFrameElement) {
+			if (!resizeState.snapshot) return;
+			const oldRect = iframe.getBoundingClientRect();
+			iframe.style.flex = '1 1 auto';
+			iframe.style.width = '100%';
+			iframe.style.height = '';
+			const rect = iframe.getBoundingClientRect();
+			iframe.style.width = Math.max(oldRect.width, rect.width) + 'px';
+			iframe.style.height = Math.max(oldRect.height, rect.height) + 'px';
+			iframe.style.flex = '0 0 auto';
+			mayStartViewTransition(
+				{
+					update: async () => {
+						const oldRect = iframe.contentDocument!.body.getBoundingClientRect();
+						const bodyStyle = iframe!.contentDocument!.body.style;
+						bodyStyle.width = rect.width + 'px';
+						bodyStyle.height = rect.height + 'px';
+						console.log('Resized ', oldRect.width, oldRect.height, 'to', rect.width, rect.height);
+					},
+					types: ['window-resize'],
+				},
+				{ scope: iframe.contentDocument!, useTypesPolyfill: 'always' }
+			).finished.then(() => {
+				if (resizeState.snapshot) reInitAnimation(iframe, rect);
+			});
+		}
+
+		function reInitAnimation(iframe: HTMLIFrameElement, rect: DOMRect) {
+			const bodyStyle = iframe!.contentDocument!.body.style;
+			iframe!.style.width = rect.width + 'px';
+			iframe!.style.height = rect.height + 'px';
+			bodyStyle.width = rect.width + 'px';
+			bodyStyle.height = rect.height + 'px';
+			resizeState.snapshot = setTimeout(() => showAnimation(iframe!), ANIM_TIMEOUT);
+		}
 
 		function handleResize(e: PointerEvent) {
 			if (!resizeState.isResizing) return;
@@ -392,6 +448,7 @@ const {style} = Astro.props;
 			theWindow.style.setProperty('--window-height', newHeight + 'px');
 			theWindow.style.setProperty('--window-left', newLeft + 'px');
 			theWindow.style.setProperty('--window-top', newTop + 'px');
+
 			theWindow.classList.add('window-changing');
 		}
 
@@ -402,23 +459,54 @@ const {style} = Astro.props;
 			document.removeEventListener('pointerup', stopResize);
 			resizeState.longTap && clearTimeout(resizeState.longTap);
 			resizeState.longTap = undefined;
+			resizeState.snapshot && clearTimeout(resizeState.snapshot);
+			resizeState.snapshot = undefined;
+			const iframe = theWindow.querySelector('iframe');
+			if (iframe) {
+				iframe.style.flex = '1 1 auto';
+				iframe.style.width = '100%';
+				iframe.style.height = '';
+				mayStartViewTransition(
+					{
+						update: () => {
+							const bodyStyle = iframe!.contentDocument!.body.style;
+							bodyStyle.width = '';
+							bodyStyle.height = '';
+						},
+						types: ['window-resize'],
+					},
+					{
+						collisionBehavior: 'chaining',
+						useTypesPolyfill: 'always',
+						scope: iframe.contentDocument!,
+					}
+				);
+			}
 		}
 
-		// Minimize functionality
 		minimizeBtn.addEventListener('click', () => {
 			isMinimized = !isMinimized;
 
-			if (isMinimized) {
-				previousHeight = theWindow.style.getPropertyValue('--window-height') || '300px';
-				theWindow.classList.add('minimized');
-				minimizeBtn.innerHTML = '>';
-				minimizeBtn.title = 'Restore';
-			} else {
-				theWindow.classList.remove('minimized');
-				theWindow.style.setProperty('--window-height', previousHeight);
-				minimizeBtn.innerHTML = '<';
-				minimizeBtn.title = 'Minimize';
-			}
+			const transition = mayStartViewTransition(
+				{
+					update: () => {
+						if (isMinimized) {
+							previousHeight = theWindow.style.getPropertyValue('--window-height') || '300px';
+							theWindow.classList.add('minimized');
+							minimizeBtn.innerHTML = '>';
+							minimizeBtn.title = 'Restore';
+						} else {
+							theWindow.classList.remove('minimized');
+							theWindow.style.setProperty('--window-height', previousHeight);
+							minimizeBtn.innerHTML = '<';
+							minimizeBtn.title = 'Minimize';
+						}
+					},
+					types: ['minimize'],
+				},
+				{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+			);
+			transition.finished.then(() => {});
 		});
 	}
 

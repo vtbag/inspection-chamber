@@ -11,9 +11,26 @@ import Window from '@/components/Window.astro';
 		<title>__vtbag_inspection_chamber_title__</title>
 		<Font cssVariable="--font-labels" preload />
 		<Font cssVariable="--font-logo" preload />
-		<style>
+		<style is:global>
 			* {
 				box-sizing: border-box;
+			}
+			:active-view-transition-type(minimize) {
+				.window {
+					view-transition-name: window;
+					iframe {
+						view-transition-name: window-content;
+					}
+				}
+				#logo {
+					view-transition-name: logo;
+				}
+				#minimize-btn {
+					view-transition-name: minimize-btn;
+				}
+				&::view-transition-group(window-content) {
+					display: none;
+				}
 			}
 		</style>
 		<Animations />
@@ -25,12 +42,12 @@ import Window from '@/components/Window.astro';
 		></iframe>
 		<div id="dragBar" style="display: block; height: 100vh; width: 5px; cursor: col-resize"></div>
 		<div id="dock" style="height: 100%; width: 300px;"></div>
-		<Window style="display: none">
+		<Window style="display: none;">
 			<div slot="title" style="display: flex; flex-direction: row; align-items: center">
 				<img id="logo" width="32" height="32" slot="title" src="/bot1.png" />
 			</div>
 		</Window>
-		<h2>I</h2><p>c</p>
+		<div style="max-width: 0; max-height:0"><h2>I</h2><p>c</p></div>
 		<script>
 			import { setupHooks } from '@/ic2/hooks';
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
@@ -53,12 +70,12 @@ import Window from '@/components/Window.astro';
 				`
 			<iframe
 				id="content"
-				style="border: none; width: 100%; height: 100%; overflow: clip"
-				srcdoc='<html style="overflow: hidden">
+				style="border: none; width: 100%; height: 100%; overflow: clip;"
+				srcdoc='<html style="overflow: clip">
 	<head>
 	${headElements}
 	</head>
-	<body style="display: flex">
+	<body style="display: flex; overflow: clip;">
 		<vtbag-ic-animations >
 			<svg style="display: none;" aria-hidden="true">
 					<defs>
@@ -100,7 +117,10 @@ import Window from '@/components/Window.astro';
 					side = event.detail.side;
 					if (!side) return;
 
-					mayStartViewTransition({ update: handleLongTap, types: ['longTap'] });
+					mayStartViewTransition(
+						{ update: handleLongTap, types: ['longTap'] },
+						{ useTypesPolyfill: 'always' }
+					);
 				}
 			});
 
@@ -188,15 +208,19 @@ import Window from '@/components/Window.astro';
 					document.body.style.display = 'block';
 					iframe.style.width = '100vw';
 					iframe.style.height = '100vh';
-					win.firstElementChild!.insertAdjacentElement('afterend', content);
+					win.insertAdjacentElement('beforeend', content);
 					dragBar.style.display = 'none';
 					dock.style.display = 'none';
 					win.style.display = 'flex';
+					content.style.flex = '1 1 auto';
+					content.style.height = '';
 				} else {
 					document.body.style.display = 'flex';
 					dock.appendChild(content);
+					content.style.height = '100%';
+					content.style.width = '100%';
+					content.style.flex = '';
 					dock.style.display = 'block';
-
 					dragBar.style.display = 'block';
 					win.style.display = 'none';
 					const len = side.length;

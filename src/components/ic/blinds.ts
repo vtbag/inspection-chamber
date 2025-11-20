@@ -1,4 +1,3 @@
-
 export function addBlinds(
 	container: Element,
 	tagName: string,
@@ -47,11 +46,11 @@ export function addBlinds(
 }
 
 function denseOrder(container: Element): number[] {
-	const positions: { index: number; top: number; left: number; }[] = [];
+	const positions: { index: number; top: number; left: number }[] = [];
 	[...container.children].forEach((child, index) => {
 		const rect = child.getBoundingClientRect();
 		positions.push({ index, top: rect.top, left: rect.left });
 	});
 	positions.sort((a, b) => (a.top === b.top ? a.left - b.left : a.top - b.top));
 	return positions.map((p) => p.index);
-} 
+}

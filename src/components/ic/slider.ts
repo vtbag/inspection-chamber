@@ -10,7 +10,7 @@ export type LEDs = {
 };
 export function slider(id: string, name: string): string {
 	return `
-<div class="horizontal-slider-container" style="view-transition-name: hsc-${id}">
+<div class="horizontal-slider-container" style="view-transition-name: hsc-${id}; view-transition-class: slider">
 	<div class="slider-track">
 		<div class="slider-fill"></div>
 		<input type="range" id="${id}" name="${name}" min="0" max="500" value="0" step="1">
@@ -45,8 +45,7 @@ export function setCurrentValue(id: string, current: number) {
 	const container = document.querySelector<HTMLElement>(`.horizontal-slider-container:has(#${id}`)!;
 	input.value = '' + current;
 	container.querySelector<HTMLElement>(`.slider-value .current`)!.innerText = `${input.value}ms`;
-	container.querySelector<HTMLElement>(`.slider-fill`)?.style.setProperty(
-		'width',
-		`calc(${(Number(input.value) / Number(input.max)) * 100}% + 3px)`
-	);
+	container
+		.querySelector<HTMLElement>(`.slider-fill`)
+		?.style.setProperty('width', `calc(${(Number(input.value) / Number(input.max)) * 100}% + 3px)`);
 }

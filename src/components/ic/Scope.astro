@@ -31,7 +31,7 @@ import GroupList from './GroupList.astro';
 		#timings: Map<Animation, ComputedEffectTiming> = new Map();
 		#longestDuration?: number;
 		#clickTrack: Animation | undefined;
-		#observer: ResizeObserver;
+		#observer?: ResizeObserver;
 		#resizeToggle: any;
 
 		constructor() {
@@ -104,16 +104,12 @@ import GroupList from './GroupList.astro';
 		connectedMoveCallback() {}
 		connectedCallback() {
 			console.log('connected scope ' + this.#scope);
-			this.#observer = new ResizeObserver(() => {
-				console.log("HUHU");
-				
+			this.#observer = new ResizeObserver(() => {				
 				if (this.#resizeToggle || getCurrentViewTransition()) {
 					return;
 				}
 				this.#resizeToggle = true;
 				requestAnimationFrame(() => {
-					console.log("Add blinds");
-					
 					addBlinds(this.querySelector('.scope-head')!, 'div', 'head-blind', 'shb', 'blind');
 					this.#resizeToggle = false;
 				});

@@ -6,15 +6,15 @@ import './studio.css';
 
 <Scope />
 <template id="vtbag-ic-animations">
-	<h2 class="ic-label">Inspection Chamber</h2>
-	<div class="animations-head">
-		<div class="animations-head-main">
+	<h2 class="ic-label" style="--vtn: label">Inspection Chamber</h2>
+	<div class="animations-head" style="--vtn: animations-head">
+		<div class="animations-head-main" style="--vtn: animations-head-main">
 			<span>View Transitions: <span id="view-transitions">0</span></span>
 			<span id="scopes">Scopes:</span>
 			<span id="scope-buttons"></span>
 		</div>
 	</div>
-	<div class="scope-container"></div>
+	<div class="scope-container" style="--vtn: scope-container"></div>
 </template>
 <script>
 	import { capture } from './capture';

@@ -27,7 +27,7 @@ if (parent !== self) {
 			const iframe = window.frameElement as HTMLIFrameElement;
 			if (iframe.src) iframe.contentWindow?.location.reload();
 			else iframe.srcdoc = iframe.srcdoc;
-		}, 10);
+		}, 250);
 	}
 } else {
 	// This is the parent window
