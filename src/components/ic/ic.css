@@ -180,7 +180,18 @@ vtbag-ic-pseudo {
 		color: light-dark(#222, #ddd);
 	}
 	&.visibility {
-		translate: 0 2.5px;
+		position: relative;
+		top: 2.5px;
+		left:-3px;
+		&:not(:has(input:checked)) {
+			color: #f008;
+		}
+	}
+	&.solo {
+		&:has(input:checked) {
+			color: #f00;
+			font-weight: 900;
+		}
 	}
 }
 
@@ -319,7 +330,7 @@ button {
 		flex-direction: row;
 	}
 	.toggle.visibility {
-		translate: 2.5px 0;
+		left: 2.5px
 	}
 	vtbag-ic-animations {
 		flex-direction: row;

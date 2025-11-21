@@ -32,7 +32,8 @@ import GroupList from './GroupList.astro';
 		#longestDuration?: number;
 		#clickTrack: Animation | undefined;
 		#observer?: ResizeObserver;
-		#resizeToggle: any;
+		#resizeToggle: boolean = false;
+		#main?: VtbagIcAnimationsElement;
 
 		constructor() {
 			super();
@@ -104,7 +105,7 @@ import GroupList from './GroupList.astro';
 		connectedMoveCallback() {}
 		connectedCallback() {
 			console.log('connected scope ' + this.#scope);
-			this.#observer = new ResizeObserver(() => {				
+			this.#observer = new ResizeObserver(() => {
 				if (this.#resizeToggle || getCurrentViewTransition()) {
 					return;
 				}
@@ -154,6 +155,7 @@ import GroupList from './GroupList.astro';
 
 		render() {
 			if (this.isConnected && this.#dirty) {
+				this.#main = this.closest('vtbag-ic-animations')!;
 				this.#dirty = false;
 				let html = `<div class="scope-head"><div class="scope-head-main"><h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>`;
 
@@ -167,7 +169,7 @@ import GroupList from './GroupList.astro';
 				html += ledGroup(this.#sizeLEDs);
 
 				this.#freezeLEDs.checked =
-					this.closest('vtbag-ic-animations')!.querySelector<HTMLInputElement>(
+					this.#main!.querySelector<HTMLInputElement>(
 						'.animations-head input[name="freeze"]:checked'
 					)?.value ?? 'none';
 
@@ -191,11 +193,10 @@ import GroupList from './GroupList.astro';
 					);
 					this.animations.forEach((a) => {
 						a.pause();
-						// a.currentTime = 0;
 					});
 				}
 
-				(this.closest('vtbag-ic-animations') as VtbagIcAnimationsElement).updateAnimationsHead();
+				this.#main!.updateAnimationsHead();
 				this.updateScopeHead();
 
 				this.insertAdjacentHTML(
@@ -222,9 +223,13 @@ import GroupList from './GroupList.astro';
 				(max, a) => Math.max(max, this.#timings.get(a)!.duration as number),
 				0
 			);
+			const slowMo = this.#main!.querySelector<HTMLInputElement>(
+				'input[name="slow-mo"]:checked'
+			)?.value;
 			this.#clickTrack = this.#scope?.animate([{ top: 0 }, { top: 0 }], {
 				duration: this.#longestDuration,
 				pseudoElement: '::view-transition',
+				playbackRate: slowMo === 'normal' ? 1 : slowMo === 'slow' ? 0.1 : 0.01,
 			})!;
 			this.#animations.push(this.#clickTrack);
 			if (this.#animations[0].playState === 'paused') this.#clickTrack.pause();
@@ -346,15 +351,19 @@ ${styles.join('\n')}
 					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
 						'red'
 					);
+					const speed = this.#main!.querySelector<HTMLInputElement>(
+						'input[name="slow-mo"]:checked'
+					)?.value;
 					this.#animations.forEach((a) => {
 						(a.currentTime === this.#longestDuration ||
 							this.querySelector<HTMLInputElement>(`input[value="next"]:checked`)) &&
 							(a.currentTime = this.#longestDuration! - 1);
+						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01;
 						a.play();
 						this.autoMoveSlider();
 					});
 				}
-				(this.closest('vtbag-ic-animations') as VtbagIcAnimationsElement).updateAnimationsHead();
+				this.#main!.updateAnimationsHead();
 			});
 		}
 
