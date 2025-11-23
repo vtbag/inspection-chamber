@@ -363,13 +363,13 @@ h2 {
 	}
 	vtbag-ic-group[name='::view-transition'] {
 		view-transition-name: match-element;
-		view-transition-class: clip;
+		view-transition-class: clip var(--vtc, '');
 	}
-	[style*='--vtn:'] {
+	vtbag-ic-group[style*='--vtn:'] {
 		view-transition-name: var(--vtn, none);
 	}
 	&::view-transition-group(*) {
-		animation-duration: 1000ms;
+		animation-duration: 250ms;
 	}
 	&::view-transition-group(.led-group),
 	&::view-transition-group(.slider),
@@ -391,7 +391,7 @@ h2 {
 	}
 	vtbag-ic-group[name='::view-transition'] {
 		view-transition-name: match-element;
-		view-transition-class: clip;
+		view-transition-class: clip var(--vtc, '');
 	}
 	[style*='--vtn:'] {
 		view-transition-name: var(--vtn, none);
@@ -416,10 +416,10 @@ h2 {
 	}
 	vtbag-ic-group[style*='--vtn:'] {
 		view-transition-name: var(--vtn);
-		view-transition-class: card;
+		view-transition-class: card var(--vtc, '');
 		.group-content {
 			view-transition-name: match-element;
-			view-transition-class: card-inner;
+			view-transition-class: card-inner var(--vtc, '');
 		}
 	}
 
@@ -501,19 +501,19 @@ h2 {
 ::view-transition-group(*) {
 	animation-timing-function: var(--timing, ease);
 }
-/* 
+
 ::view-transition-group(.delay-1) {
-	animation-delay: 30ms;
+	animation-delay: 75ms;
 }
 ::view-transition-group(.delay-2) {
-	animation-delay: 60ms;
+	animation-delay: 150ms;
 }
 ::view-transition-group(.delay-3) {
-	animation-delay: 90ms;
+	animation-delay: 225ms;
 }
 ::view-transition-group(.delay-4) {
-	animation-delay: 120ms;
+	animation-delay: 300ms;
 }
 ::view-transition-group(.delay-5) {
-	animation-delay: 150ms;
-} */
+	animation-delay: 375ms;
+} 

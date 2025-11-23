@@ -16,36 +16,42 @@ export function addBlinds(
 	let prev = children[order[0]]?.getBoundingClientRect();
 	const fix = [];
 	let columnWidth = prev.width;
-	let row = 0;
+	let rows = 0;
 	for (let j = 0; j < children.length; ++j) {
 		const idx = order[j];
 		const child = children[idx] as HTMLElement;
 		const current = child.getBoundingClientRect();
 		if (!current.width) continue;
 		columnWidth = columnWidth === 0 ? current.width : Math.min(columnWidth, current.width);
-		if (idx > 0) {
-			if (current.top > prev.bottom) { fix[idx - 1] = prev; row = Math.max(3, row + 1); }
-		}
-		const vtc = child.style.getPropertyValue("--vtc").split(" ").filter((e) => e.startsWith("delay-"));
-		vtc.push(`delay-${row}`);
-		child.style.setProperty("--vtc", vtc.join(" "));
+		if (idx > 0 && current.top > prev.bottom) { fix[idx - 1] = prev; rows++; }
 		prev = current;
 	}
 
+	const addDelay = (el: HTMLElement, delay: number) => {
+		const vtc = el.style.getPropertyValue("--vtc").split(" ").filter((e) => !e.startsWith("delay-"));
+		vtc.push(`delay-${Math.max(0, delay)}`);
+		el.style.setProperty("--vtc", vtc.join(" "));
+	};
+
 	fix[children.length - 1] = prev;
 	let cnt = 0;
+	let delay = Math.min(3, rows) + 1;
 	for (let j = fix.length - 1; j >= 0; --j) {
 		const i = order[j];
 		const last = fix[i];
+		let child = children[i] as HTMLElement;
 		if (last) {
+			delay = Math.max(0, delay - 1);
 			const span = ~~((containerRect.right - last.right) / columnWidth);
 			if (span > 0) {
 				container.children[i].insertAdjacentHTML(
 					'afterend',
 					`<${tagName} ${className ? `class="${className}"` : ''} style="grid-column: span ${span}; ${viewTransitionName ? `--vtn: p-${viewTransitionName}-${cnt++}; --vtc: ${viewTransitionClass}` : ''}"></${tagName}>`
 				);
+				addDelay(container.children[i + 1] as HTMLElement, delay);
 			}
 		}
+		addDelay(child, delay);
 	}
 }
 

@@ -213,7 +213,7 @@ const { style } = Astro.props;
 		mayStartViewTransition,
 	} from '@vtbag/utensil-drawer/may-start-view-transition';
 
-	const ANIM_TIMEOUT = 1000;
+	const ANIM_TIMEOUT = 	1;
 	interface DragState {
 		isDragging: boolean;
 		startX: number;
@@ -350,7 +350,7 @@ const { style } = Astro.props;
 			const bodyStyle = iframe!.contentDocument!.body.style;
 			bodyStyle.width = rect.width + 'px';
 			bodyStyle.height = rect.height + 'px';
-			resizeState.snapshot = setTimeout(() => showAnimation(iframe), ANIM_TIMEOUT);
+			resizeState.snapshot = setTimeout(() => showAnimation(iframe), 500);
 		}
 
 		function showAnimation(iframe: HTMLIFrameElement) {
@@ -475,7 +475,7 @@ const { style } = Astro.props;
 						types: ['window-resize'],
 					},
 					{
-						collisionBehavior: 'never',
+						collisionBehavior: 'chaining',
 						useTypesPolyfill: 'always',
 						scope: iframe.contentDocument!,
 					}

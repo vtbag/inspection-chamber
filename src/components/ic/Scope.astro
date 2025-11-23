@@ -363,7 +363,7 @@ ${styles.join('\n')}
 						'input[name="slow-mo"]:checked'
 					)?.value;
 					this.#animations.forEach((a) => {
-						(a.currentTime === this.#longestDuration) && (a.currentTime = this.#longestDuration! - 1);
+						a.currentTime === this.#longestDuration && (a.currentTime = this.#longestDuration! - 1);
 						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01;
 						a.play();
 						this.autoMoveSlider();

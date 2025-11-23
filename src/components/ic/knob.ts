@@ -1,7 +1,7 @@
 
 export function knob(id: string, name: string): string {
 	return `
-<div class="rotary-body" style="view-transition-name: kc-${id}; view-transition-class: knob">
+<div class="rotary-body" style="view-transition-name: kc-${id}; --vtc: knob">
 	<div for="${id}" class="rotary-knob">
 		<div class="knob-ring"><span class="knob-indicator"></span></div>
 		<input type="range" id="${id}" name="${name}" min="0" max="500" value="0" step="1">
