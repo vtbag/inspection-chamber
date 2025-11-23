@@ -210,11 +210,10 @@ const { style } = Astro.props;
 
 <script>
 	import {
-		getCurrentViewTransition,
 		mayStartViewTransition,
 	} from '@vtbag/utensil-drawer/may-start-view-transition';
 
-	const ANIM_TIMEOUT = 250;
+	const ANIM_TIMEOUT = 1000;
 	interface DragState {
 		isDragging: boolean;
 		startX: number;
@@ -375,7 +374,7 @@ const { style } = Astro.props;
 					},
 					types: ['window-resize'],
 				},
-				{ scope: iframe.contentDocument!, useTypesPolyfill: 'always' }
+				{ scope: iframe.contentDocument!, useTypesPolyfill: 'always', collisionBehavior: 'chaining' }
 			).finished.then(() => {
 				if (resizeState.snapshot) reInitAnimation(iframe, rect);
 			});
@@ -476,7 +475,7 @@ const { style } = Astro.props;
 						types: ['window-resize'],
 					},
 					{
-						collisionBehavior: 'chaining',
+						collisionBehavior: 'never',
 						useTypesPolyfill: 'always',
 						scope: iframe.contentDocument!,
 					}

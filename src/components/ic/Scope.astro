@@ -116,7 +116,7 @@ import GroupList from './GroupList.astro';
 				});
 			});
 			this.#observer.observe(this);
-			this.render();
+			this.animatedRender();
 		}
 
 		get size() {
@@ -149,10 +149,22 @@ import GroupList from './GroupList.astro';
 			if (value.some((a) => !this.#animations.includes(a))) {
 				this.#animations = [...new Set<Animation>([...this.#animations, ...value])];
 				this.#dirty = true;
-				this.render();
+				this.animatedRender();
 			}
 		}
 
+		animatedRender() {
+			this.#animations.forEach((a) => a.pause());
+			mayStartViewTransition!(
+				{
+					update: () => {
+						this.render();
+					},
+					types: ['vt-entry'],
+				},
+				{ useTypesPolyfill: 'always', collisionBehavior: 'chaining' }
+			);
+		}
 		render() {
 			if (this.isConnected && this.#dirty) {
 				this.#main = this.closest('vtbag-ic-animations')!;
@@ -343,11 +355,7 @@ ${styles.join('\n')}
 					);
 					this.#animations.forEach((a) => a.pause());
 				}
-				if (
-					this.querySelector<HTMLInputElement>(
-						`input[value="run"]:checked, input[value="next"]:checked`
-					)
-				) {
+				if (this.querySelector<HTMLInputElement>(`input[value="run"]:checked`)) {
 					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
 						'red'
 					);
@@ -355,12 +363,19 @@ ${styles.join('\n')}
 						'input[name="slow-mo"]:checked'
 					)?.value;
 					this.#animations.forEach((a) => {
-						(a.currentTime === this.#longestDuration ||
-							this.querySelector<HTMLInputElement>(`input[value="next"]:checked`)) &&
-							(a.currentTime = this.#longestDuration! - 1);
+						(a.currentTime === this.#longestDuration) && (a.currentTime = this.#longestDuration! - 1);
 						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01;
 						a.play();
 						this.autoMoveSlider();
+					});
+				}
+				if (this.querySelector<HTMLInputElement>(`input[value="next"]:checked`)) {
+					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
+						'red'
+					);
+					
+					this.#animations.forEach((a) => {
+						a.finish();
 					});
 				}
 				this.#main!.updateAnimationsHead();

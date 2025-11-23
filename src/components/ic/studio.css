@@ -299,7 +299,7 @@ input[type='checkbox']:not(:checked) + label .off-label {
 }
 .rotary-knob input[type='range'] {
 	top: 26px;
-	width: 200%
+	width: 200%;
 }
 
 

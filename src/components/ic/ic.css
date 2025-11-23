@@ -182,7 +182,7 @@ vtbag-ic-pseudo {
 	&.visibility {
 		position: relative;
 		top: 2.5px;
-		left:-3px;
+		left: -3px;
 		&:not(:has(input:checked)) {
 			color: #f008;
 		}
@@ -227,7 +227,6 @@ vtbag-ic-pseudo {
 	}
 }
 .animations-head {
-	display: block;
 	height: fit-content;
 }
 .scope-head-main:has(button:nth-child(2)),
@@ -330,7 +329,7 @@ button {
 		flex-direction: row;
 	}
 	.toggle.visibility {
-		left: 2.5px
+		left: 2.5px;
 	}
 	vtbag-ic-animations {
 		flex-direction: row;
@@ -344,6 +343,9 @@ h2 {
 	outline: 4px solid light-dark(#f0f0f0, #0a0a0a);
 }
 
+[style*='--vtc:'] {
+	view-transition-class: var(--vtc);
+}
 :root {
 	view-transition-name: none;
 }
@@ -359,11 +361,39 @@ h2 {
 	:root {
 		view-transition-name: root;
 	}
-	vtbag-ic-group[name="::view-transition"] {
+	vtbag-ic-group[name='::view-transition'] {
 		view-transition-name: match-element;
 		view-transition-class: clip;
 	}
-	[style*='--vtn:']  {
+	[style*='--vtn:'] {
+		view-transition-name: var(--vtn, none);
+	}
+	&::view-transition-group(*) {
+		animation-duration: 1000ms;
+	}
+	&::view-transition-group(.led-group),
+	&::view-transition-group(.slider),
+	&::view-transition-group(.clip),
+	&::view-transition-group(label) {
+		overflow: clip;
+	}
+}
+:active-view-transition-type(
+	visibility-toggle,
+	vt-exit,
+	update-animations-head,
+	vt-entry,
+	slow-mo,
+	freeze
+) {
+	:root {
+		view-transition-name: root;
+	}
+	vtbag-ic-group[name='::view-transition'] {
+		view-transition-name: match-element;
+		view-transition-class: clip;
+	}
+	[style*='--vtn:'] {
 		view-transition-name: var(--vtn, none);
 	}
 	&::view-transition-group(*) {
@@ -371,7 +401,7 @@ h2 {
 	}
 	&::view-transition-group(.led-group),
 	&::view-transition-group(.slider),
-	&::view-transition-group(.clip	),
+	&::view-transition-group(.clip),
 	&::view-transition-group(label) {
 		overflow: clip;
 	}
@@ -438,3 +468,52 @@ h2 {
 		width: 100%;
 	}
 }
+
+::view-transition-new(*):only-child {
+	animation-name: entry;
+}
+
+::view-transition-old(*):only-child {
+	animation-name: exit;
+}
+
+@keyframes entry {
+	from {
+		opacity: 0;
+		transform: scale(1.1) translateY(30px);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.1) translateY(30px);
+	}
+}
+@keyframes exit {
+	to {
+		opacity: 0;
+		transform: scale(0.9) translateY(30px);
+	}
+}
+
+:root {
+	--timing: ease;
+}
+
+::view-transition-group(*) {
+	animation-timing-function: var(--timing, ease);
+}
+/* 
+::view-transition-group(.delay-1) {
+	animation-delay: 30ms;
+}
+::view-transition-group(.delay-2) {
+	animation-delay: 60ms;
+}
+::view-transition-group(.delay-3) {
+	animation-delay: 90ms;
+}
+::view-transition-group(.delay-4) {
+	animation-delay: 120ms;
+}
+::view-transition-group(.delay-5) {
+	animation-delay: 150ms;
+} */

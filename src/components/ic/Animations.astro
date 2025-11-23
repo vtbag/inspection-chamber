@@ -21,9 +21,9 @@ import './studio.css';
 	import { type Group } from './group';
 	import { highlight } from './highlight';
 	import { ledGroup } from './led-group';
-	import { knob } from './knob';
 	import { key } from './scope';
 	import { allRoots } from '@/css';
+	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
 
@@ -39,16 +39,24 @@ import './studio.css';
 			super();
 			this.groupMaps = moduleGroupMaps;
 			self.addEventListener('ic-about-to-finish', (e) => {
-				const root = (e as CustomEvent).detail.root;
-				const scopeKey = key(root);
-				const scope = this.#scopes.get(scopeKey)!;
-				scope && (scope.animations = []);
-				this.#scopes.delete(scopeKey);
-				scope?.remove();
-				allRoots.delete(root);
-				parent.document.documentElement.classList.remove('action');
-				this.renderHead();
-				this.updateAnimationsHead();
+				mayStartViewTransition(
+					{
+						update: () => {
+							const root = (e as CustomEvent).detail.root;
+							const scopeKey = key(root);
+							const scope = this.#scopes.get(scopeKey)!;
+							scope && (scope.animations = []);
+							this.#scopes.delete(scopeKey);
+							scope?.remove();
+							allRoots.delete(root);
+							parent.document.documentElement.classList.remove('action');
+							this.renderHead();
+							this.updateAnimationsHead();
+						},
+						types: ['vt-exit'],
+					},
+					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+				);
 			});
 		}
 
@@ -135,51 +143,64 @@ import './studio.css';
 				const clicked = e.target as HTMLInputElement;
 				if (clicked.tagName !== 'INPUT') return;
 
-				this.updateAnimationsHead();
-				const freezeOption = this.querySelector<HTMLInputElement>(
-					'input[name="freeze"]:checked'
-				)?.value;
-				if (freezeOption) {
-					if (this.#scopes.size === 0) {
-						if (freezeOption === 'freeze') {
-							this.refreshAnimations(this.#rootDocument!.getAnimations())!;
-							return;
+				const freeze = () => {
+					this.updateAnimationsHead();
+					const freezeOption = this.querySelector<HTMLInputElement>(
+						'input[name="freeze"]:checked'
+					)?.value;
+					if (freezeOption) {
+						if (this.#scopes.size === 0) {
+							if (freezeOption === 'freeze') {
+								this.refreshAnimations(this.#rootDocument!.getAnimations())!;
+								return;
+							}
+							if (freezeOption === 'next') {
+								this.#rootDocument!.getAnimations().forEach((a) => {
+									a.finish();
+								});
+								return;
+							}
 						}
-						if (freezeOption === 'next') {
-							this.#rootDocument!.getAnimations().forEach((a) => {
-								a.finish();
-							});
-							return;
-						}
+						this.querySelectorAll<HTMLInputElement>(
+							`.scope-container input[value=${freezeOption}]`
+						).forEach((input) => {
+							input.click();
+						});
 					}
-					this.querySelectorAll<HTMLInputElement>(
-						`.scope-container input[value=${freezeOption}]`
-					).forEach((input) => {
-						input.click();
-					});
-				}
+				};
+				mayStartViewTransition(
+					{ update: freeze, types: ["freeze"] },
+					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+				);
 			});
 
 			this.querySelector('.slow-mo')!.addEventListener('click', (e) => {
 				if ((e.target as HTMLElement).tagName !== 'INPUT') return;
-				const speed = (e.target as HTMLInputElement).value;
 
-				if (this.#scopes.size === 0) {
-					this.#rootDocument!.getAnimations().forEach((a) => {
-						a.updatePlaybackRate(speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01);
-					});
-				} else {
-					this.querySelectorAll<VtbagIcScopeElement>('vtbag-ic-scope').forEach((scope) => {
-						scope.animations.forEach((a) => {
+				const slowMo = () => {
+					const speed = (e.target as HTMLInputElement).value;
+
+					if (this.#scopes.size === 0) {
+						this.#rootDocument!.getAnimations().forEach((a) => {
 							a.updatePlaybackRate(speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01);
 						});
-					});
-				}
-				this.updateAnimationsHead();
+					} else {
+						this.querySelectorAll<VtbagIcScopeElement>('vtbag-ic-scope').forEach((scope) => {
+							scope.animations.forEach((a) => {
+								a.updatePlaybackRate(speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01);
+							});
+						});
+					}
+					this.updateAnimationsHead();
+				};
+				mayStartViewTransition(
+					{ update: slowMo, types: ['slow-mo'] },
+					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+				);
 			});
 
 			addEventListener('ic-after-capture-new', this.mayRender);
-			addEventListener('ic-animation-start', this.mayRender);
+			//	addEventListener('ic-animation-start', this.mayRender);
 
 			this.querySelector<HTMLSelectElement>('#scope-buttons')!.addEventListener('click', (e) => {
 				const button = e.target as HTMLButtonElement;
@@ -200,21 +221,17 @@ import './studio.css';
 
 			this.#rootDocument = detail.root.ownerDocument;
 
-			this.animatedRender();
+			this.render();
 
 			requestAnimationFrame(() => {
 				this.#throttleReRender = false;
 				if (again) {
-					this.animatedRender();
+					this.render();
 				}
 				again = false;
 			});
 			this.#throttleReRender = true;
 		};
-
-		animatedRender() {
-			this.render();
-		}
 
 		render() {
 			if (this.isConnected) {

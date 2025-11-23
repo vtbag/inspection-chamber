@@ -16,15 +16,19 @@ export function addBlinds(
 	let prev = children[order[0]]?.getBoundingClientRect();
 	const fix = [];
 	let columnWidth = prev.width;
+	let row = 0;
 	for (let j = 0; j < children.length; ++j) {
 		const idx = order[j];
-		const g = children[idx];
-		const current = g.getBoundingClientRect();
+		const child = children[idx] as HTMLElement;
+		const current = child.getBoundingClientRect();
 		if (!current.width) continue;
 		columnWidth = columnWidth === 0 ? current.width : Math.min(columnWidth, current.width);
 		if (idx > 0) {
-			if (current.top > prev.bottom) fix[idx - 1] = prev;
+			if (current.top > prev.bottom) { fix[idx - 1] = prev; row = Math.max(3, row + 1); }
 		}
+		const vtc = child.style.getPropertyValue("--vtc").split(" ").filter((e) => e.startsWith("delay-"));
+		vtc.push(`delay-${row}`);
+		child.style.setProperty("--vtc", vtc.join(" "));
 		prev = current;
 	}
 
@@ -38,7 +42,7 @@ export function addBlinds(
 			if (span > 0) {
 				container.children[i].insertAdjacentHTML(
 					'afterend',
-					`<${tagName} ${className ? `class="${className}"` : ''} style="grid-column: span ${span}; ${viewTransitionName ? `--vtn: p-${viewTransitionName}-${cnt++}; view-transition-class: ${viewTransitionClass}` : ''}"></${tagName}>`
+					`<${tagName} ${className ? `class="${className}"` : ''} style="grid-column: span ${span}; ${viewTransitionName ? `--vtn: p-${viewTransitionName}-${cnt++}; --vtc: ${viewTransitionClass}` : ''}"></${tagName}>`
 				);
 			}
 		}
@@ -46,7 +50,7 @@ export function addBlinds(
 }
 
 function denseOrder(container: Element): number[] {
-	const positions: { index: number; top: number; left: number }[] = [];
+	const positions: { index: number; top: number; left: number; }[] = [];
 	[...container.children].forEach((child, index) => {
 		const rect = child.getBoundingClientRect();
 		positions.push({ index, top: rect.top, left: rect.left });
