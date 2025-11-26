@@ -23,14 +23,20 @@ export function addBlinds(
 		const current = child.getBoundingClientRect();
 		if (!current.width) continue;
 		columnWidth = columnWidth === 0 ? current.width : Math.min(columnWidth, current.width);
-		if (idx > 0 && current.top > prev.bottom) { fix[idx - 1] = prev; rows++; }
+		if (idx > 0 && current.top > prev.bottom) {
+			fix[idx - 1] = prev;
+			rows++;
+		}
 		prev = current;
 	}
 
 	const addDelay = (el: HTMLElement, delay: number) => {
-		const vtc = el.style.getPropertyValue("--vtc").split(" ").filter((e) => !e.startsWith("delay-"));
+		const vtc = el.style
+			.getPropertyValue('--vtc')
+			.split(' ')
+			.filter((e) => !e.startsWith('delay-'));
 		vtc.push(`delay-${Math.max(0, delay)}`);
-		el.style.setProperty("--vtc", vtc.join(" "));
+		el.style.setProperty('--vtc', vtc.join(' '));
 	};
 
 	fix[children.length - 1] = prev;
@@ -56,7 +62,7 @@ export function addBlinds(
 }
 
 function denseOrder(container: Element): number[] {
-	const positions: { index: number; top: number; left: number; }[] = [];
+	const positions: { index: number; top: number; left: number }[] = [];
 	[...container.children].forEach((child, index) => {
 		const rect = child.getBoundingClientRect();
 		positions.push({ index, top: rect.top, left: rect.left });

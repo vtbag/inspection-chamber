@@ -1,6 +1,47 @@
 if (parent !== self) {
 	// This is an iframe, let's throw the hooks
 	// If the parent window is not ready yet, we wait until it is.
+
+	// special case:
+	console.log('iframe detected', location, location.search);
+	if (location.search.startsWith('?inspectionChamber')) {
+		console.log('nested inspection chamber');
+		addEventListener('DOMContentLoaded', () => {
+			replaceDocument(location.href.replace('?inspectionChamber', '?'), document.title);
+			setup();
+		});
+	} else {
+		setup();
+	}
+} else {
+	// This is the parent window
+	// Nothing is urgent here and we do not want to mess with loading.
+
+	addEventListener('DOMContentLoaded', () => replaceDocument(location.href, document.title));
+}
+
+async function replaceDocument(href: string, title: string) {
+	if ('activeViewTransition' in document && document.activeViewTransition) {
+		await (document.activeViewTransition as ViewTransition).finished;
+	}
+	// reset the document state
+	document.open();
+	document.write('<!DOCTYPE html><html></html>');
+	document.close();
+
+	document.documentElement.innerHTML = htmlString(href, '🔬 ' + title);
+
+	document.documentElement.querySelectorAll('script').forEach((oldScript) => {
+		const newScript = document.createElement('script');
+		Array.from(oldScript.attributes).forEach((attr) =>
+			newScript.setAttribute(attr.name, attr.value)
+		);
+		newScript.textContent = oldScript.textContent;
+		oldScript.parentNode!.replaceChild(newScript, oldScript);
+	});
+}
+
+function setup() {
 	console.log('init', parent.__vtbag);
 	if (parent.__vtbag && parent.__vtbag.ic2) {
 		console.log('parent is ready, setup hooks', parent.__vtbag.ic2);
@@ -29,27 +70,4 @@ if (parent !== self) {
 			else iframe.srcdoc = iframe.srcdoc;
 		}, 250);
 	}
-} else {
-	// This is the parent window
-	// Nothing is urgent here and we do not want to mess with loading.
-
-	addEventListener('DOMContentLoaded', () => {
-		const href = location.href;
-		const title = document.title;
-		// reset the document state
-		document.open();
-		document.write('<!DOCTYPE html><html></html>');
-		document.close();
-
-		document.documentElement.innerHTML = htmlString(href, '🔬 ' + title);
-
-		document.documentElement.querySelectorAll('script').forEach((oldScript) => {
-			const newScript = document.createElement('script');
-			Array.from(oldScript.attributes).forEach((attr) =>
-				newScript.setAttribute(attr.name, attr.value)
-			);
-			newScript.textContent = oldScript.textContent;
-			oldScript.parentNode!.replaceChild(newScript, oldScript);
-		});
-	});
 }

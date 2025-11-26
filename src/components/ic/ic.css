@@ -86,7 +86,7 @@ h1 {
 	font-size: 1.1rem;
 }
 h2 {
-	font-size: 1rem;
+	font-size: 1.2rem;
 	font-family: var(--font-logo);
 	color: #bdf;
 	margin: 4px 2px 6px 4px;
@@ -393,7 +393,7 @@ h2 {
 		view-transition-name: match-element;
 		view-transition-class: clip var(--vtc, '');
 	}
-	[style*='--vtn:'] {
+	vtbag-ic-group[style*='--vtn:'] {
 		view-transition-name: var(--vtn, none);
 	}
 	&::view-transition-group(*) {
@@ -503,17 +503,17 @@ h2 {
 }
 
 ::view-transition-group(.delay-1) {
-	animation-delay: 75ms;
+	animation-delay: 50ms;
 }
 ::view-transition-group(.delay-2) {
-	animation-delay: 150ms;
+	animation-delay: 100ms;
 }
 ::view-transition-group(.delay-3) {
-	animation-delay: 225ms;
+	animation-delay: 150ms;
 }
 ::view-transition-group(.delay-4) {
-	animation-delay: 300ms;
+	animation-delay: 200ms;
 }
 ::view-transition-group(.delay-5) {
-	animation-delay: 375ms;
-} 
+	animation-delay: 250ms;
+}

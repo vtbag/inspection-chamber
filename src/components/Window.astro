@@ -370,7 +370,6 @@ const { style } = Astro.props;
 						const bodyStyle = iframe!.contentDocument!.body.style;
 						bodyStyle.width = rect.width + 'px';
 						bodyStyle.height = rect.height + 'px';
-						console.log('Resized ', oldRect.width, oldRect.height, 'to', rect.width, rect.height);
 					},
 					types: ['window-resize'],
 				},

@@ -52,7 +52,12 @@ function namedElementsOfRule(rule: CSSRule, keyframeName?: string) {
 		declNamedElements((rule as CSSStyleRule).style);
 		// fall through to grouping rule to check nested rules
 	}
-	if (name === 'CSSGroupingRule' || name === 'CSSStyleRule') {
+	if (
+		name === 'CSSMediaRule' ||
+		name === 'CSSupportsRule' ||
+		name === 'CSScontainerRule' ||
+		name === 'CSSStyleRule'
+	) {
 		[...(rule as CSSGroupingRule).cssRules].forEach((rule) => namedElementsOfRule(rule));
 		return;
 	}

@@ -17,6 +17,7 @@ import './studio.css';
 	<div class="scope-container" style="--vtn: scope-container"></div>
 </template>
 <script>
+	import { addBlinds } from './blinds';
 	import { capture } from './capture';
 	import { type Group } from './group';
 	import { highlight } from './highlight';
@@ -169,7 +170,7 @@ import './studio.css';
 					}
 				};
 				mayStartViewTransition(
-					{ update: freeze, types: ["freeze"] },
+					{ update: freeze, types: ['freeze'] },
 					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
 				);
 			});
@@ -247,7 +248,10 @@ import './studio.css';
 						});
 					}
 				}
-				this.renderHead();
+				mayStartViewTransition(
+					{ update: () => this.renderHead(), types: [] },
+					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+				);
 			}
 		}
 
@@ -341,6 +345,7 @@ import './studio.css';
 			if (color.red === color.green) {
 				this.querySelector('.animations-head input[name=freeze]:checked')!.classList.add('orange');
 			}
+			addBlinds(this.querySelector('.animations-head')!, 'div', 'head-blind', 'animations-head', 'blind');
 		}
 	}
 

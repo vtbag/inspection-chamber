@@ -1,5 +1,4 @@
-import { type SparseDOMNode, print as printSDN } from './sparse-dom';
-import { idText } from 'typescript';
+import { type SparseDOMNode } from './sparse-dom';
 
 export type Group = {
 	parent?: Group;

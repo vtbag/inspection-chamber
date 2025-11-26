@@ -36,11 +36,11 @@ import Window from '@/components/Window.astro';
 		<Animations />
 	</head>
 	<body
-		style="display: flex; flex-direction: row; overflow: hidden; margin: 0; height: 100vh; width: 100vw;"
+		style="display: flex; flex-direction: row; overflow: hidden; margin: 0; height: 100%; width: 100%;"
 	>
-		<iframe id="ic-iframe" src="/iframe-src/" style="height: 100vh; width: calc(100vw - 305px)"
+		<iframe id="ic-iframe" src="/iframe-src/" style="height: 100%; width: calc(100% - 305px)"
 		></iframe>
-		<div id="dragBar" style="display: block; height: 100vh; width: 5px; cursor: col-resize"></div>
+		<div id="dragBar" style="display: block; height: 100%; width: 5px; cursor: col-resize"></div>
 		<div id="dock" style="height: 100%; width: 400px;"></div>
 		<Window style="display: none;">
 			<div slot="title" style="display: flex; flex-direction: row; align-items: center">
@@ -52,30 +52,19 @@ import Window from '@/components/Window.astro';
 			import { setupHooks } from '@/ic2/hooks';
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
-			const DRAG_BAR_WIDTH = 5;
-			const DRAG_BAR_WIDTH_PX = DRAG_BAR_WIDTH + 'px';
-
-			const headElements = [...document.head.children]
-				.filter((e) => !(e as HTMLScriptElement).textContent?.includes('setupHooks()'))
-				.map((e) => e.outerHTML.replaceAll("'", '"'))
-				.join('\n');
-
 			const iframe = document.getElementById('ic-iframe')!;
-			const dragBar = document.getElementById('dragBar')!;
-			const dock = document.getElementById('dock')!;
-			const win = dock!.nextElementSibling as HTMLElement;
+			if (iframe) {
+				const DRAG_BAR_WIDTH = 5;
+				const DRAG_BAR_WIDTH_PX = DRAG_BAR_WIDTH + 'px';
 
-			dock.insertAdjacentHTML(
-				'afterbegin',
-				`
-			<iframe
-				id="content"
-				style="border: none; width: 100%; height: 100%; overflow: clip;"
-				srcdoc='<html style="overflow: clip">
-	<head>
-	${headElements}
-	</head>
-	<body style="display: flex; overflow: clip;">
+				const dragBar = document.getElementById('dragBar')!;
+				const dock = document.getElementById('dock')!;
+				const win = dock!.nextElementSibling as HTMLElement;
+
+				const srcdoc =
+					`<html style="overflow: clip">` +
+					document.head.outerHTML +
+					`<body style="display: flex; overflow: clip;">
 		<vtbag-ic-animations >
 			<svg style="display: none;" aria-hidden="true">
 					<defs>
@@ -103,165 +92,75 @@ import Window from '@/components/Window.astro';
 			</defs></svg>	
 		</vtbag-ic-animations>
 	</body>
-</html>' 
-			></iframe>`
-			);
-			let side = 'w';
-			let dragReference = 0;
-			let dragOriginalSize = 0;
-			let isDragging = false;
-			let longTap: ReturnType<typeof setTimeout> | undefined;
+</html>`;
+				dock.insertAdjacentHTML(
+					'afterbegin',
+					`<iframe id="content" style="border: none; width: 100%; height: 100%; overflow: clip;"</iframe>`
+				);
+				dock.firstElementChild!.setAttribute('srcdoc', srcdoc);
+				let side = 'w';
+				let dragReference = 0;
+				let dragOriginalSize = 0;
+				let isDragging = false;
+				let longTap: ReturnType<typeof setTimeout> | undefined;
 
-			addEventListener('longTap', (event) => {
-				if (event instanceof CustomEvent) {
-					side = event.detail.side;
-					if (!side) return;
+				addEventListener('longTap', (event) => {
+					if (event instanceof CustomEvent) {
+						side = event.detail.side;
+						if (!side) return;
 
-					mayStartViewTransition(
-						{ update: handleLongTap, types: ['longTap'] },
-						{ useTypesPolyfill: 'always' }
-					);
-				}
-			});
+						mayStartViewTransition(
+							{ update: handleLongTap, types: ['longTap'] },
+							{ useTypesPolyfill: 'always' }
+						);
+					}
+				});
 
-			dragBar.addEventListener('pointerdown', (e) => {
-				e.preventDefault();
-				isDragging = true;
-				document.body.classList.add('dragging');
-				dragBar.setPointerCapture(e.pointerId);
-				dragReference = side === 'e' || side === 'w' ? e.clientX : e.clientY;
-				const iframeRect = iframe.getBoundingClientRect();
-				dragOriginalSize =
-					side === 'e' || side === 'w'
-						? iframeRect.right - iframeRect.left
-						: iframeRect.bottom - iframeRect.top;
-				longTap = setTimeout(() => {
-					longTap = undefined;
-					stopDragging();
-					dispatchEvent(new CustomEvent('longTap', { detail: { side: 'x' } }));
-				}, 500);
-			});
+				dragBar.addEventListener('pointerdown', (e) => {
+					e.preventDefault();
+					isDragging = true;
+					document.body.classList.add('dragging');
+					dragBar.setPointerCapture(e.pointerId);
+					dragReference = side === 'e' || side === 'w' ? e.clientX : e.clientY;
+					const iframeRect = iframe.getBoundingClientRect();
+					dragOriginalSize =
+						side === 'e' || side === 'w'
+							? iframeRect.right - iframeRect.left
+							: iframeRect.bottom - iframeRect.top;
+					longTap = setTimeout(() => {
+						longTap = undefined;
+						stopDragging();
+						dispatchEvent(new CustomEvent('longTap', { detail: { side: 'x' } }));
+					}, 500);
+				});
 
-			dragBar.addEventListener('pointermove', (e) => {
-				if (!isDragging) return;
-				let delta = (side === 'e' || side === 'w' ? e.clientX : e.clientY) - dragReference;
-				if (longTap && Math.abs(delta) > 5) {
-					clearTimeout(longTap);
-					longTap = undefined;
-				}
-				switch (side) {
-					case 'n':
-						iframe.style.height =
-							Math.max(100, Math.min(innerHeight - 100, delta + dragOriginalSize)) + 'px';
-						break;
-					case 's':
-						iframe.style.height =
-							Math.max(100, Math.min(innerHeight - 100, dragOriginalSize - delta)) + 'px';
-						break;
-					case 'w':
-						iframe.style.width =
-							Math.max(100, Math.min(innerWidth - 100, dragOriginalSize + delta)) + 'px';
-						break;
-					case 'e':
-						iframe.style.width =
-							Math.max(100, Math.min(innerWidth - 100, dragOriginalSize - delta)) + 'px';
-						break;
-				}
-			});
-			function stopDragging() {
-				switch (side) {
-					case 'n':
-					case 's':
-						dock.style.height =
-							innerHeight - parseInt(iframe.style.height, 10) - DRAG_BAR_WIDTH + 'px';
-						break;
-					case 'e':
-					case 'w':
-						dock.style.width =
-							innerWidth - parseInt(iframe.style.width, 10) - DRAG_BAR_WIDTH + 'px';
-						break;
-				}
-				isDragging = false;
-				document.body.classList.remove('dragging');
-				if (longTap) {
-					clearTimeout(longTap);
-					longTap = undefined;
-				}
-			}
-			dragBar.addEventListener('pointerup', stopDragging);
-			dragBar.addEventListener('pointercancel', stopDragging);
-
-			async function handleLongTap() {
-				const content = document.querySelector<HTMLElement>('#content')!;
-				const {
-					top: winTop,
-					left: winLeft,
-					bottom: winBottom,
-					right: winRight,
-				} = win.getBoundingClientRect();
-
-				console.log({ side, winTop, winLeft, winBottom, winRight });
-				document.body.innerHTML = '';
-
-				if (side === 'x') {
-					document.body.append(iframe, win);
-					document.body.style.display = 'block';
-					iframe.style.width = '100vw';
-					iframe.style.height = '100vh';
-					win.insertAdjacentElement('beforeend', content);
-					dragBar.style.display = 'none';
-					dock.style.display = 'none';
-					win.style.display = 'flex';
-					content.style.flex = '1 1 auto';
-					content.style.height = '';
-				} else {
-					document.body.style.display = 'flex';
-					dock.appendChild(content);
-					content.style.height = '100%';
-					content.style.width = '100%';
-					content.style.flex = '';
-					dock.style.display = 'block';
-					dragBar.style.display = 'block';
-					win.style.display = 'none';
-					const len = side.length;
-					if (len > 1) {
-						side = matchMedia('(orientation: portrait)').matches ? side[0] : side[len - 1];
+				dragBar.addEventListener('pointermove', (e) => {
+					if (!isDragging) return;
+					let delta = (side === 'e' || side === 'w' ? e.clientX : e.clientY) - dragReference;
+					if (longTap && Math.abs(delta) > 5) {
+						clearTimeout(longTap);
+						longTap = undefined;
 					}
 					switch (side) {
 						case 'n':
-						case 's':
-							document.body.style.flexDirection = 'column';
-							dragBar.style.width = iframe.style.width = dock.style.width = '100vw';
-							dragBar.style.height = DRAG_BAR_WIDTH_PX;
-							dragBar.style.cursor = 'row-resize';
-							dock.style.height = '';
-							break;
-						case 'e':
-						case 'w':
-							document.body.style.flexDirection = 'row';
-							dragBar.style.height = iframe.style.height = dock.style.height = '100vh';
-							dragBar.style.width = DRAG_BAR_WIDTH_PX;
-							dragBar.style.cursor = 'col-resize';
-							break;
-					}
-					switch (side) {
-						case 'n':
-							document.body.append(iframe, dragBar, dock);
-							iframe.style.height = winTop + 'px';
+							iframe.style.height =
+								Math.max(100, Math.min(innerHeight - 100, delta + dragOriginalSize)) + 'px';
 							break;
 						case 's':
-							document.body.append(dock, dragBar, iframe);
-							iframe.style.height = innerHeight - winBottom + 'px';
-							break;
-						case 'e':
-							document.body.append(dock, dragBar, iframe);
-							iframe.style.width = innerWidth - winRight + 'px';
+							iframe.style.height =
+								Math.max(100, Math.min(innerHeight - 100, dragOriginalSize - delta)) + 'px';
 							break;
 						case 'w':
-							document.body.append(iframe, dragBar, dock);
-							iframe.style.width = winLeft + 'px';
+							iframe.style.width =
+								Math.max(100, Math.min(innerWidth - 100, dragOriginalSize + delta)) + 'px';
+							break;
+						case 'e':
+							iframe.style.width =
+								Math.max(100, Math.min(innerWidth - 100, dragOriginalSize - delta)) + 'px';
 							break;
 					}
+				});
+				function stopDragging() {
 					switch (side) {
 						case 'n':
 						case 's':
@@ -274,14 +173,108 @@ import Window from '@/components/Window.astro';
 								innerWidth - parseInt(iframe.style.width, 10) - DRAG_BAR_WIDTH + 'px';
 							break;
 					}
+					isDragging = false;
+					document.body.classList.remove('dragging');
+					if (longTap) {
+						clearTimeout(longTap);
+						longTap = undefined;
+					}
+				}
+				dragBar.addEventListener('pointerup', stopDragging);
+				dragBar.addEventListener('pointercancel', stopDragging);
+
+				async function handleLongTap() {
+					const content = document.querySelector<HTMLElement>('#content')!;
+					const {
+						top: winTop,
+						left: winLeft,
+						bottom: winBottom,
+						right: winRight,
+					} = win.getBoundingClientRect();
+
+					console.log({ side, winTop, winLeft, winBottom, winRight });
+					document.body.innerHTML = '';
+
+					if (side === 'x') {
+						document.body.append(iframe, win);
+						document.body.style.display = 'block';
+						iframe.style.width = '100%';
+						iframe.style.height = '100%';
+						win.insertAdjacentElement('beforeend', content);
+						dragBar.style.display = 'none';
+						dock.style.display = 'none';
+						win.style.display = 'flex';
+						content.style.flex = '1 1 auto';
+						content.style.height = '';
+					} else {
+						document.body.style.display = 'flex';
+						dock.appendChild(content);
+						content.style.height = '100%';
+						content.style.width = '100%';
+						content.style.flex = '';
+						dock.style.display = 'block';
+						dragBar.style.display = 'block';
+						win.style.display = 'none';
+						const len = side.length;
+						if (len > 1) {
+							side = matchMedia('(orientation: portrait)').matches ? side[0] : side[len - 1];
+						}
+						switch (side) {
+							case 'n':
+							case 's':
+								document.body.style.flexDirection = 'column';
+								dragBar.style.width = iframe.style.width = dock.style.width = '100%';
+								dragBar.style.height = DRAG_BAR_WIDTH_PX;
+								dragBar.style.cursor = 'row-resize';
+								dock.style.height = '';
+								break;
+							case 'e':
+							case 'w':
+								document.body.style.flexDirection = 'row';
+								dragBar.style.height = iframe.style.height = dock.style.height = '100%';
+								dragBar.style.width = DRAG_BAR_WIDTH_PX;
+								dragBar.style.cursor = 'col-resize';
+								break;
+						}
+						switch (side) {
+							case 'n':
+								document.body.append(iframe, dragBar, dock);
+								iframe.style.height = winTop + 'px';
+								break;
+							case 's':
+								document.body.append(dock, dragBar, iframe);
+								iframe.style.height = innerHeight - winBottom + 'px';
+								break;
+							case 'e':
+								document.body.append(dock, dragBar, iframe);
+								iframe.style.width = innerWidth - winRight + 'px';
+								break;
+							case 'w':
+								document.body.append(iframe, dragBar, dock);
+								iframe.style.width = winLeft + 'px';
+								break;
+						}
+						switch (side) {
+							case 'n':
+							case 's':
+								dock.style.height =
+									innerHeight - parseInt(iframe.style.height, 10) - DRAG_BAR_WIDTH + 'px';
+								break;
+							case 'e':
+							case 'w':
+								dock.style.width =
+									innerWidth - parseInt(iframe.style.width, 10) - DRAG_BAR_WIDTH + 'px';
+								break;
+						}
+					}
+					let iframeWindow = document.querySelector<HTMLIFrameElement>('#content')!.contentWindow;
+					while (!iframeWindow) await new Promise((r) => setTimeout(r, 20));
+					self.__vtbag.ic2!.context = iframeWindow;
 				}
 				let iframeWindow = document.querySelector<HTMLIFrameElement>('#content')!.contentWindow;
 				while (!iframeWindow) await new Promise((r) => setTimeout(r, 20));
-				self.__vtbag.ic2!.context = iframeWindow;
+				setupHooks(iframeWindow);
 			}
-			let iframeWindow = document.querySelector<HTMLIFrameElement>('#content')!.contentWindow;
-			while (!iframeWindow) await new Promise((r) => setTimeout(r, 20));
-			setupHooks(iframeWindow);
 		</script>
 	</body>
 </html>

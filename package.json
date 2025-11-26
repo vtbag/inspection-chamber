@@ -41,6 +41,7 @@
     "url": "https://github.com/sponsors/martrapp"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.5",
     "@changesets/cli": "^2.29.7",
     "@eslint/js": "^9.39.0",
     "@types/css-tree": "^2.3.11",
@@ -52,9 +53,7 @@
     "esbuild": "^0.25.11",
     "postcss-active-view-transition-type": "^0.0.7",
     "prettier": "^3.6.2",
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "@astrojs/check": "^0.9.5"
+    "typescript": "^5.9.3",
+    "vite-plugin-singlefile": "^2.3.0"
   }
 }

@@ -92,12 +92,15 @@
 			const use = checkbox.nextElementSibling!.querySelector('use')!;
 			const checked = checkbox.checked;
 			use.href.baseVal = checked ? '#icon-eye-on' : '#icon-eye-off';
-			scope.ownerDocument.head.querySelector(`#vtbag-vis-${CSS.escape(name)}`)?.remove();
+			scope.ownerDocument.body.querySelector(`#vtbag-vis-${CSS.escape(name)}`)?.remove();
 			if (!checked) {
-				scope.ownerDocument.head.insertAdjacentHTML(
+				scope.ownerDocument.body.insertAdjacentHTML(
 					'beforeend',
 					`<style id="vtbag-vis-${name}">${name} { opacity: 0}</style>`
 				);
+			}
+			if (!checked && pseudo.querySelector<HTMLInputElement>('.solo input')!.checked) {
+				pseudo.querySelector<HTMLInputElement>('.solo input')!.click();
 			}
 			const inner = checkbox.closest('vtbag-ic-pseudo')?.children[1] as HTMLDivElement;
 			inner &&

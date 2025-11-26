@@ -4,7 +4,7 @@ import { defineConfig, fontProviders } from 'astro/config';
 export default defineConfig({
   devToolbar: { enabled: false },
   site: 'https://none',
-  compressHTML: false,
+  compressHTML: true,
 
   experimental: {
     preserveScriptOrder: true,
@@ -31,9 +31,9 @@ export default defineConfig({
 
   vite: {
     build: {
-      minify: false,
-      cssMinify: false,
-      assetsInlineLimit: 40000000000,
+      minify: true,
+      cssMinify: true,
+      assetsInlineLimit: 400000,
     },
     server: {
       fs: {
