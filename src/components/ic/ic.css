@@ -193,6 +193,32 @@ vtbag-ic-pseudo {
 			font-weight: 900;
 		}
 	}
+	&.frame {
+		&:has(input:checked) {
+			color: darkslategray;
+			font-weight: 900;
+		}
+	}
+	&.frame.group {
+		&:has(input:checked) {
+			color: var(--vtbag-ic-group-color);
+		}
+	}
+	&.frame.image-pair {
+		&:has(input:checked) {
+			color: darkgoldenrod;
+		}
+	}
+	&.frame.old {
+		&:has(input:checked) {
+			color: darkslateblue;
+		}
+	}
+	&.frame.new {
+		&:has(input:checked) {
+			color: darkolivegreen;
+		}
+	}
 }
 
 .scope-head {
@@ -389,6 +415,12 @@ h2 {
 	:root {
 		view-transition-name: root;
 	}
+	.scope-head,
+	.scope-head-main,
+	.animations-head,
+	.animations-head-main {
+		view-transition-name: match-element;
+	}
 	vtbag-ic-group[name='::view-transition'] {
 		view-transition-name: match-element;
 		view-transition-class: clip var(--vtc, '');
@@ -396,11 +428,12 @@ h2 {
 	vtbag-ic-group[style*='--vtn:'] {
 		view-transition-name: var(--vtn, none);
 	}
+	.head-blind[style*='--vtn:'] {
+		view-transition-name: var(--vtn, none);
+	}
 	&::view-transition-group(*) {
 		animation-duration: 250ms;
 	}
-	&::view-transition-group(.led-group),
-	&::view-transition-group(.slider),
 	&::view-transition-group(.clip),
 	&::view-transition-group(label) {
 		overflow: clip;
@@ -480,17 +513,13 @@ h2 {
 @keyframes entry {
 	from {
 		opacity: 0;
-		transform: scale(1.1) translateY(30px);
-	}
-	50% {
-		opacity: 1;
-		transform: scale(1.1) translateY(30px);
+		transform: scale(1.2) translateY(30px);
 	}
 }
 @keyframes exit {
 	to {
 		opacity: 0;
-		transform: scale(0.9) translateY(30px);
+		transform: scale(0.7) translateY(30px);
 	}
 }
 

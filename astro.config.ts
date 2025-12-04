@@ -1,4 +1,4 @@
-import { defineConfig, fontProviders } from 'astro/config';
+import { defineConfig } from 'astro/config';
 
 
 export default defineConfig({
@@ -9,21 +9,49 @@ export default defineConfig({
   experimental: {
     preserveScriptOrder: true,
     headingIdCompat: true,
-    fonts: [{
+    fonts: [/*{
       provider: fontProviders.google(),
       name: "Roboto Condensed",
       cssVariable: "--font-labels",
       styles: ["normal"],
       subsets: ["latin"],
       display: "block",
-    },{
+      unicodeRange: ["U+26"],
+    }, {
       provider: fontProviders.google(),
       name: "Audiowide",
-      cssVariable: "--font-logo",
+      cssVariable: "--font-logo-old",
       styles: ["normal"],
       subsets: ["latin"],
       display: "block",
-    }]
+      unicodeRange: ["U+26"],
+    },*/ {
+      provider: "local",
+      name: "Roboto Condensed",
+      cssVariable: "--font-labels",
+      variants: [
+        {
+          weight: 400,
+          style: "normal",
+          src: ["./src/assets/fonts/optimizedRobotoCondensed.woff2"],
+          display: "block",
+          unicodeRange: ["U+20-7E"],
+        },
+      ],
+    },{
+      provider: "local",
+      name: "Audiowide",
+      cssVariable: "--font-logo",
+      variants: [
+        {
+          weight: 400,
+          style: "normal",
+          src: ["./src/assets/fonts/optimizedAudiowide.woff2"],
+          display: "block",
+          unicodeRange: ["U+20-7E"],
+        },
+      ],
+    }],
   },
   prefetch: false,
 

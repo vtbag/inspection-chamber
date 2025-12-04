@@ -1,34 +1,23 @@
 if (parent !== self) {
 	// This is an iframe, let's throw the hooks
 	// If the parent window is not ready yet, we wait until it is.
-
-	// special case:
-	console.log('iframe detected', location, location.search);
-	if (location.search.startsWith('?inspectionChamber')) {
-		console.log('nested inspection chamber');
-		addEventListener('DOMContentLoaded', () => {
-			replaceDocument(location.href.replace('?inspectionChamber', '?'), document.title);
-			setup();
-		});
-	} else {
-		setup();
-	}
+	setup();
 } else {
-	// This is the parent window
+	// This is the top window
 	// Nothing is urgent here and we do not want to mess with loading.
-
-	addEventListener('DOMContentLoaded', () => replaceDocument(location.href, document.title));
+	requestIdleCallback(() => {
+		replaceDocument(location.href, document.title);
+	});
 }
 
 async function replaceDocument(href: string, title: string) {
-	if ('activeViewTransition' in document && document.activeViewTransition) {
-		await (document.activeViewTransition as ViewTransition).finished;
-	}
 	// reset the document state
 	document.open();
+	// @ts-ignore
 	document.write('<!DOCTYPE html><html></html>');
 	document.close();
 
+	// @ts-ignore
 	document.documentElement.innerHTML = htmlString(href, '🔬 ' + title);
 
 	document.documentElement.querySelectorAll('script').forEach((oldScript) => {
@@ -42,32 +31,44 @@ async function replaceDocument(href: string, title: string) {
 }
 
 function setup() {
-	console.log('init', parent.__vtbag);
-	if (parent.__vtbag && parent.__vtbag.ic2) {
-		console.log('parent is ready, setup hooks', parent.__vtbag.ic2);
-		const originalElementStartViewTransition = Element.prototype.startViewTransition;
-		if (originalElementStartViewTransition) {
-			Element.prototype.startViewTransition = parent.__vtbag.ic2.monkey!(
-				originalElementStartViewTransition
-			);
-		}
-
-		const originalDocumentStartViewTransition = document.startViewTransition;
-		if (originalDocumentStartViewTransition) {
-			document.startViewTransition = parent.__vtbag.ic2.monkey!(
-				originalDocumentStartViewTransition
-			);
-		}
-		addEventListener('pageswap', parent.__vtbag.ic2.pageswap!);
-		addEventListener('pagereveal', parent.__vtbag.ic2.pagereveal!);
-		addEventListener('animationstart', parent.__vtbag.ic2.animationStart!);
-		addEventListener('animationend', parent.__vtbag.ic2.animationStop!);
-	} else {
+	const reload = () => {
 		console.log('Waiting for parent to be ready', parent?.__vtbag);
 		setTimeout(() => {
 			const iframe = window.frameElement as HTMLIFrameElement;
 			if (iframe.src) iframe.contentWindow?.location.reload();
 			else iframe.srcdoc = iframe.srcdoc;
-		}, 250);
+		}, 500);
+	};
+
+	console.log('init', parent.__vtbag);
+	if (!parent.__vtbag?.ic2) {
+		reload();
+		return;
 	}
+	let target = parent;
+	while (target.__vtbag?.ic2 && target.__vtbag?.ic2?.context === self) {
+		console.log('climb up one level from', target.__vtbag.ic2.contextID);
+		if (target === target.parent) break;
+		target = target.parent;
+	}
+	if (!target.__vtbag?.ic2) {
+		reload();
+		return;
+	}
+	console.log(`parent ${target.__vtbag.ic2!.contextID} is ready, setup hooks`, target.__vtbag.ic2);
+	const originalElementStartViewTransition = Element.prototype.startViewTransition;
+	if (originalElementStartViewTransition) {
+		Element.prototype.startViewTransition = target.__vtbag.ic2!.monkey!(
+			originalElementStartViewTransition
+		);
+	}
+
+	const originalDocumentStartViewTransition = document.startViewTransition;
+	if (originalDocumentStartViewTransition) {
+		document.startViewTransition = target.__vtbag.ic2.monkey!(originalDocumentStartViewTransition);
+	}
+	addEventListener('pageswap', target.__vtbag.ic2.pageswap!);
+	addEventListener('pagereveal', target.__vtbag.ic2.pagereveal!);
+	addEventListener('animationstart', target.__vtbag.ic2.animationStart!);
+	addEventListener('animationend', target.__vtbag.ic2.animationStop!);
 }

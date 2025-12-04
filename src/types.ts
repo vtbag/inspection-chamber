@@ -18,6 +18,7 @@ export type IC2 = {
 	animationStart?: (event: AnimationEvent) => void;
 	animationStop?: (event: AnimationEvent) => void;
 	context?: Window;
+	contextID?: string;
 	globalViewTransition?: ViewTransition | null | undefined;
 	iframe?: HTMLIFrameElement;
 	monkey?:

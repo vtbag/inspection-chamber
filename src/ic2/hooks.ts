@@ -3,6 +3,7 @@ export function setupHooks(context: Window) {
 	self.__vtbag ??= {};
 	self.__vtbag.ic2 ??= {};
 	self.__vtbag.ic2.context = context;
+	self.__vtbag.ic2.contextID = `[${crypto.randomUUID().slice(0, 4)}]`;
 	self.__vtbag.ic2.pageswap = pageswap;
 	self.__vtbag.ic2.pagereveal = pagereveal;
 	self.__vtbag.ic2.monkey = monkey;

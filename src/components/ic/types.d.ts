@@ -21,7 +21,8 @@ declare global {
 		get element(): HTMLElement;
 		get path(): string;
 		get scopeId(): number;
-		animations: Animation[];
+		get animations(): Animation[];
+		set animations(as: Animation[]);
 		get size(): string;
 		updateScopeHead(): void;
 	}

@@ -1,19 +1,36 @@
-export function getElementSelector(element: HTMLElement): string {
-	if (element.constructor.name === HTMLHtmlElement.name) return ':root';
+import { renderUniqueStylesheet } from 'astro/runtime/server/index.js';
 
-	if (element.id) return '#' + element.id;
+export function deriveCSSSelector(element?: Element, short = true) {
+	let path = '';
+	if (!element) return '';
 
-	const tagName = element.tagName.toLowerCase();
-	let selector = tagName;
+	const unique = (s: string) => element?.ownerDocument.querySelectorAll(s).length === 1;
 
-	const parent = element.parentElement;
-	if (!parent) return selector;
+	if (element?.constructor.name === HTMLHtmlElement.name) return ':root';
 
-	const siblings = Array.from(parent.children).filter((s) => s.tagName.toLowerCase() === tagName);
-	if (siblings.length > 1) {
-		const index = siblings.indexOf(element) + 1;
-		selector += `:nth-child(${index})`;
+	while (element?.nodeType === Node.ELEMENT_NODE) {
+		const tag = element.tagName.toLowerCase();
+		let selector = tag;
+		if (element.id) {
+			selector = '#' + CSS.escape(element.id);
+		}
+		let test = path ? selector + '>' + path : selector;
+		if (short && unique(test)) {
+			return test;
+		}
+
+		let sibling = element;
+		let nth = 1;
+		while ((sibling = sibling.previousElementSibling as Element)) {
+			if (sibling.tagName.toLowerCase() === tag) nth++;
+		}
+		selector += ':nth-of-type(' + nth + ')';
+		test = path ? selector + '>' + path : selector;
+		if (short && unique(test)) {
+			return test;
+		}
+		path = test;
+		element = element.parentNode as Element;
 	}
-
-	return parent.parentElement ? getElementSelector(parent) + '>' + selector : selector;
+	return path;
 }

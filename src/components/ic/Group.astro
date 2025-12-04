@@ -5,6 +5,7 @@ import Pseudo from './Pseudo.astro';
 <Pseudo />
 <script>
 	import type { Group } from './group';
+	import { color } from './group';
 	class ICGroup extends HTMLElement {
 		#animations: Animation[] = [];
 		#dirty = false;
@@ -19,6 +20,11 @@ import Pseudo from './Pseudo.astro';
 			this.render();
 		}
 
+		disconnectedCallback() {
+			this.ownerDocument.body
+				.querySelector(`#vtbag-color-g-${this.#scope!.scopeId}-${this.group?.preOrder! / 2}`)
+				?.remove();
+		}
 		get name() {
 			return this.group?.name;
 		}
@@ -45,10 +51,19 @@ import Pseudo from './Pseudo.astro';
 			if (this.isConnected && this.#dirty && this.group) {
 				this.#dirty = false;
 
-				this.style.setProperty("--vtn", 'g-' + this.#scope!.scopeId + '-' + this.group!.preOrder);
+				this.style.setProperty('--vtn', 'g-' + this.#scope!.scopeId + '-' + this.group!.preOrder);
 
 				if (this.group?.children.length) this.style.gridColumn = 'span 2';
-				this.style.outline = outline(this.group!);
+				const col = color(this.group!);
+				this.#scope!.element.ownerDocument.body.querySelector(
+					`#vtbag-color-g-${this.#scope!.scopeId}-${this.group?.preOrder! / 2}`
+				)?.remove();
+				this.#scope!.element.ownerDocument.body.insertAdjacentHTML(
+					'beforeend',
+					`<style id="vtbag-color-g-${this.#scope!.scopeId}-${this.group?.preOrder! / 2}">::view-transition-group(${CSS.escape(this.group.name)}) { --vtbag-ic-group-color: ${col}; }</style>`
+				);
+				this.style.setProperty('--vtbag-ic-group-color', col);
+				this.style.outline = `4px inset var(--vtbag-ic-group-color)`;
 
 				const { noOld, noNew, noChildren } = components(this.#scope!.element, name);
 
@@ -75,23 +90,18 @@ import Pseudo from './Pseudo.astro';
 				return name;
 			}
 
-			function outline(group: Group) {
-				let root = group;
-				while (root.parent) root = root.parent;
-				const outline = `4px inset oklch(0.7 0.07 ${(360 / (root.postOrder! - root.preOrder! + 1)) * group.preOrder!}deg / 1)`;
-				return outline;
-			}
-
 			function components(scope: HTMLElement, name: string) {
-				const noOld = getComputedStyle(scope, `::view-transition-new(${name})`).getPropertyValue(
-					'--vtbag-ic-only-child'
-				);
-				const noNew = getComputedStyle(scope, `::view-transition-old(${name})`).getPropertyValue(
-					'--vtbag-ic-only-child'
-				);
+				const noOld = getComputedStyle(
+					scope,
+					`::view-transition-new(${CSS.escape(name)})`
+				).getPropertyValue('--vtbag-ic-only-child');
+				const noNew = getComputedStyle(
+					scope,
+					`::view-transition-old(${CSS.escape(name)})`
+				).getPropertyValue('--vtbag-ic-only-child');
 				const noChildren = getComputedStyle(
 					scope,
-					`::view-transition-image-pair(${name})`
+					`::view-transition-image-pair(${CSS.escape(name)})`
 				).getPropertyValue('--vtbag-ic-only-child');
 				return { noOld, noNew, noChildren };
 			}

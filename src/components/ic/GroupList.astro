@@ -111,6 +111,7 @@ import Group from './Group.astro';
 					? ag.group.preOrder - bg.group.preOrder
 					: ag.name.replace(/^-vtbag-/, '').localeCompare(bg.name.replace(/^-vtbag-/, ''));
 			});
+			// @ts-ignore
 			if ('moveBefore' in Element.prototype) sorted.forEach((s) => this.moveBefore(s, null));
 			else sorted.forEach((s) => this.appendChild(s));
 

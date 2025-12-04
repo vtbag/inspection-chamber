@@ -23,6 +23,7 @@ echo 'function htmlString(src, title) {return `' >> lib/attach.tmp
 sed -e 's/<!DOCTYPE html><html>//' dist/IC/InspectionChamber/index.html | sed -e 's|</html>||' | sed -e 's/\([\\`$]\)/\\\1/g' >> lib/attach.tmp
 echo '`.replace("__vtbag_inspection_chamber_title__", title).replace("/vtbag_inspection_chamber_src__/", src);}' >> lib/attach.tmp
 mv lib/attach.tmp lib/attach.js
+perl -0pi -e 's|<link rel="preload" href="data:font/woff2;base64.*? type="font/woff2" crossorigin>||sg' lib/attach.js
 
 if [ "$1" = "test" ]; then
   mkdir -p e2e/public/lib

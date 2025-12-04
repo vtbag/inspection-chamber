@@ -92,3 +92,9 @@ export function isSorted(group: Group): boolean {
 			arr[idx - 1].name.replace(/^-vtbag-/, '').localeCompare(g.name.replace(/^-vtbag-/, '')) <= 0
 	);
 }
+
+export function color(group: Group): string {
+	let root = group;
+	while (root.parent) root = root.parent;
+	return `oklch(0.7 0.07 ${(360 / (root.postOrder! - root.preOrder! + 1)) * group.preOrder!}deg / 1)`;
+}

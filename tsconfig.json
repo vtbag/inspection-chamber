@@ -1,6 +1,6 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "exclude": ["node_modules", "test", "components/template", "e2e"],
+  "exclude": ["node_modules", "test", "components/template", "e2e", "dist", "lib", "public"],
   "compilerOptions": {
     "allowJs": true,
     "paths": { "@/*": ["./src/*"] },

@@ -14,13 +14,18 @@
 			}
 			:root {
 				color-scheme: dark;
-				view-transition-name: holla;
 				background-color: #222;
+			}
+			body {
 			}
 			* {
 				box-sizing: border-box;
 				margin: 0;
 				padding: 0;
+			}
+			h1 {
+				width: fit-content;
+				margin: 0 auto;
 			}
 			header p {
 				view-transition-name: ¶;
@@ -38,10 +43,11 @@
 		>
 			<header style="text-align: center; margin-bottom: 3rem;">
 				<h1
-					style="view-transition-name: h1; font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
+					style="view-transition-name: h1\\!; font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
 				>
 					Welcome to Our Platform
 				</h1>
+				<section>Holla, Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit magni ex vero commodi neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat laudantium provident tenetur consectetur adipisci cumque!</section>
 				<p style="font-size: 1.25rem; color: #a0aec0; max-width: 600px; margin: 0 auto;">
 					Discover amazing features and unlock your potential with our innovative solutions.
 				</p>
@@ -85,6 +91,7 @@
 		<script>
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
+			const h1 = document.querySelector('h1')!;
 			const btn = document.getElementById('expand-btn');
 			const img1 = document.getElementById('bot')!;
 			const img2 = document.getElementById('heroine')!;
@@ -94,13 +101,15 @@
 				mayStartViewTransition({
 					update() {
 						if (isExpanded) {
+							h1.innerText = 'Welcome to Our Platform';
 							img2.style.display = 'none';
 							img1.style.display = 'inline';
-							if (btn) btn.textContent = 'Expand Image';
+							if (btn) btn.textContent = 'Expand the small image';
 						} else {
+							h1.innerText = 'Welcome';
 							img1.style.display = 'none';
 							img2.style.display = 'inline';
-							if (btn) btn.textContent = 'Shrink Image';
+							if (btn) btn.textContent = 'Shrink image';
 						}
 						isExpanded = !isExpanded;
 						const header = document.querySelector('header');

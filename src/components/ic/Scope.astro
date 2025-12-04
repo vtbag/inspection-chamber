@@ -10,12 +10,13 @@ import GroupList from './GroupList.astro';
 		getCurrentViewTransition,
 		mayStartViewTransition,
 	} from '@vtbag/utensil-drawer/may-start-view-transition';
-	import { getElementSelector } from './element-selector';
-	import { type Group, isSorted } from './group';
+	import { deriveCSSSelector } from './element-selector';
+	import { color, type Group, isSorted } from './group';
 	import { highlight } from './highlight';
 	import { ledGroup, type LEDs } from './led-group';
 	import { slider, setMaxValue, setCurrentValue } from './slider';
 	import { addBlinds } from './blinds';
+	import { frameToggles } from './multi-frame';
 
 	class ICScope extends HTMLElement {
 		#scope: HTMLElement | null = null;
@@ -34,11 +35,11 @@ import GroupList from './GroupList.astro';
 		#observer?: ResizeObserver;
 		#resizeToggle: boolean = false;
 		#main?: VtbagIcAnimationsElement;
+		#frameToggleRefresh?: () => void;
 
 		constructor() {
 			super();
 
-			console.log('Constructor for Scope');
 			this.#sortLEDs = {
 				className: 'sort',
 				groupName: `scope-sort-${this.#id}`,
@@ -104,7 +105,6 @@ import GroupList from './GroupList.astro';
 
 		connectedMoveCallback() {}
 		connectedCallback() {
-			console.log('connected scope ' + this.#scope);
 			this.#observer = new ResizeObserver(() => {
 				if (this.#resizeToggle || getCurrentViewTransition()) {
 					return;
@@ -116,7 +116,7 @@ import GroupList from './GroupList.astro';
 				});
 			});
 			this.#observer.observe(this);
-			this.animatedRender();
+			this.render();
 		}
 
 		get size() {
@@ -124,7 +124,7 @@ import GroupList from './GroupList.astro';
 		}
 
 		get path() {
-			return (this.#path ??= getElementSelector(this.#scope!));
+			return (this.#path ??= deriveCSSSelector(this.#scope!));
 		}
 
 		get scopeId() {
@@ -149,7 +149,7 @@ import GroupList from './GroupList.astro';
 			if (value.some((a) => !this.#animations.includes(a))) {
 				this.#animations = [...new Set<Animation>([...this.#animations, ...value])];
 				this.#dirty = true;
-				this.animatedRender();
+				this.render();
 			}
 		}
 
@@ -190,6 +190,14 @@ import GroupList from './GroupList.astro';
 
 				this.innerHTML = html;
 
+				this.#frameToggleRefresh = frameToggles(
+					this.querySelector<HTMLDivElement>('div.scope-head')!,
+					'vtbag-ic-scope'
+				);
+				this.addEventListener('frame-toggle', () => {
+					this.#frameToggleRefresh!();
+				});
+
 				this.querySelectorAll<HTMLInputElement>(`input[name^="freeze"]`).forEach((e) =>
 					e.classList.remove('orange', 'red')
 				);
@@ -227,12 +235,13 @@ import GroupList from './GroupList.astro';
 				this.addResizeListener(error);
 				this.addFreezeListener();
 				this.addButtonListener();
+				this.addEventListener('resync', () => this.resync());
 			}
 		}
 		setupSlider() {
 			this.#animations.forEach((a) => this.#timings.set(a, a.effect!.getComputedTiming()));
 			this.#longestDuration = this.#animations.reduce(
-				(max, a) => Math.max(max, this.#timings.get(a)!.duration as number),
+				(max, a) => Math.max(max, this.#timings.get(a)!.endTime as number),
 				0
 			);
 			const slowMo = this.#main!.querySelector<HTMLInputElement>(
@@ -258,10 +267,38 @@ import GroupList from './GroupList.astro';
 					});
 				}
 			);
+			this.resync();
 		}
+
+		resync() {
+			// Make Firefox happy
+			if (navigator.userAgent.toLowerCase().includes('firefox')) {
+				const paused = this.#animations[0]?.playState === 'paused';
+				const time = this.#animations[0]?.currentTime;
+				const rate = this.#animations[0]?.playbackRate;
+				if (paused) {
+					this.#animations.forEach((a) => {
+						a.playbackRate = 0.0001;
+						a.play();
+					});
+					requestAnimationFrame(() =>
+						requestAnimationFrame(() =>
+							this.#animations.forEach((a) => {
+								a.pause();
+								a.playbackRate = rate;
+								a.currentTime = time;
+							})
+						)
+					);
+				}
+			}
+		}
+
 		updateScopeHead() {
 			addBlinds(this.querySelector('.scope-head')!, 'div', 'head-blind', 'shb', 'blind');
+			this.#frameToggleRefresh!();
 		}
+
 		private addButtonListener() {
 			[this.children[0], this.children[2]].forEach((x) =>
 				x.addEventListener('click', (e) => {
@@ -293,6 +330,7 @@ import GroupList from './GroupList.astro';
 				document.querySelectorAll<VtbagIcGroupElement>('vtbag-ic-group').forEach((g) => {
 					styles.push(`
 ::view-transition-group(${g.style.getPropertyValue('--vtn')}) {
+--vtbag-ic-group-color: ${g.style.getPropertyValue('--vtbag-ic-group-color')};
 	outline: ${g.style.outline};
 	border-radius: 4px;	
 }`);
@@ -373,7 +411,7 @@ ${styles.join('\n')}
 					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
 						'red'
 					);
-					
+
 					this.#animations.forEach((a) => {
 						a.finish();
 					});
@@ -403,7 +441,7 @@ ${styles.join('\n')}
 					/-vtbag-match-element-([0-9]+)/,
 					(_, num) => `match-element<sup>(${num})</sup>`
 				);
-				html += `<button data-group="${g.preOrder}" style="--vtn: b-${this.#id}-${g.preOrder}; border: 2px solid oklch(0.7 0.07 ${(360 / (rootGroup.postOrder! - rootGroup.preOrder! + 1)) * g.preOrder!}deg / 1)">${name}</button>`;
+				html += `<button data-group="${g.preOrder}" style="--vtn: b-${this.#id}-${g.preOrder}; border: 2px solid ${color(g)}">${name}</button>`;
 			});
 			html += '</div>';
 			return html;

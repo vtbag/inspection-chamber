@@ -1,5 +1,5 @@
 import { namedElements, allRoots } from '@/css';
-import { getElementSelector } from './element-selector';
+import { deriveCSSSelector } from './element-selector';
 import { nestGroups, numberGroupsDFS, type Group } from './group';
 import { linkToParent, sort, type SparseDOMNode } from './sparse-dom';
 
@@ -24,7 +24,7 @@ export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>)
 	elementMap.set(transitionRoot, rootNode);
 
 	named.forEach(({ element, pseudoElement }) => {
-		const path = getElementSelector(element);
+		const path = deriveCSSSelector(element);
 		// todo element.dataset.vtbagIcId = path;
 		const key = path + (pseudoElement ? pseudoElement : '');
 		if (seen.has(key)) return;
@@ -70,7 +70,7 @@ export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>)
 			return name;
 		}
 
-		function addBackLink() {
+		function _addBackLink() {
 			const withBackLink =
 				(style.backdropFilter !== 'none' ? style.backdropFilter + ' ' : '') +
 				`url(#vtbag-ic-${key})`;

@@ -34,12 +34,15 @@ import Window from '@/components/Window.astro';
 			}
 		</style>
 		<Animations />
+		<script is:inline src="/attach.js"></script>
 	</head>
 	<body
 		style="display: flex; flex-direction: row; overflow: hidden; margin: 0; height: 100%; width: 100%;"
 	>
-		<iframe id="ic-iframe" src="/iframe-src/" style="height: 100%; width: calc(100% - 305px)"
-		></iframe>
+		<iframe
+			id="ic-iframe"
+			src="/vtbag_inspection_chamber_src__/"
+			style="height: 100%; width: calc(100% - 305px)"></iframe>
 		<div id="dragBar" style="display: block; height: 100%; width: 5px; cursor: col-resize"></div>
 		<div id="dock" style="height: 100%; width: 400px;"></div>
 		<Window style="display: none;">
@@ -267,13 +270,10 @@ import Window from '@/components/Window.astro';
 								break;
 						}
 					}
-					let iframeWindow = document.querySelector<HTMLIFrameElement>('#content')!.contentWindow;
-					while (!iframeWindow) await new Promise((r) => setTimeout(r, 20));
+					let iframeWindow = document.querySelector<HTMLIFrameElement>('#content')!.contentWindow!;
 					self.__vtbag.ic2!.context = iframeWindow;
 				}
-				let iframeWindow = document.querySelector<HTMLIFrameElement>('#content')!.contentWindow;
-				while (!iframeWindow) await new Promise((r) => setTimeout(r, 20));
-				setupHooks(iframeWindow);
+				setupHooks(document.querySelector<HTMLIFrameElement>('#content')!.contentWindow!);
 			}
 		</script>
 	</body>

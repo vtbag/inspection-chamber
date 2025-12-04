@@ -366,7 +366,6 @@ const { style } = Astro.props;
 			mayStartViewTransition(
 				{
 					update: async () => {
-						const oldRect = iframe.contentDocument!.body.getBoundingClientRect();
 						const bodyStyle = iframe!.contentDocument!.body.style;
 						bodyStyle.width = rect.width + 'px';
 						bodyStyle.height = rect.height + 'px';

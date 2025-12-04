@@ -24,13 +24,12 @@ import './studio.css';
 	import { ledGroup } from './led-group';
 	import { key } from './scope';
 	import { allRoots } from '@/css';
-	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	import { getCurrentViewTransition, mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
 
 	class ICAnimations extends HTMLElement {
 		#initialized = false;
-		#throttleReRender = false;
 		groupMaps: Map<Element, Map<string, Group>>;
 		#scopes = new Map<HTMLElement, VtbagIcScopeElement>();
 		#observer?: ResizeObserver;
@@ -40,6 +39,9 @@ import './studio.css';
 			super();
 			this.groupMaps = moduleGroupMaps;
 			self.addEventListener('ic-about-to-finish', (e) => {
+				const vt = getCurrentViewTransition();
+				console.log('ic-about-to-finish', vt);
+				vt && vt.skipTransition();
 				mayStartViewTransition(
 					{
 						update: () => {
@@ -182,7 +184,7 @@ import './studio.css';
 					const speed = (e.target as HTMLInputElement).value;
 
 					if (this.#scopes.size === 0) {
-						this.#rootDocument!.getAnimations().forEach((a) => {
+						this.#rootDocument?.getAnimations().forEach((a) => {
 							a.updatePlaybackRate(speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01);
 						});
 					} else {
@@ -214,46 +216,27 @@ import './studio.css';
 
 		mayRender = (e: Event) => {
 			const detail = (e as CustomEvent).detail;
-			let again = false;
-			if (this.#throttleReRender) {
-				again = true;
-				return;
-			}
-
 			this.#rootDocument = detail.root.ownerDocument;
-
-			this.render();
-
-			requestAnimationFrame(() => {
-				this.#throttleReRender = false;
-				if (again) {
-					this.render();
+			let update = () => this.renderHead();
+			if (this.querySelector<HTMLInputElement>('#run')?.checked) {
+				const speed = this.querySelector<HTMLInputElement>('input[name="slow-mo"]:checked')?.value;
+				if (speed !== 'normal') {
+					this.#rootDocument!.getAnimations().forEach((a) => {
+						a.updatePlaybackRate(speed === 'slow' ? 0.1 : 0.01);
+					});
 				}
-				again = false;
-			});
-			this.#throttleReRender = true;
-		};
-
-		render() {
-			if (this.isConnected) {
-				if (!this.querySelector<HTMLInputElement>('#run')?.checked) {
+			} else {
+				this.#rootDocument?.getAnimations().forEach((a) => a.pause());
+				update = () => {
 					this.refreshAnimations(this.#rootDocument!.getAnimations())!;
-				} else {
-					const speed = this.querySelector<HTMLInputElement>(
-						'input[name="slow-mo"]:checked'
-					)?.value;
-					if (speed !== 'normal') {
-						this.#rootDocument!.getAnimations().forEach((a) => {
-							a.updatePlaybackRate(speed === 'slow' ? 0.1 : 0.01);
-						});
-					}
-				}
-				mayStartViewTransition(
-					{ update: () => this.renderHead(), types: [] },
-					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
-				);
+					this.renderHead();
+				};
 			}
-		}
+			mayStartViewTransition(
+				{ update, types: ['vt-entry'] },
+				{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+			);
+		};
 
 		private renderHead() {
 			const firstScopeFreeze = this.querySelector<HTMLElement>('.scope-container .freeze');
@@ -281,6 +264,7 @@ import './studio.css';
 			);
 
 			if ('moveBefore' in Element.prototype)
+				// @ts-ignore
 				sorted.forEach((s) => scopeContainer.moveBefore(s, null));
 			else sorted.forEach((s) => scopeContainer.appendChild(s));
 		}
@@ -304,8 +288,6 @@ import './studio.css';
 					animations.push(a);
 				}
 			});
-			console.log('scopes in getAnimations()', newScopes);
-
 			newScopes.forEach((animations, element) => {
 				let scope = this.#scopes.get(key(element))!;
 				if (!scope) {
@@ -345,7 +327,13 @@ import './studio.css';
 			if (color.red === color.green) {
 				this.querySelector('.animations-head input[name=freeze]:checked')!.classList.add('orange');
 			}
-			addBlinds(this.querySelector('.animations-head')!, 'div', 'head-blind', 'animations-head', 'blind');
+			addBlinds(
+				this.querySelector('.animations-head')!,
+				'div',
+				'head-blind',
+				'animations-head',
+				'blind'
+			);
 		}
 	}
 
@@ -377,6 +365,7 @@ import './studio.css';
 	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
 		self.addEventListener(event, (e) => {
 			const root = (e as CustomEvent).detail.root;
+
 			root.ownerDocument.head
 				.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(key(root))?.get('@')?.name}`)
 				?.remove();
@@ -394,7 +383,6 @@ import './studio.css';
 	::view-transition-old(*),
 	::view-transition-new(*) {
 	--vtbag-ic-only-child: initial;
-
 }
 ::view-transition-image-pair(*):only-child,
 ::view-transition-old(*):only-child,

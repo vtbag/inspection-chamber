@@ -7,6 +7,7 @@ export type LEDs = {
 		value: String;
 		label: String;
 	}[];
+	independent?: boolean;
 };
 export function ledGroup(leds: LEDs) {
 	return `
@@ -15,7 +16,7 @@ export function ledGroup(leds: LEDs) {
 			.map(
 				(alt) => `
 			<div class="input-led-item">
-				<input type="radio" name="${leds.groupName}" value="${alt.value}" id="${alt.id}" ${leds.checked === alt.value ? 'checked' : ''}>
+				<input type="${leds.independent ? 'checkbox' : 'radio'}" name="${leds.groupName}" value="${alt.value}" id="${alt.id}" ${leds.checked === alt.value ? 'checked' : ''}>
 				<label for="${alt.id}">
 					<span class="led"></span>
             <span class="radio-text">${alt.label}</span>
