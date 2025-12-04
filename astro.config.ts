@@ -9,23 +9,7 @@ export default defineConfig({
   experimental: {
     preserveScriptOrder: true,
     headingIdCompat: true,
-    fonts: [/*{
-      provider: fontProviders.google(),
-      name: "Roboto Condensed",
-      cssVariable: "--font-labels",
-      styles: ["normal"],
-      subsets: ["latin"],
-      display: "block",
-      unicodeRange: ["U+26"],
-    }, {
-      provider: fontProviders.google(),
-      name: "Audiowide",
-      cssVariable: "--font-logo-old",
-      styles: ["normal"],
-      subsets: ["latin"],
-      display: "block",
-      unicodeRange: ["U+26"],
-    },*/ {
+    fonts: [{
       provider: "local",
       name: "Roboto Condensed",
       cssVariable: "--font-labels",
@@ -38,7 +22,7 @@ export default defineConfig({
           unicodeRange: ["U+20-7E"],
         },
       ],
-    },{
+    }, {
       provider: "local",
       name: "Audiowide",
       cssVariable: "--font-logo",

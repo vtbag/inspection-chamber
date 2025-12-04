@@ -22,14 +22,14 @@ export type IC2 = {
 	globalViewTransition?: ViewTransition | null | undefined;
 	iframe?: HTMLIFrameElement;
 	monkey?:
-		| (<
-				T extends
-					| typeof Element.prototype.startViewTransition
-					| typeof document.startViewTransition,
-		  >(
-				original: T
-		  ) => T)
-		| undefined;
+	| (<
+		T extends
+		| typeof Element.prototype.startViewTransition
+		| typeof document.startViewTransition,
+	>(
+		original: T
+	) => T)
+	| undefined;
 	pagereveal?: (event: PageRevealEvent) => void;
 	pageswap?: (event: PageSwapEvent) => void;
 	pauseSheet?: CSSStyleSheet;
