@@ -15,6 +15,7 @@ const basicProps = [
 	'writing-mode',
 	'z-index',
 ];
+if (0) console.log('basicProps', basicProps);
 
 let defaultStyleValues: Record<string, string>;
 

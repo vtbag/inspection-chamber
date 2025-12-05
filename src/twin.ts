@@ -56,7 +56,7 @@ function twinId(name: string, pseudo: string) {
 export async function syncTwins(hidden: Set<string>) {
 	top!.document.documentElement.classList.add('vtbag-twin-sync');
 	const inspectionChamber = top!.__vtbag.inspectionChamber!;
-	const root = inspectionChamber.frameDocument!.documentElement;
+	// const root = inspectionChamber.frameDocument!.documentElement;
 	for (let group of [...(inspectionChamber.twin?.children || [])]) {
 		const name = (group as HTMLElement).dataset.vtbagTransitionName!;
 		if (hidden.has(name)) continue;
