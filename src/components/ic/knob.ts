@@ -1,4 +1,3 @@
-
 export function knob(id: string, name: string): string {
 	return `
 <div class="rotary-body" style="view-transition-name: kc-${id}; --vtc: knob">
@@ -7,9 +6,6 @@ export function knob(id: string, name: string): string {
 		<input type="range" id="${id}" name="${name}" min="0" max="500" value="0" step="1">
 	</div>
 </div>`;
-
-
-
 }
 export function setMaxValue(id: string, max: number, now: number, onInput: (event: Event) => void) {
 	const input = document.querySelector<HTMLInputElement>(`#${id}`);
