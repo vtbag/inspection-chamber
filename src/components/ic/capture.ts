@@ -12,8 +12,8 @@ export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>)
 	const elementMap = new Map<Element, SparseDOMNode>();
 	const sparseDOM: SparseDOMNode[] = [];
 
-	const { elements: named } = namedElements(transitionRoot);
 	allRoots.add(transitionRoot);
+	const { elements: named } = namedElements(transitionRoot);
 	const style = getComputedStyle(transitionRoot);
 	let rootNode: SparseDOMNode = {
 		viewTransitionName: 'none',
@@ -51,7 +51,7 @@ export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>)
 
 		function cssUnescape(str: string): string {
 			return str
-				.replace(/\\([0-9a-fA-F]{1,6})\s?/g, (match, hex) => {
+				.replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_match, hex) => {
 					return String.fromCharCode(parseInt(hex, 16));
 				})
 				.replace(/\\(.)/g, '$1');
@@ -76,6 +76,7 @@ export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>)
 				`url(#vtbag-ic-${key})`;
 			sheet += `${key} { backdrop-filter: ${withBackLink}}\n`;
 		}
+		if (0) _addBackLink();
 	});
 
 	rootNode = elementMap.get(transitionRoot)!;

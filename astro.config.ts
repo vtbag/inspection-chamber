@@ -12,7 +12,7 @@ export default defineConfig({
     fonts: [{
       provider: "local",
       name: "Roboto Condensed",
-      cssVariable: "--font-labels",
+      cssVariable: "--vtbag-ic-font-labels",
       variants: [
         {
           weight: 400,
@@ -25,7 +25,7 @@ export default defineConfig({
     }, {
       provider: "local",
       name: "Audiowide",
-      cssVariable: "--font-logo",
+      cssVariable: "--vtbag-ic-font-logo",
       variants: [
         {
           weight: 400,

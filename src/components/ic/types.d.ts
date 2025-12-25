@@ -15,6 +15,11 @@ declare global {
 	interface VtbagIcAnimationsElement extends HTMLElement {
 		updateAnimationsHead(): unknown;
 		groupMaps: Map<HTMLElement, Map<string, Group>>;
+		movePseudos(): void;
+	}
+	interface VtbagIcIdentifyElement extends HTMLElement {
+		show(): void;
+		hide(): void;
 	}
 	interface VtbagIcScopeElement extends HTMLElement {
 		init(element: HTMLElement, root: Group, animations: Animation[]): void;
@@ -39,7 +44,17 @@ declare global {
 		set animations(animations: Animation[]);
 	}
 	interface VtbagIcPseudoElement extends HTMLElement {
-		exists: boolean;
+		twin: HTMLDivElement;
+		get exists(): boolean;
+		createTwin(): void;
+		moveTwin(): void;
+		name(escaped = false): string;
+		animations(): Animation[];
+		async computedStyleCompact(all = false): Promise<{ key: string; value: string; defaultValue: string; priority: string; }[]>;
+		onIntersectionChange(entry: IntersectionObserverEntry);
+	}
+	interface VtbagIcPseudoDetailsElement extends HTMLElement {
+		set(pseudo: string): void;
 	}
 	interface HTMLElementTagNameMap {
 		'vtbag-ic-animations': VtbagIcAnimationsElement;
@@ -50,4 +65,4 @@ declare global {
 	}
 }
 
-export {};
+export { };

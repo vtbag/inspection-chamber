@@ -5,7 +5,7 @@ import Pseudo from './Pseudo.astro';
 <Pseudo />
 <script>
 	import type { Group } from './group';
-	import { color } from './group';
+	import { color, gid } from './group';
 	class ICGroup extends HTMLElement {
 		#animations: Animation[] = [];
 		#dirty = false;
@@ -20,11 +20,8 @@ import Pseudo from './Pseudo.astro';
 			this.render();
 		}
 
-		disconnectedCallback() {
-			this.ownerDocument.body
-				.querySelector(`#vtbag-color-g-${this.#scope!.scopeId}-${this.group?.preOrder! / 2}`)
-				?.remove();
-		}
+		disconnectedCallback() {}
+
 		get name() {
 			return this.group?.name;
 		}
@@ -43,24 +40,20 @@ import Pseudo from './Pseudo.astro';
 		}
 
 		render() {
-			const name = this.group?.name || '';
-			if (!name) {
-				this.insertAdjacentHTML('afterbegin', `<div class="group-content"></div>`);
-				return;
-			}
 			if (this.isConnected && this.#dirty && this.group) {
 				this.#dirty = false;
+				const name = this.group?.name || '';
 
-				this.style.setProperty('--vtn', 'g-' + this.#scope!.scopeId + '-' + this.group!.preOrder);
+				this.style.setProperty('--vtn', 'g-' + this.#scope!.scopeId + '-' + gid(this.group));
 
 				if (this.group?.children.length) this.style.gridColumn = 'span 2';
 				const col = color(this.group!);
 				this.#scope!.element.ownerDocument.body.querySelector(
-					`#vtbag-color-g-${this.#scope!.scopeId}-${this.group?.preOrder! / 2}`
+					`#vtbag-color-${this.#scope!.scopeId}-${gid(this.group)}`
 				)?.remove();
 				this.#scope!.element.ownerDocument.body.insertAdjacentHTML(
 					'beforeend',
-					`<style id="vtbag-color-g-${this.#scope!.scopeId}-${this.group?.preOrder! / 2}">::view-transition-group(${CSS.escape(this.group.name)}) { --vtbag-ic-group-color: ${col}; }</style>`
+					`<style id="vtbag-color-${this.#scope!.scopeId}-${gid(this.group)}">::view-transition-group(${CSS.escape(this.group.name)}) { --vtbag-ic-group-color: ${col}; }</style>`
 				);
 				this.style.setProperty('--vtbag-ic-group-color', col);
 				this.style.outline = `4px inset var(--vtbag-ic-group-color)`;
@@ -70,7 +63,7 @@ import Pseudo from './Pseudo.astro';
 				this.insertAdjacentHTML(
 					'afterbegin',
 					`
-	<div class="group-content"><h3 class="heading" data-group="${this.group!.parent?.preOrder}">${displayName(name)}</h3>
+	<div class="group-content"><h3 class="heading" data-group="${gid(this.group)}">${displayName(this.group)}</h3>
 		<vtbag-ic-pseudo name="group" ${this.#scope!.size === 'small' ? 'style="height: 0px"' : ''}'>
 			<vtbag-ic-pseudo name="image-pair"><div class="old-new">
 				${noOld ? '' : '<vtbag-ic-pseudo name="old"></vtbag-ic-pseudo>'}
@@ -82,15 +75,21 @@ import Pseudo from './Pseudo.astro';
 				);
 			}
 
-			function displayName(name: string) {
+			function displayName(group: Group) {
+				let name = group.name;
 				if (name.startsWith('-vtbag-auto-'))
 					name = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
 				if (name.startsWith('-vtbag-match-element-'))
 					name = 'match-element' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
+				if (group.className && group.className !== 'none') {
+					name += ' <small>.' + group.className.split(' ').join('<wbr>.') + '</small>';
+				}
 				return name;
 			}
 
 			function components(scope: HTMLElement, name: string) {
+
+				// work around for Firefox bug. Should be Pseudo.exists
 				const noOld = getComputedStyle(
 					scope,
 					`::view-transition-new(${CSS.escape(name)})`

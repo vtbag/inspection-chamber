@@ -79,7 +79,7 @@ export function frameToggles(parent: HTMLElement, grandpaSelector: string) {
 						.forEach((el) => el.click()),
 				types: ['framing'],
 			},
-			{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+			{ collisionBehavior: 'never', useTypesPolyfill: 'always' }
 		);
 	});
 

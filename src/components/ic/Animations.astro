@@ -1,18 +1,20 @@
 ---
+import PseudoDetails from './PseudoDetails.astro';
 import Scope from './Scope.astro';
 import './ic.css';
 import './studio.css';
 ---
 
 <Scope />
+<PseudoDetails />
 <template id="vtbag-ic-animations">
-	<h2 class="ic-label" style="--vtn: label">Inspection Chamber</h2>
 	<div class="animations-head" style="--vtn: animations-head">
-		<div class="animations-head-main" style="--vtn: animations-head-main">
+		<div class="animations-head-main" style="--vtn: animations-head-main; display:none">
 			<span>View Transitions: <span id="view-transitions">0</span></span>
 			<span id="scopes">Scopes:</span>
 			<span id="scope-buttons"></span>
 		</div>
+		<vtbag-ic-pseudo-details></vtbag-ic-pseudo-details>
 	</div>
 	<div class="scope-container" style="--vtn: scope-container"></div>
 </template>
@@ -21,10 +23,9 @@ import './studio.css';
 	import { capture } from './capture';
 	import { type Group } from './group';
 	import { highlight } from './highlight';
-	import { ledGroup } from './led-group';
-	import { key } from './scope';
+	import { disableLedGroup, enableLedGroup, hideLedGroup, ledGroup } from './led-group';
 	import { allRoots } from '@/css';
-	import { getCurrentViewTransition, mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
 
@@ -34,27 +35,30 @@ import './studio.css';
 		#scopes = new Map<HTMLElement, VtbagIcScopeElement>();
 		#observer?: ResizeObserver;
 		#rootDocument?: Document;
+		#pseudosToMove: VtbagIcPseudoElement[] = [];
+		#retriggerPseudosToMove: boolean = false;
 
 		constructor() {
 			super();
 			this.groupMaps = moduleGroupMaps;
 			self.addEventListener('ic-about-to-finish', (e) => {
-				const vt = getCurrentViewTransition();
-				console.log('ic-about-to-finish', vt);
-				vt && vt.skipTransition();
 				mayStartViewTransition(
 					{
 						update: () => {
 							const root = (e as CustomEvent).detail.root;
-							const scopeKey = key(root);
-							const scope = this.#scopes.get(scopeKey)!;
-							scope && (scope.animations = []);
-							this.#scopes.delete(scopeKey);
+							const scope = this.#scopes.get(root)!;
+							this.#scopes.delete(root);
 							scope?.remove();
 							allRoots.delete(root);
-							parent.document.documentElement.classList.remove('action');
+							!this.#scopes
+								.keys()
+								.some((element) => element.ownerDocument.documentElement === element) &&
+								parent.document.documentElement.classList.remove('action');
 							this.renderHead();
 							this.updateAnimationsHead();
+							if (this.#scopes.size === 0) {
+								this.querySelector<VtbagIcIdentifyElement>('vtbag-ic-identify')?.hide();
+							}
 						},
 						types: ['vt-exit'],
 					},
@@ -63,8 +67,15 @@ import './studio.css';
 			});
 		}
 
-		disconnectCallback() {
+		disconnectedCallback() {
+			console.log('ICAnimations disconnected');
 			this.#observer?.disconnect();
+			this.querySelectorAll<VtbagIcScopeElement>('vtbag-ic-scope').forEach((s) =>
+				s.element.activeViewTransition?.skipTransition()
+			);
+			this.querySelector<VtbagIcScopeElement>(
+				'vtbag-ic-scope'
+			)?.element.ownerDocument.activeViewTransition?.skipTransition();
 		}
 
 		connectedCallback() {
@@ -86,7 +97,46 @@ import './studio.css';
 				)
 			);
 			this.querySelector<HTMLSpanElement>('#scopes')!.style.display = 'none';
-			this.querySelector<HTMLDivElement>('div.animations-head')!.insertAdjacentHTML(
+			const animationHead = this.querySelector<HTMLDivElement>('div.animations-head')!;
+			animationHead.insertAdjacentHTML(
+				'afterbegin',
+				ledGroup({
+					independent: true,
+					className: 'stopped-animations',
+					groupName: 'stopped-animations',
+					checked: 'reset',
+					alternatives: [
+						{
+							label: 'Reset all stopped animations',
+							value: 'reset',
+							id: 'reset-stopped-animations',
+						},
+					],
+				})
+			);
+			(animationHead.firstElementChild as HTMLDivElement).style.gridColumn = 'span 2';
+			const reset =
+				animationHead.firstElementChild!.querySelector<HTMLInputElement>('input[type=checkbox]')!;
+			reset.classList.add('red');
+			reset.addEventListener('click', () => {
+				reset.checked = true;
+				this.#rootDocument!.getAnimations().forEach((a) => {
+					'stopped' in a && delete a.stopped;
+				});
+				parent.document
+					.querySelectorAll<HTMLElement>('#twins div[data-stopped]')
+					.forEach((div) => div.removeAttribute('data-stopped'));
+				this.querySelectorAll<HTMLElement>('vtbag-ic-identify div[data-stopped]').forEach((div) =>
+					div.removeAttribute('data-stopped')
+				);
+				this.querySelectorAll<HTMLElement>(`vtbag-ic-pseudo[data-stopped]`).forEach((pseudo) =>
+					pseudo.removeAttribute('data-stopped')
+				);
+				this.querySelector<HTMLElement>('.stopped-animations')!.style.display = 'none';
+			});
+			hideLedGroup(this.querySelector<HTMLDivElement>('.input-led-group.stopped-animations')!);
+
+			animationHead.insertAdjacentHTML(
 				'beforeend',
 				ledGroup({
 					className: 'freeze',
@@ -112,7 +162,7 @@ import './studio.css';
 				})
 			);
 
-			this.querySelector<HTMLDivElement>('div.animations-head')!.insertAdjacentHTML(
+			animationHead.insertAdjacentHTML(
 				'beforeend',
 				ledGroup({
 					className: 'slow-mo',
@@ -137,12 +187,15 @@ import './studio.css';
 					],
 				})
 			);
-			(
-				this.querySelector<HTMLDivElement>('div.animations-head')!
-					.lastElementChild as HTMLDivElement
-			).style.display = 'none';
+			disableLedGroup(
+				this.querySelector<HTMLDivElement>('.input-led-group.slow-mo')!,
+				'To enable speed control, select Run mode.'
+			);
+
+			animationHead.insertAdjacentHTML('beforeend', '<vtbag-ic-identify></vtbag-ic-identify>');
 
 			this.querySelector('.freeze')!.addEventListener('click', (e) => {
+				this.#pseudosToMove.length = 0;
 				const clicked = e.target as HTMLInputElement;
 				if (clicked.tagName !== 'INPUT') return;
 
@@ -154,11 +207,11 @@ import './studio.css';
 					if (freezeOption) {
 						if (this.#scopes.size === 0) {
 							if (freezeOption === 'freeze') {
-								this.refreshAnimations(this.#rootDocument!.getAnimations())!;
+								this.refreshAnimations(this.#rootDocument?.getAnimations() ?? [])!;
 								return;
 							}
 							if (freezeOption === 'next') {
-								this.#rootDocument!.getAnimations().forEach((a) => {
+								this.#rootDocument?.getAnimations().forEach((a) => {
 									a.finish();
 								});
 								return;
@@ -173,7 +226,10 @@ import './studio.css';
 				};
 				mayStartViewTransition(
 					{ update: freeze, types: ['freeze'] },
-					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+					{
+						collisionBehavior: true || this.#scopes.size ? 'never' : 'chaining',
+						useTypesPolyfill: 'always',
+					}
 				);
 			});
 
@@ -198,7 +254,7 @@ import './studio.css';
 				};
 				mayStartViewTransition(
 					{ update: slowMo, types: ['slow-mo'] },
-					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+					{ collisionBehavior: 'never', useTypesPolyfill: 'always' }
 				);
 			});
 
@@ -212,12 +268,14 @@ import './studio.css';
 					highlight(scope);
 				}
 			});
+			setTimeout(() => this.updateAnimationsHead(), 100);
 		}
 
 		mayRender = (e: Event) => {
 			const detail = (e as CustomEvent).detail;
 			this.#rootDocument = detail.root.ownerDocument;
-			let update = () => this.renderHead();
+			let update = () => {};
+
 			if (this.querySelector<HTMLInputElement>('#run')?.checked) {
 				const speed = this.querySelector<HTMLInputElement>('input[name="slow-mo"]:checked')?.value;
 				if (speed !== 'normal') {
@@ -225,9 +283,12 @@ import './studio.css';
 						a.updatePlaybackRate(speed === 'slow' ? 0.1 : 0.01);
 					});
 				}
+				return;
 			} else {
 				this.#rootDocument?.getAnimations().forEach((a) => a.pause());
 				update = () => {
+					this.querySelector<VtbagIcIdentifyElement>('vtbag-ic-identify')?.show();
+					this.querySelector<HTMLDivElement>('.animations-head-main')!.style.display = '';
 					this.refreshAnimations(this.#rootDocument!.getAnimations())!;
 					this.renderHead();
 				};
@@ -269,7 +330,7 @@ import './studio.css';
 			else sorted.forEach((s) => scopeContainer.appendChild(s));
 		}
 
-		refreshAnimations(animations: Animation[]) {
+		refreshAnimations(animations: Animation[], render = true) {
 			const newScopes = new Map<HTMLElement, Animation[]>();
 
 			animations.forEach((a) => {
@@ -288,30 +349,35 @@ import './studio.css';
 					animations.push(a);
 				}
 			});
-			newScopes.forEach((animations, element) => {
-				let scope = this.#scopes.get(key(element))!;
-				if (!scope) {
-					scope = document.createElement('vtbag-ic-scope');
-					scope.init(element, this.groupMaps.get(key(element))!.get('@')!, animations);
-					this.#scopes.set(key(element), scope);
-					this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
-				}
-				if (
-					scope.animations?.length !== animations.length ||
-					scope.animations.some((a, i) => a !== animations[i])
-				) {
-					scope.animations = animations;
-				}
-			});
+			render &&
+				newScopes.forEach((animations, element) => {
+					let scope = this.#scopes.get(element)!;
+					if (!scope) {
+						scope = document.createElement('vtbag-ic-scope');
+						scope.init(element, this.groupMaps.get(element)!.get('@')!, animations);
+						this.#scopes.set(element, scope);
+						this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
+					}
+					if (
+						scope.animations?.length !== animations.length ||
+						scope.animations.some((a, i) => a !== animations[i])
+					) {
+						scope.animations = animations;
+					}
+				});
 			return newScopes;
 		}
 
 		updateAnimationsHead() {
+			this.querySelector<HTMLDivElement>('.animations-head-main')!.style.display =
+				this.#scopes.size > 0 ? '' : 'none';
+
+			const slowMo = this.querySelector<HTMLDivElement>('.input-led-group.slow-mo')!;
+			if (this.#scopes.size > 0 || this.querySelector('.freeze input[value="run"]:checked'))
+				enableLedGroup(slowMo);
+			else disableLedGroup(slowMo, 'To enable the speed control, select Run mode.');
+
 			const color = { red: this.#scopes.size > 0, green: this.#scopes.size === 0 };
-			this.querySelector<HTMLDivElement>('.slow-mo')!.style.display =
-				this.#scopes.size > 0 || this.querySelector('.freeze input[value="run"]:checked')
-					? ''
-					: 'none';
 
 			this.#scopes.forEach(
 				(scope) =>
@@ -335,6 +401,27 @@ import './studio.css';
 				'blind'
 			);
 		}
+
+		movePseudos() {
+			const movePseudosCallback = () => {
+				const twins = parent.document.documentElement.classList.contains('show-twins');
+
+				if (twins) {
+					if (this.#retriggerPseudosToMove && this.#pseudosToMove.length === 0) {
+						this.querySelectorAll('vtbag-ic-pseudo').forEach((p) => this.#pseudosToMove.push(p));
+						this.#retriggerPseudosToMove = false;
+					}
+					if (this.#pseudosToMove.length) {
+						for (let i = 0; i < 5; ++i) this.#pseudosToMove.shift()?.moveTwin();
+						setTimeout(movePseudosCallback);
+					}
+				} else {
+					this.#pseudosToMove.length = 0;
+				}
+			};
+			this.#retriggerPseudosToMove = true;
+			if (this.#pseudosToMove.length === 0) movePseudosCallback();
+		}
 	}
 
 	if (!customElements.get('vtbag-ic-animations'))
@@ -345,14 +432,13 @@ import './studio.css';
 			const transitionRoot = (e as CustomEvent).detail.root;
 			if (transitionRoot.tagName === 'HTML')
 				parent.document.documentElement.classList.add('action');
-			const transitionRootKey = key(transitionRoot);
 			const groups =
-				moduleGroupMaps.get(transitionRootKey) ??
+				moduleGroupMaps.get(transitionRoot) ??
 				new Map<string, Group>([
 					['@', { name: '' + moduleGroupMaps.size, className: '', children: [], ancestor: false }],
 				]);
 			const sheet = capture(transitionRoot, groups);
-			moduleGroupMaps.set(transitionRootKey, groups);
+			moduleGroupMaps.set(transitionRoot, groups);
 
 			const head = transitionRoot.ownerDocument.head;
 			head.insertAdjacentHTML(
@@ -365,9 +451,8 @@ import './studio.css';
 	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
 		self.addEventListener(event, (e) => {
 			const root = (e as CustomEvent).detail.root;
-
 			root.ownerDocument.head
-				.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(key(root))?.get('@')?.name}`)
+				.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(root)?.get('@')?.name}`)
 				?.remove();
 		})
 	);

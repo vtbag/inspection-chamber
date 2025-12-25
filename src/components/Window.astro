@@ -49,7 +49,6 @@ const { style } = Astro.props;
 		overflow: clip;
 		padding: 8px;
 		/* backdrop-filter: blur(8px); */
-		/* transition-behavior: allow-discrete; */
 		/* transition-property: width, height, display; */
 		/* transition-duration: 100ms; */
 	}
@@ -366,9 +365,13 @@ const { style } = Astro.props;
 			mayStartViewTransition(
 				{
 					update: async () => {
-						const bodyStyle = iframe!.contentDocument!.body.style;
+						const doc = iframe!.contentDocument!;
+						const bodyStyle = doc.body.style;
 						bodyStyle.width = rect.width + 'px';
 						bodyStyle.height = rect.height + 'px';
+						doc.querySelector("vtbag-ic-animations")?.updateAnimationsHead();
+						doc.querySelectorAll("vtbag-ic-scope").forEach((scope) => scope.updateScopeHead());
+
 					},
 					types: ['window-resize'],
 				},

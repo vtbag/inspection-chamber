@@ -41,18 +41,18 @@
     "url": "https://github.com/sponsors/martrapp"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.5",
-    "@changesets/cli": "^2.29.7",
-    "@eslint/js": "^9.39.0",
+    "@astrojs/check": "^0.9.6",
+    "@changesets/cli": "^2.29.8",
+    "@eslint/js": "^9.39.2",
     "@types/css-tree": "^2.3.11",
     "@types/dom-view-transitions": "^1.0.6",
     "@vtbag/utensil-drawer": "^1.2.13",
-    "astro": "^5.15.3",
+    "astro": "^5.16.6",
     "css-tree": "^3.1.0",
     "eruda": "^3.4.3",
-    "esbuild": "^0.25.11",
+    "esbuild": "^0.27.2",
     "postcss-active-view-transition-type": "^0.0.7",
-    "prettier": "^3.6.2",
+    "prettier": "^3.7.4",
     "typescript": "^5.9.3",
     "vite-plugin-singlefile": "^2.3.0"
   }

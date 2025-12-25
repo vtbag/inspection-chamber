@@ -1,4 +1,4 @@
-export function highlight(element?: HTMLElement) {
+export function highlight(element?: Element | null) {
 	if (element) {
 		element.animate(
 			[

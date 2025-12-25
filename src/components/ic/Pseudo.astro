@@ -1,211 +1,296 @@
 <script>
-	import { color, type Group } from './group';
-	import { key } from './scope.ts';
+	import { color, gid, type Group } from './group';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	import './toggle.css';
+
+	const twinProperties = {
+		position: '',
+		top: '0px',
+		left: '0px',
+		bottom: '0px',
+		right: '0px',
+		width: '0px',
+		height: '0px',
+		translate: 'none',
+		rotate: 'none',
+		scale: 'none',
+		transform: 'none',
+		'transform-origin': '50% 50%',
+		perspective: 'none',
+		'box-sizing': 'content-box',
+		'border-width': '0px',
+		'border-radius': '0px',
+		'z-index': 'auto',
+	};
+
+	const allProperties = Array.from(
+		getComputedStyle(parent.document.querySelector('#default')!)
+	).filter((p) => !p.startsWith('--vtbag-ic-') && !p.includes('block-') && !p.includes('inline-')&& !p.includes('-block') && !p.includes('-inline')  );
 
 	class ICPseudo extends HTMLElement {
 		#computedStyle: CSSStyleDeclaration | undefined;
-		#dirty = false;
-		#animations: Animation[] = [];
+		#animations: Animation[] | undefined;
+		id = '';
+		icParent?: VtbagIcPseudoElement;
+		icGroup?: VtbagIcGroupElement;
+		icScope?: VtbagIcScopeElement;
+		#twin?: HTMLDivElement;
+		static defaultStyles: CSSStyleDeclaration | undefined;
 
 		constructor() {
 			super();
 		}
 
-		set animations(value: Animation[]) {
-			if (value.some((a) => !this.#animations.includes(a))) {
-				this.#animations = [...new Set<Animation>([...this.#animations, ...value])];
-
-				this.#dirty = true;
-				this.render();
-			}
-		}
 		connectedCallback() {
 			this.render();
 		}
 
-		static get observedAttributes() {
-			return ['name'];
+		connectedMoveCallback() {}
+
+		disconnectedCallback() {
+			this.#twin?.remove();
 		}
 
 		get exists() {
 			return this.#computedStyle?.width !== 'auto';
 		}
 
-		attributeChangedCallback(_name: string, oldValue: string, newValue: string) {
-			if (oldValue !== newValue) {
-				this.#dirty = true;
-				this.render();
-			}
+		get twin() {
+			return this.#twin;
 		}
 
-		render() {
-			if (this.isConnected && this.#dirty) {
-				this.#dirty = false;
+		async computedStyleCompact(all = true) {
+			const result: { key: string; value: string; defaultValue: string; priority: string }[] = [];
 
-				let icScope;
-				let groupElement;
-				let name = this.getAttribute('name');
-				if (name === '::view-transition') {
-					icScope = this.closest('vtbag-ic-scope') as VtbagIcScopeElement;
+			let start = performance.now();
+
+			for (const key of all ? allProperties : Object.keys(twinProperties!)) {
+				await (async () => {
+					let defaultValue = ICPseudo.defaultStyles!.getPropertyValue(key);
+					const value = this.#computedStyle!.getPropertyValue(key);
+					const priority = this.#computedStyle!.getPropertyPriority(key);
+					if (performance.now() - start > 10) {
+						await new Promise((r) => setTimeout(r));
+						start = performance.now();
+					}
+					if (key === 'transform-origin' || key === 'perspective-origin') {
+						// detect fitting absolute values for 50%, 50% default.
+						const [w, h] = value.split(' ').map((v) => ~~(parseFloat(v) * 2));
+						const w2 = parseInt(this.#computedStyle!.width, 10);
+						const h2 = parseInt(this.#computedStyle!.height, 10);
+						if (w === w2 && h === h2) defaultValue = value;
+					}
+					if (value !== defaultValue && (value === 'auto' || value === 'normal'))
+						console.log(key, defaultValue, value);
+					result.push({ key, value, defaultValue, priority });
+				})();
+			}
+			return result;
+		}
+
+		name(escaped = false) {
+			const name = this.getAttribute('name');
+			if (name === '::view-transition') {
+				return name;
+			}
+			return `::view-transition-${name}(${escaped ? CSS.escape(this.icGroup!.name) : this.icGroup!.name})`;
+		}
+
+		animations() {
+			return this.#animations ??= this.icScope?.animations.filter((a) => a.effect?.pseudoElement === this.name()) || [];	;
+		}
+		render() {
+			if (this.isConnected) {
+				const kind = this.getAttribute('name');
+				this.icGroup = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
+				if (kind === '::view-transition') {
+					this.icParent = undefined;
+					this.icGroup = undefined;
+					this.icScope = this.closest('vtbag-ic-scope') as VtbagIcScopeElement;
 				} else {
-					groupElement = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
-					name = `::view-transition-${name}(${CSS.escape(groupElement.name)})`;
-					icScope = groupElement.scope;
+					this.icParent = this.parentElement!.closest('vtbag-ic-pseudo') as VtbagIcPseudoElement;
+					this.icScope = this.icGroup.scope;
 				}
-				const scope = icScope!.element;
+				const scope = this.icScope.element;
+				this.id = `${this.icScope.scopeId}-${gid(this.icGroup?.group)}-${kind}`;
+
 				// todo: simplify
-				this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(scope, name);
+				this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(
+					scope,
+					this.name(true)
+				);
+				//this.allProperties = Array.from(this.#computedStyle!);
+
+			
+					
+				const twins = parent.document.querySelector('#twins')!;
+				const defaultDiv = twins.querySelector<HTMLDivElement>('#default')!;
+				ICPseudo.defaultStyles = twins.ownerDocument.defaultView?.getComputedStyle(defaultDiv)!;
 
 				// potentially "slotted" elements
 
-				const hidden = scope.ownerDocument.body.querySelector(`#vtbag-vis-${CSS.escape(name)}`);
-				const framed = scope.ownerDocument.body.querySelector(`#vtbag-frame-${CSS.escape(name)}`);
+				const framed = scope.ownerDocument.body.querySelector(`#vtbag-frame-${this.id}`);
 				this.insertAdjacentHTML(
 					'afterbegin',
 					`<span class="pseudo-head"><span class="name">${this.getAttribute('name')?.replace('image-pair', 'pair').replace('group-children', 'children') || '::view-transition'}</span>
-					<label class="toggle frame ${this.getAttribute('name')}"><input type="checkbox" style="position: absolute; opacity: 0; pointer-events: none;" ${framed ? 'checked' : ''}>🖽</label><label class="toggle visibility">
-	<input type="checkbox" style="position: absolute; opacity: 0; pointer-events: none;" ${hidden ? '' : 'checked'}>
-	<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-	<use href="#icon-eye-on"/></svg></label>
-	${
-		this.getAttribute('name') === 'group'
-			? `<label class="toggle solo"><input type="checkbox" style="position: absolute; opacity: 0; pointer-events: none;">s
-		</label>`
-			: ''
-	}</span>
-  `
+					<label class="toggle frame ${this.getAttribute('name')}"><input type="checkbox" ${framed ? 'checked' : ''}>🖽</label><label class="toggle visibility"><input type="checkbox" checked><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-eye-on"/></svg></label
+						>${
+							this.getAttribute('name') === 'group'
+								? `<label class="toggle solo"><input type="checkbox">s</label>`
+								: ''
+						}</span>`
 				);
-				hidden && ((this.children[1] as HTMLDivElement).style.display = 'none');
-				frame(this, icScope, name);
-				visibility(this, scope, name);
-				solo(this);
-				groupChildren(this, scope, groupElement!);
+				this.frame();
+				this.visibility();
+				this.solo();
+				this.groupChildren();
 			}
+		}
+		createTwin() {
+			const twins = parent.document.querySelector('#twins')!;
+			this.#twin = twins.ownerDocument.createElement('div')!;
+			this.#twin.dataset.title = (this.icScope?.path ?? '') + this.name();
+			this.dataset.link = this.#twin.dataset.title!;
+			this.moveTwin();
+			(this.icParent?.twin ?? twins).appendChild(this.#twin);
+		}
+
+		async moveTwin() {
+			const properties = await this.computedStyleCompact(false);
+			properties.forEach(({ key, value, defaultValue, priority }) => {
+				this.#twin!.style.setProperty(key, value !== defaultValue ? value : '', priority);
+			});
+			if (
+				this.icScope?.path !== ':root' &&
+				this.#twin!.dataset.title === (this.icScope?.path ?? '') + '::view-transition'
+			) {
+				const rect = this.icScope!.element.getBoundingClientRect();
+				this.#twin!.style.top = rect.top + 'px';
+				this.#twin!.style.left = rect.left + 'px';
+			}
+		}
+		frame() {
+			this.querySelector<HTMLInputElement>('.frame input')?.addEventListener('click', (e) => {
+				if ((e.target as HTMLElement).tagName !== 'INPUT') return;
+				const checkbox = e.target as HTMLInputElement;
+				const kind = this.getAttribute('name');
+
+				const color =
+					kind === 'group'
+						? 'var(--vtbag-ic-group-color)'
+						: kind === 'old'
+							? 'darkslateblue'
+							: kind === 'new'
+								? 'darkolivegreen'
+								: kind === 'image-pair'
+									? 'darkgoldenrod'
+									: 'darkslategray';
+
+				const thickness =
+					kind === 'group'
+						? 3
+						: kind === 'old'
+							? 2
+							: kind === 'new'
+								? 2
+								: kind === 'image-pair'
+									? 1
+									: 3;
+
+				const key = `vtbag-frame-${this.id}`;
+				this.icScope!.element.ownerDocument.body.querySelector('#' + key)?.remove();
+				if (checkbox.checked) {
+					this.icScope!.element.ownerDocument.body.insertAdjacentHTML(
+						'beforeend',
+						`<style id="${key}">${this.name(true)} { outline: ${thickness}px solid ${color}; outline-offset:-${thickness}px; box-shadow: 0 0 ${thickness}px ${thickness}px  ${color}}</style>`
+					);
+				}
+				this.dispatchEvent(new CustomEvent('resync', { bubbles: true }));
+				this.dispatchEvent(new CustomEvent('frame-toggle', { bubbles: true }));
+			});
+		}
+
+		visibility() {
+			const scope = this.icScope!.element;
+			this.querySelector<HTMLInputElement>('.visibility input')!.addEventListener('click', (e) => {
+				const checkbox = e.target as HTMLInputElement;
+				const use = checkbox.nextElementSibling!.querySelector('use')!;
+				const checked = checkbox.checked;
+				use.href.baseVal = checked ? '#icon-eye-on' : '#icon-eye-off';
+				scope.ownerDocument.body.querySelector(`#vtbag-vis-${this.id}`)?.remove();
+				if (!checked) {
+					scope.ownerDocument.body.insertAdjacentHTML(
+						'beforeend',
+						`<style id="vtbag-vis-${this.id}">${this.name(true)} { opacity: 0}</style>`
+					);
+				}
+				this.dispatchEvent(new CustomEvent('resync', { bubbles: true }));
+				if (!checked && this.querySelector<HTMLInputElement>('.solo input')?.checked) {
+					this.querySelector<HTMLInputElement>('.solo input')!.click();
+				}
+				const inner = checkbox.closest('vtbag-ic-pseudo')?.children[1] as HTMLDivElement;
+				inner &&
+					mayStartViewTransition(
+						{
+							update: () => {
+								inner.style.display = checked ? '' : 'none';
+								this.dispatchEvent(new CustomEvent('frame-toggle', { bubbles: true }));
+							},
+							types: ['visibility-toggle'],
+						},
+						{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+					);
+			});
+		}
+
+		solo() {
+			this.querySelector<HTMLInputElement>('.solo input')?.addEventListener('click', (e) => {
+				if ((e.target as HTMLElement).tagName !== 'INPUT') return;
+				const checkbox = e.target as HTMLInputElement;
+
+				document
+					.querySelectorAll<HTMLInputElement>('.visibility input:not(:checked)')
+					.forEach((h) => h.click());
+
+				const solos = document.querySelectorAll<HTMLInputElement>(
+					`vtbag-ic-pseudo .solo input:checked`
+				);
+
+				if (solos.length === 0) return;
+
+				solos.forEach((v) => v !== checkbox && ((v.checked = false), v.removeAttribute('checked')));
+
+				const me = checkbox.closest('vtbag-ic-pseudo');
+				document
+					.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo[name="group"]')
+					.forEach(
+						(i) =>
+							i !== me &&
+							i.querySelector<HTMLInputElement>('.pseudo-head .visibility input')!.click()
+					);
+			});
+		}
+
+		groupChildren() {
+			if (this.getAttribute('name') === 'group-children') {
+				const group = this.closest<VtbagIcGroupElement>('vtbag-ic-group')!.group as Group;
+				let html = '<div name="children">';
+
+				group.children.forEach(
+					(g) =>
+						(html += `<button data-group="${gid(g)}" style="border: 2px solid ${color(group)}">${g.name.replace(
+							/-vtbag-match-element-([0-9]+)/,
+							(_, num) => `match-element<sup>(${num})</sup>`
+						)}</button>`)
+				);
+				html += '</div>';
+				this.insertAdjacentHTML('beforeend', html);
+			}
+		}
+
+		onIntersectionChange(entry: IntersectionObserverEntry) {
 		}
 	}
 
 	if (!customElements.get('vtbag-ic-pseudo')) customElements.define('vtbag-ic-pseudo', ICPseudo);
-
-	function frame(pseudo: ICPseudo, icScope: VtbagIcScopeElement, name: string) {
-		pseudo.querySelector<HTMLInputElement>('.frame input')?.addEventListener('click', (e) => {
-			if ((e.target as HTMLElement).tagName !== 'INPUT') return;
-			const checkbox = e.target as HTMLInputElement;
-
-			const kind = pseudo.getAttribute('name');
-
-			const color =
-				kind === 'group'
-					? 'var(--vtbag-ic-group-color)'
-					: kind === 'old'
-						? 'darkslateblue'
-						: kind === 'new'
-							? 'darkolivegreen'
-							: kind === 'image-pair'
-								? 'darkgoldenrod'
-								: 'darkslategray';
-								
-			const thickness =
-				kind === 'group'
-					? 4
-					: kind === 'old'
-						? 2
-						: kind === 'new'
-							? 2
-							: kind === 'image-pair'
-								? 1
-								: 3;
-
-			icScope.element.ownerDocument.body
-				.querySelector(`#vtbag-frame-${CSS.escape(name)}`)
-				?.remove();
-			if (checkbox.checked) {
-				icScope.element.ownerDocument.body.insertAdjacentHTML(
-					'beforeend',
-					`<style id="vtbag-frame-${name}">${name} { outline: ${thickness}px solid ${color}; outline-offset:-${thickness}px; box-shadow: 0 0 ${thickness}px ${thickness}px  ${color}}</style>`
-				);
-			}
-			pseudo.dispatchEvent(new CustomEvent('resync', { bubbles: true }));
-			pseudo.dispatchEvent(new CustomEvent('frame-toggle', { bubbles: true }));
-		});
-	}
-
-	function visibility(pseudo: ICPseudo, scope: HTMLElement, name: string) {
-		pseudo.querySelector<HTMLInputElement>('.visibility input')!.addEventListener('click', (e) => {
-			const checkbox = e.target as HTMLInputElement;
-			const use = checkbox.nextElementSibling!.querySelector('use')!;
-			const checked = checkbox.checked;
-			use.href.baseVal = checked ? '#icon-eye-on' : '#icon-eye-off';
-			scope.ownerDocument.body.querySelector(`#vtbag-vis-${CSS.escape(name)}`)?.remove();
-			if (!checked) {
-				scope.ownerDocument.body.insertAdjacentHTML(
-					'beforeend',
-					`<style id="vtbag-vis-${name}">${name} { opacity: 0}</style>`
-				);
-			}
-			pseudo.dispatchEvent(new CustomEvent('resync', { bubbles: true }));
-			if (!checked && pseudo.querySelector<HTMLInputElement>('.solo input')?.checked) {
-				pseudo.querySelector<HTMLInputElement>('.solo input')!.click();
-			}
-			const inner = checkbox.closest('vtbag-ic-pseudo')?.children[1] as HTMLDivElement;
-			inner &&
-				mayStartViewTransition(
-					{
-						update: () => {
-							inner.style.display = checked ? '' : 'none';
-							pseudo.dispatchEvent(new CustomEvent('frame-toggle', { bubbles: true }));
-						},
-						types: ['visibility-toggle'],
-					},
-					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
-				);
-		});
-	}
-
-	function solo(pseudo: ICPseudo) {
-		pseudo.querySelector<HTMLInputElement>('.solo input')?.addEventListener('click', (e) => {
-			if ((e.target as HTMLElement).tagName !== 'INPUT') return;
-			const checkbox = e.target as HTMLInputElement;
-
-			document
-				.querySelectorAll<HTMLInputElement>('.visibility input:not(:checked)')
-				.forEach((h) => h.click());
-
-			const solos = document.querySelectorAll<HTMLInputElement>(
-				`vtbag-ic-pseudo .solo input:checked`
-			);
-
-			if (solos.length === 0) return;
-
-			solos.forEach((v) => v !== checkbox && ((v.checked = false), v.removeAttribute('checked')));
-
-			const me = checkbox.closest('vtbag-ic-pseudo');
-			document
-				.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo[name="group"]')
-				.forEach(
-					(i) =>
-						i !== me && i.querySelector<HTMLInputElement>('.pseudo-head .visibility input')!.click()
-				);
-		});
-	}
-
-	function groupChildren(pseudo: ICPseudo, scope: HTMLElement, groupElement: VtbagIcGroupElement) {
-		if (pseudo.getAttribute('name') === 'group-children') {
-			const group = pseudo
-				.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!
-				.groupMaps.get(key(scope))
-				?.get(groupElement!.name) as Group;
-			let html = '<div name="children">';
-
-			group.children.forEach(
-				(g) =>
-					(html += `<button data-group="${g.preOrder}" style="border: 2px solid ${color(group)}">${g.name.replace(
-						/-vtbag-match-element-([0-9]+)/,
-						(_, num) => `match-element<sup>(${num})</sup>`
-					)}</button>`)
-			);
-			html += '</div>';
-			pseudo.insertAdjacentHTML('beforeend', html);
-		}
-	}
 </script>

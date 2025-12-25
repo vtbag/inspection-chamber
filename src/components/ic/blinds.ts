@@ -13,9 +13,10 @@ export function addBlinds(
 	}
 	const order = denseOrder(container);
 	const containerRect = container.getBoundingClientRect();
+	let originalPrev = true;
 	let prev = children[order[0]]?.getBoundingClientRect();
 	const fix = [];
-	let columnWidth = prev.width;
+	let columnWidth = prev?.width;
 	let rows = 0;
 	for (let j = 0; j < children.length; ++j) {
 		const idx = order[j];
@@ -23,11 +24,12 @@ export function addBlinds(
 		const current = child.getBoundingClientRect();
 		if (!current.width) continue;
 		columnWidth = columnWidth === 0 ? current.width : Math.min(columnWidth, current.width);
-		if (idx > 0 && current.top > prev.bottom) {
+		if (!originalPrev && current.top > prev.bottom) {
 			fix[idx - 1] = prev;
 			rows++;
 		}
 		prev = current;
+		originalPrev = false;
 	}
 
 	const addDelay = (el: HTMLElement, delay: number) => {
@@ -35,7 +37,7 @@ export function addBlinds(
 			.getPropertyValue('--vtc')
 			.split(' ')
 			.filter((e) => !e.startsWith('delay-'));
-		vtc.push(`delay-${Math.max(0, delay)}`);
+		vtc.push(`delay-${delay}`);
 		el.style.setProperty('--vtc', vtc.join(' '));
 	};
 
@@ -57,7 +59,7 @@ export function addBlinds(
 				addDelay(container.children[i + 1] as HTMLElement, delay);
 			}
 		}
-		addDelay(child, delay);
+		addDelay(child, Math.max(0, delay));
 	}
 }
 

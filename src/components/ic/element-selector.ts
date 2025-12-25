@@ -1,5 +1,3 @@
-import { renderUniqueStylesheet } from 'astro/runtime/server/index.js';
-
 export function deriveCSSSelector(element?: Element, short = true) {
 	let path = '';
 	if (!element) return '';

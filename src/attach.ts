@@ -47,7 +47,6 @@ function setup() {
 	}
 	let target = parent;
 	while (target.__vtbag?.ic2 && target.__vtbag?.ic2?.context === self) {
-		console.log('climb up one level from', target.__vtbag.ic2.contextID);
 		if (target === target.parent) break;
 		target = target.parent;
 	}
@@ -55,7 +54,6 @@ function setup() {
 		reload();
 		return;
 	}
-	console.log(`parent ${target.__vtbag.ic2!.contextID} is ready, setup hooks`, target.__vtbag.ic2);
 	const originalElementStartViewTransition = Element.prototype.startViewTransition;
 	if (originalElementStartViewTransition) {
 		Element.prototype.startViewTransition = target.__vtbag.ic2!.monkey!(

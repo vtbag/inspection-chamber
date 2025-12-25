@@ -1,0 +1,75 @@
+---
+import Welcome from './Welcome.astro';
+import Message from './Message.astro';
+import Analyzer from './Analyzer.astro';
+import Animations from './Animations.astro';
+import Captures from './Captures.astro';
+---
+
+<Welcome />
+<Message />
+<Analyzer />
+<Animations />
+<Captures />
+
+<script>
+	import { ICElement } from './ic-element';
+
+	class ICMain extends ICElement {
+		render() {
+			this.innerHTML = `
+			<h2 class="ic-label" style="--vtn: label">Inspection Chamber</h2>
+			<vtbag-ic-welcome></vtbag-ic-welcome>
+			<vtbag-ic-message></vtbag-ic-message>
+			<div class="main-head">
+				<vtbag-ic-analyzer></vtbag-ic-analyzer>
+			</div>
+			<vtbag-ic-animations></vtbag-ic-animations>
+			<vtbag-ic-captures></vtbag-ic-captures>`;
+			const rerender = () => {
+				document.startViewTransition!(
+					{
+						update: () => this.render(),
+						types: ['swap-analyzer'],
+					},
+		//			{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+				).ready.then(()=>console.log('rerendered main view transition'), (error) => console.error('view transition failed', error));
+			};
+			this.querySelector<HTMLDivElement>('div.main-head')!.addEventListener('change', rerender);
+		}
+	}
+	customElements.define('vtbag-ic-main', ICMain);
+</script>
+
+<style is:global>
+	@layer defaults, components, overrides;
+
+	@layer components {
+		@scope (vtbag-ic-main) {
+			:scope {
+				display: block;
+				height: 100vh;
+				overflow-y: auto;
+				overflow-x: clip;
+				scrollbar-gutter: stable;
+				.main-head {
+					display: grid;
+					border-radius: 4px;
+					grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+					grid-auto-flow: row dense;
+					padding: 2px;
+					> * {
+						margin: 2px;
+					}
+				}
+
+				&:has(input[value='capture']:checked) vtbag-ic-animations {
+					display: none;
+				}
+				&:has(input[value='animation']:checked) vtbag-ic-captures {
+					display: none;
+				}
+			}
+		}
+	}
+</style>

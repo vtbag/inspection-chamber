@@ -1,0 +1,38 @@
+@layer defaults, components, overrides;
+
+/* see also src/components/ic/toggle.css */
+
+@layer components {
+	*:has(> .minmax) {
+		position: relative;
+	}
+
+	@scope (.minmax) {
+		:scope {
+			position: absolute;
+			top: -5px;
+			right: 8px;
+			&.toggle {
+				top: 4px;
+				background-color: light-dark(#fff,#000);
+				&:after {
+					content: ' ⭱';
+				}
+				&:has(input:checked):after {
+					content: ' ↧';
+				}
+			}
+		}
+	}
+
+	.shrinker {
+		transition: height 0.15s linear;
+		overflow: clip;
+	}
+}
+
+@layer overrides {
+	.shrinker.closed * {
+		view-transition-name: none !important;
+	}
+}

@@ -15,24 +15,22 @@ export type InspectionChamber = {
 	pushBack?: HTMLDivElement | null;
 };
 export type IC2 = {
+	intersectionObserver?: IntersectionObserver;
 	animationStart?: (event: AnimationEvent) => void;
 	animationStop?: (event: AnimationEvent) => void;
 	context?: Window;
-	contextID?: string;
-	globalViewTransition?: ViewTransition | null | undefined;
-	iframe?: HTMLIFrameElement;
 	monkey?:
-	| (<
-		T extends
-		| typeof Element.prototype.startViewTransition
-		| typeof document.startViewTransition,
-	>(
-		original: T
-	) => T)
-	| undefined;
+		| (<
+				T extends
+					| typeof Element.prototype.startViewTransition
+					| typeof document.startViewTransition,
+		  >(
+				original: T
+		  ) => T)
+		| undefined;
 	pagereveal?: (event: PageRevealEvent) => void;
 	pageswap?: (event: PageSwapEvent) => void;
-	pauseSheet?: CSSStyleSheet;
+	document?: HTMLElement;
 };
 
 declare global {

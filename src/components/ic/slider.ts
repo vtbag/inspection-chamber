@@ -1,4 +1,4 @@
-export function slider(id: string, name: string): string {
+export function  slider(id: string, name: string): string {
 	return `
 <div class="horizontal-slider-container" style="view-transition-name: hsc-${id}; --vtc: slider">
 	<div class="slider-track">

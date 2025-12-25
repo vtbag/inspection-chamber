@@ -7,14 +7,15 @@
 		<title>Animations Test iframe</title>
 		<meta charset="UTF-8" />
 		<style is:inline>
-			:root, body {
+			:root,
+			body {
 				margin: 0;
 				padding: 0;
-				height: 100%;
 			}
 			:root {
 				color-scheme: dark;
 				background-color: #222;
+				view-transition-name: none;
 			}
 			body {
 			}
@@ -30,8 +31,43 @@
 			header p {
 				view-transition-name: ¶;
 			}
+			aside {
+				contain: layout;
+				height: fit-content;
+				width: fit-content;
+				margin-inline: auto;
+				margin-bottom: 1rem;
+				padding: 1rem;
+				outline: 2px solid #444;
+				border-radius: 12px;
+				box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+				span::before,
+				span::after {
+					content: ' ';
+					padding: 8px;
+				}
+				span {
+					view-transition-class: letter;
+				}
+				span:first-child {
+					view-transition-class: letter first;
+				}
+				span:last-child {
+					view-transition-class: last letter with many classes;
+				}
+			}
 			::view-transition-group(*) {
 				animation-duration: calc(5 * var(--vtbag-ic-animation-speed, 1) * 50ms);
+			}
+			::view-transition-old(h1\!),
+			::view-transition-new(h1\!) {
+				height: 100%;
+				width: auto;
+			}
+			::view-transition-old(root),
+			::view-transition-new(root) {
+				height: 100%;
+				width: 100%;
 			}
 		</style>
 		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
@@ -47,7 +83,11 @@
 				>
 					Welcome to Our Platform
 				</h1>
-				<section>Holla, Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit magni ex vero commodi neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat laudantium provident tenetur consectetur adipisci cumque!</section>
+				<section>
+					Holla, Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit magni ex vero
+					commodi neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat
+					laudantium provident tenetur consectetur adipisci cumque!
+				</section>
 				<p style="font-size: 1.25rem; color: #a0aec0; max-width: 600px; margin: 0 auto;">
 					Discover amazing features and unlock your potential with our innovative solutions.
 				</p>
@@ -67,8 +107,8 @@
 
 			<div style="text-align: center;">
 				<button
-					id="expand-btn"
-					style="view-transition-name: button; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1rem 2rem; font-size: 1.1rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.2s;"
+					id="expand-button"
+					style="view-transition-name: expand-button; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1rem 2rem; font-size: 1.1rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.2s;"
 				>
 					Expand Image
 				</button>
@@ -86,46 +126,98 @@
 					possibilities with our cutting-edge technology.
 				</p>
 			</section>
-		</main>
 
-		<script>
-			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+			<aside>
+				<span style="view-transition-name: \\@lpha">a</span><span
+					style="view-transition-name: bravo-\\$">b</span
+				><span style="view-transition-name: \\!charlie">c</span><span
+					style="view-transition-name: delta\\+item">d</span
+				><span style="view-transition-name: \\'écho\\'">e</span><span
+					style="view-transition-name: foxtrot-elem">f</span
+				><span style="view-transition-name: golf">g</span><span
+					style="view-transition-name: hotel-symbol">h</span
+				><span style="view-transition-name: india">i</span><span
+					style="view-transition-name: juliett-char">j</span
+				><span style="view-transition-name: kilo">k</span><span
+					style="view-transition-name: lima-element">l</span
+				><span style="view-transition-name: mike">m</span><span
+					style="view-transition-name: november-item">n</span
+				><span style="view-transition-name: oscar">o</span><span
+					style="view-transition-name: papa-symbol">p</span
+				><span style="view-transition-name: quebec">q</span><span
+					style="view-transition-name: romeo-char">r</span
+				><span style="view-transition-name: some-extra-ordinary-long-view-transition-name">s</span
+				><span style="view-transition-name: tango-element">t</span><span
+					style="view-transition-name: uniform">u</span
+				><span style="view-transition-name: victor-item">v</span><span
+					style="view-transition-name: whiskey">w</span
+				><span style="view-transition-name: xray-symbol">x</span><span
+					style="view-transition-name: yankee">y</span
+				><span style="view-transition-name: zulu-char">z</span>
+			</aside>
 
-			const h1 = document.querySelector('h1')!;
-			const btn = document.getElementById('expand-btn');
-			const img1 = document.getElementById('bot')!;
-			const img2 = document.getElementById('heroine')!;
-			let isExpanded = false;
+			<button
+				id="shuffle-button"
+				style="view-transition-name: shuffle-button; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1rem 2rem; font-size: 1.1rem; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.2s;margin-inline:auto; display:block;"
+			>
+				Shuffle
+			</button>
 
-			btn?.addEventListener('click', () => {
-				mayStartViewTransition({
-					update() {
-						if (isExpanded) {
-							h1.innerText = 'Welcome to Our Platform';
-							img2.style.display = 'none';
-							img1.style.display = 'inline';
-							if (btn) btn.textContent = 'Expand the small image';
-						} else {
-							h1.innerText = 'Welcome';
-							img1.style.display = 'none';
-							img2.style.display = 'inline';
-							if (btn) btn.textContent = 'Shrink image';
-						}
-						isExpanded = !isExpanded;
-						const header = document.querySelector('header');
-						header?.appendChild(header.firstElementChild!);
-					},
-					types: ['image-expand'],
+			<script>
+				import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+
+				const h1 = document.querySelector('h1')!;
+				const expand = document.getElementById('expand-button');
+				const img1 = document.getElementById('bot')!;
+				const img2 = document.getElementById('heroine')!;
+				let isExpanded = false;
+				const shuffle = document.getElementById('shuffle-button')!;
+				const aside = document.querySelector('aside')!;
+
+				expand?.addEventListener('click', () => {
+					mayStartViewTransition({
+						update() {
+							if (isExpanded) {
+								h1.innerText = 'Welcome to Our Platform';
+								img2.style.display = 'none';
+								img1.style.display = 'inline';
+								if (expand) expand.textContent = 'Expand the small image';
+							} else {
+								h1.innerText = 'Welcome';
+								img1.style.display = 'none';
+								img2.style.display = 'inline';
+								if (expand) expand.textContent = 'Shrink image';
+							}
+							isExpanded = !isExpanded;
+							const header = document.querySelector('header');
+							header?.appendChild(header.firstElementChild!);
+						},
+						types: ['image-expand'],
+					});
 				});
-			});
 
-			btn?.addEventListener('mouseenter', () => {
-				if (btn) btn.style.transform = 'translateY(-2px)';
-			});
+				expand?.addEventListener('mouseenter', () => {
+					if (expand) expand.style.transform = 'translateY(-2px)';
+				});
 
-			btn?.addEventListener('mouseleave', () => {
-				if (btn) btn.style.transform = 'translateY(0)';
-			});
-		</script>
+				expand?.addEventListener('mouseleave', () => {
+					if (expand) expand.style.transform = 'translateY(0)';
+				});
+
+				shuffle?.addEventListener('click', () => {
+					mayStartViewTransition(
+						{
+							update() {
+								for (let i = aside.children.length; i >= 0; i--) {
+									aside.appendChild(aside.children[~~(Math.random() * i)]);
+								}
+							},
+							types: ['shuffle-letters'],
+						},
+						{ scope: aside }
+					);
+				});
+			</script>
+		</main>
 	</body>
 </html>

@@ -1,0 +1,47 @@
+<script>
+	import { minmax } from './minmax';
+	import { ICElement } from './ic-element';
+
+	class ICWelcome extends ICElement {
+		render() {
+			this.innerHTML = `<div>
+<h3>Welcome</h3>
+<p>
+The   Inspection Chamber is a devtool for putting  your view transitions through their paces. Debug view transitions with clarity instead of guesswork.
+</p>
+
+<h4>Basic Usage</h4>
+<p>
+Select "Analyze animations" and "Freeze", then start a view transition on your page, and the Inspection Chamber will reveal its details. To focus on the capture phase rather than animation, select "Analyze capturing". See the <a href="">full user manual</a> for more information. 
+</p>
+<h4>Docking vs Window Mode</h4>
+<p>
+Press and hold the Chamber's drag handle to switch between docking mode and window mode. The window can be freely resized and moved without changing the viewport or canceling transitions.
+</p>
+<h4>Word of Warning for the Impatient</h4>
+<p>
+Be aware that the View Transition API cancels all active view transitions whenever the viewport size changes. Open DevTools and resize the Chamber before starting any view transitions to avoid unexpected resets. Green drag handles are safe to use. Orange handles signal that resizing will cancel active view transitions.
+</p>
+</div>`;
+			minmax(this, 'maximized', 'Welcome message', localStorage, 'vtbag-ic-minmax-welcome');
+		}
+	}
+
+	customElements.define('vtbag-ic-welcome', ICWelcome);
+</script>
+
+<style is:global>
+	@layer defaults, components, overrides;
+
+	@layer components {
+		@scope (vtbag-ic-welcome) {
+			:scope {
+				display: block;
+				padding: 0.5rem 1rem;
+			}
+		}
+		.shrinker:has(> vtbag-ic-welcome) {
+			overflow-y: auto;
+		}
+	}
+</style>

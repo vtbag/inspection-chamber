@@ -1,41 +1,48 @@
 ---
 import Pseudo from './Pseudo.astro';
 import GroupList from './GroupList.astro';
+import Identify from '@/components/ic/Identify.astro';
 ---
 
 <Pseudo />
 <GroupList />
+<Identify />
+
 <script>
 	import {
 		getCurrentViewTransition,
 		mayStartViewTransition,
 	} from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { deriveCSSSelector } from './element-selector';
-	import { color, type Group, isSorted } from './group';
+	import { color, gid, type Group, isSorted } from './group';
 	import { highlight } from './highlight';
-	import { ledGroup, type LEDs } from './led-group';
+	import { ledGroup, type LEDs, showLedGroup, hideLedGroup } from './led-group';
 	import { slider, setMaxValue, setCurrentValue } from './slider';
 	import { addBlinds } from './blinds';
 	import { frameToggles } from './multi-frame';
+	import { minmax, defaultTransitionDuration } from './minmax';
 
+	let nextId = 0;
+	const scopeMap = new WeakMap<HTMLElement, number>();
 	class ICScope extends HTMLElement {
 		#scope: HTMLElement | null = null;
 		#rootGroup: Group | undefined = undefined;
 		#animations: Animation[] = [];
 		#path: string | undefined = undefined;
 		#dirty = false;
-		static #nextId = 0;
-		#id = ICScope.#nextId++;
+		#id = 0;
 		#sortLEDs: LEDs;
 		#sizeLEDs: LEDs;
 		#freezeLEDs: LEDs;
 		#timings: Map<Animation, ComputedEffectTiming> = new Map();
 		#longestDuration?: number;
 		#clickTrack: Animation | undefined;
-		#observer?: ResizeObserver;
+		#resizeObserver?: ResizeObserver;
+		#intersectionObserver?: IntersectionObserver;
 		#resizeToggle: boolean = false;
-		#main?: VtbagIcAnimationsElement;
+		#animationsElement?: VtbagIcAnimationsElement;
 		#frameToggleRefresh?: () => void;
+		#raf?: number;
 
 		constructor() {
 			super();
@@ -43,7 +50,7 @@ import GroupList from './GroupList.astro';
 			this.#sortLEDs = {
 				className: 'sort',
 				groupName: `scope-sort-${this.#id}`,
-				checked: 'alpha',
+				checked: 'paint-order',
 				alternatives: [
 					{
 						label: 'Alphabetical',
@@ -100,12 +107,13 @@ import GroupList from './GroupList.astro';
 
 		disconnectedCallback() {
 			this.#animations = [];
-			this.#observer?.disconnect();
+			this.#resizeObserver?.disconnect();
+			this.#intersectionObserver?.disconnect();
 		}
 
 		connectedMoveCallback() {}
 		connectedCallback() {
-			this.#observer = new ResizeObserver(() => {
+			this.#resizeObserver = new ResizeObserver(() => {
 				if (this.#resizeToggle || getCurrentViewTransition()) {
 					return;
 				}
@@ -115,7 +123,21 @@ import GroupList from './GroupList.astro';
 					this.#resizeToggle = false;
 				});
 			});
-			this.#observer.observe(this);
+			this.#resizeObserver.observe(this);
+			this.#intersectionObserver = new IntersectionObserver((entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						this.animatedRender();
+					} else {
+						if (this.#raf !== undefined) {
+							cancelAnimationFrame(this.#raf);
+							console.log('Canceled RAF due to intersection');
+							this.#raf = undefined;
+						}
+					}
+				});
+			});
+			this.#intersectionObserver.observe(this);
 			this.render();
 		}
 
@@ -140,6 +162,11 @@ import GroupList from './GroupList.astro';
 			this.#animations = animations;
 			this.#path = undefined;
 			this.#dirty = true;
+			this.#id = scopeMap.get(element) ?? 0;
+			if (!this.#id) {
+				this.#id = ++nextId;
+				scopeMap.set(element, this.#id);
+			}
 		}
 
 		get animations() {
@@ -167,11 +194,11 @@ import GroupList from './GroupList.astro';
 		}
 		render() {
 			if (this.isConnected && this.#dirty) {
-				this.#main = this.closest('vtbag-ic-animations')!;
+				this.#animationsElement = this.closest('vtbag-ic-animations')!;
 				this.#dirty = false;
 				let html = `<div class="scope-head"><div class="scope-head-main"><h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>`;
-
-				html += this.topLevelGroups(this.#rootGroup!, true);
+				this.setAttribute('data-scope', this.path);
+				html += this.topLevelGroupButtons(this.#rootGroup!, false, true);
 				html += '</div>';
 
 				html += slider(`slider-${this.#id}`, `slider-${this.#id}`);
@@ -181,7 +208,7 @@ import GroupList from './GroupList.astro';
 				html += ledGroup(this.#sizeLEDs);
 
 				this.#freezeLEDs.checked =
-					this.#main!.querySelector<HTMLInputElement>(
+					this.#animationsElement!.querySelector<HTMLInputElement>(
 						'.animations-head input[name="freeze"]:checked'
 					)?.value ?? 'none';
 
@@ -189,6 +216,23 @@ import GroupList from './GroupList.astro';
 				html += '</div>';
 
 				this.innerHTML = html;
+				const sizer = this.querySelector('.input-led-group.size')! as HTMLElement;
+				const sorter = this.querySelector('.input-led-group.sort')! as HTMLElement;
+				const children = this.querySelector('.children') as HTMLElement;
+				minmax(
+					children,
+					'minimized',
+					'Group names',
+					sessionStorage,
+					'vtbag-ic-minmax-group-names',
+					(input) => {
+						input.checked &&
+						this.querySelector<HTMLInputElement>('vtbag-ic-pseudo .minmax input:checked')
+							? hideLedGroup(sorter)
+							: showLedGroup(sorter);
+					}
+				);
+				children.style.display = '';
 
 				this.#frameToggleRefresh = frameToggles(
 					this.querySelector<HTMLDivElement>('div.scope-head')!,
@@ -216,7 +260,7 @@ import GroupList from './GroupList.astro';
 					});
 				}
 
-				this.#main!.updateAnimationsHead();
+				this.#animationsElement!.updateAnimationsHead();
 				this.updateScopeHead();
 
 				this.insertAdjacentHTML(
@@ -224,27 +268,51 @@ import GroupList from './GroupList.astro';
 					'<vtbag-ic-pseudo name="::view-transition"></vtbag-ic-pseudo>'
 				);
 
+				const pseudoRoot = this.lastElementChild as VtbagIcPseudoElement;
 				const groupList = document.createElement('vtbag-ic-group-list') as VtbagIcGroupListElement;
+				groupList.style.display = 'none';
 				groupList.animations = this.animations;
-				this.appendChild(groupList);
+				pseudoRoot.appendChild(groupList);
+
+				minmax(
+					groupList,
+					'minimized',
+					'Pick pseudo from tree',
+					sessionStorage,
+					'vtbag-ic-minmax-pseudo-elements',
+					(input) => {
+						input.checked ? hideLedGroup(sizer) : showLedGroup(sizer);
+						input.checked &&
+						this.querySelector<HTMLInputElement>('.scope-head-main .minmax input:checked')
+							? hideLedGroup(sorter)
+							: showLedGroup(sorter);
+					}
+				);
+
+				groupList.style.display = '';
+
+				this.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo').forEach((pseudo) =>
+					pseudo.createTwin()
+				);
 
 				const error = (e: any) => console.error('View Transition error:', e, ' Cause:', e.cause);
-
 				this.setupSlider();
 				this.addSortListener(groupList, error);
 				this.addResizeListener(error);
 				this.addFreezeListener();
 				this.addButtonListener();
+				this.addDetailsListener();
 				this.addEventListener('resync', () => this.resync());
 			}
 		}
+
 		setupSlider() {
 			this.#animations.forEach((a) => this.#timings.set(a, a.effect!.getComputedTiming()));
 			this.#longestDuration = this.#animations.reduce(
 				(max, a) => Math.max(max, this.#timings.get(a)!.endTime as number),
 				0
 			);
-			const slowMo = this.#main!.querySelector<HTMLInputElement>(
+			const slowMo = this.#animationsElement!.querySelector<HTMLInputElement>(
 				'input[name="slow-mo"]:checked'
 			)?.value;
 			this.#clickTrack = this.#scope?.animate([{ top: 0 }, { top: 0 }], {
@@ -252,26 +320,35 @@ import GroupList from './GroupList.astro';
 				pseudoElement: '::view-transition',
 				playbackRate: slowMo === 'normal' ? 1 : slowMo === 'slow' ? 0.1 : 0.01,
 			})!;
+			(this.#clickTrack as CSSAnimation & { alias: string }).alias = 'vtbag-ic-click-track';
 			this.#animations.push(this.#clickTrack);
 			if (this.#animations[0].playState === 'paused') this.#clickTrack.pause();
+			const details =
+				this.#animationsElement!.querySelector<VtbagIcPseudoDetailsElement>(
+					'vtbag-ic-pseudo-details'
+				);
+			const detailedPseudo = details?.querySelector('h3');
 			setMaxValue(
 				`slider-${this.#id}`,
 				this.#longestDuration,
 				this.#animations[0].currentTime as number,
 				(e) => {
-					this.animations.forEach((a) => {
-						a.currentTime = Math.min(
-							parseInt((e.target as HTMLInputElement).value),
-							this.#longestDuration! - 1
-						);
-					});
+					const time = parseInt((e.target as HTMLInputElement).value, 10);
+					this.animations.forEach(
+						(a) => (a as Animation & { stopped?: boolean }).stopped || (a.currentTime = time)
+					);
+					if (detailedPseudo?.innerText.startsWith(`${this.path}::view-transition`)) {
+						setCurrentValue('details-slider', time);
+					} else {
+						this.#animationsElement!.movePseudos();
+					}
 				}
 			);
 			this.resync();
 		}
 
 		resync() {
-			// Make Firefox happy
+			// Make Firefox happy. issue?
 			if (navigator.userAgent.toLowerCase().includes('firefox')) {
 				const paused = this.#animations[0]?.playState === 'paused';
 				const time = this.#animations[0]?.currentTime;
@@ -300,28 +377,59 @@ import GroupList from './GroupList.astro';
 		}
 
 		private addButtonListener() {
-			[this.children[0], this.children[2]].forEach((x) =>
-				x.addEventListener('click', (e) => {
-					const button = e.target as HTMLButtonElement;
-					let id: string | undefined;
-					if (button.tagName === 'BUTTON' || button.tagName === 'H3') {
-						id = button.dataset.group;
-						if (!id) return;
-					} else {
-						return;
+			this.addEventListener('click', async (e) => {
+				if ((e.target as HTMLElement).classList?.contains('group-content')) {
+					(e.target as HTMLElement).lastElementChild?.classList.toggle('compact');
+					return;
+				}
+				const button = (e.target as HTMLElement)?.closest('*[data-group]') as HTMLElement;
+				if (!button) return;
+				const id = button.dataset.group;
+				const group =
+					button.tagName !== 'BUTTON'
+						? (this.querySelector('.scope-head-main') as HTMLDivElement)
+						: this.querySelector<VtbagIcGroupElement>(`vtbag-ic-group:has(h3[data-group="${id}"])`);
+				if (button.tagName === 'BUTTON') {
+					const minimized = this.querySelector<HTMLInputElement>(
+						'vtbag-ic-pseudo[name="::view-transition"] .minmax input:checked'
+					);
+					if (minimized) {
+						minimized.click();
+						await new Promise((r) => setTimeout(r, defaultTransitionDuration));
 					}
-					const group =
-						id === '1'
-							? (this.querySelector('.scope-head-main') as HTMLDivElement)
-							: [...this.querySelectorAll<VtbagIcGroupElement>('vtbag-ic-group')].find(
-									(g) => g.group?.preOrder == id
-								);
-
-					highlight(group);
-				})
-			);
+				}
+				highlight(group);
+			});
+			this.addButtonEnterLeaveListeners();
 		}
 
+		private addDetailsListener() {
+			this.addEventListener('click', async (e) => {
+				const span = e.target as HTMLElement as HTMLSpanElement;
+				if (span.tagName !== 'SPAN' || !span.classList.contains('name')) return;
+				const pseudo = span.closest('vtbag-ic-pseudo') as VtbagIcPseudoElement;
+				pseudo &&
+					document
+						.querySelector<VtbagIcPseudoDetailsElement>('vtbag-ic-pseudo-details')
+						?.set(pseudo.dataset.link!);
+			});
+		}
+
+		private addButtonEnterLeaveListeners() {
+			['pointerenter', 'pointerleave'].forEach((name) =>
+				this.querySelectorAll<HTMLButtonElement>('button[data-group]').forEach((b) =>
+					b.addEventListener(name, (e) => {
+						const button = e.target as HTMLButtonElement;
+						if (button.tagName !== 'BUTTON') return;
+						const id = button.dataset.group;
+						if (!id) return;
+						this.querySelector<VtbagIcGroupElement>(
+							`vtbag-ic-group:has(h3[data-group="${id}"]) .frame input`
+						)?.click();
+					})
+				)
+			);
+		}
 		private addResizeListener(error: (e: any) => void) {
 			this.querySelector('.input-led-group.size')?.addEventListener('change', (e) => {
 				this.#sizeLEDs.checked = (e.target as HTMLInputElement).value;
@@ -372,8 +480,12 @@ ${styles.join('\n')}
 							const alpha = this.querySelector<HTMLInputElement>(`input[value="alpha"]`)!.checked;
 							groupList.sort(alpha ? 'alpha' : 'paint-order');
 							const children = this.querySelector('.children')!;
-							children.insertAdjacentHTML('afterend', this.topLevelGroups(this.#rootGroup!, alpha));
+							children.insertAdjacentHTML(
+								'afterend',
+								this.topLevelGroupButtons(this.#rootGroup!, alpha)
+							);
 							children.remove();
+							this.addButtonEnterLeaveListeners();
 						},
 						types: ['sort'],
 					},
@@ -387,47 +499,64 @@ ${styles.join('\n')}
 		private addFreezeListener() {
 			this.querySelector('.input-led-group.freeze')?.addEventListener('change', (e) => {
 				if ((e.target as HTMLElement)?.tagName !== 'INPUT') return;
+
 				if (this.querySelector<HTMLInputElement>(`input[value="freeze"]:checked`)) {
 					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)?.classList.add(
 						'red'
 					);
 					this.#animations.forEach((a) => a.pause());
 				}
+				if (this.#raf !== undefined) {
+					cancelAnimationFrame(this.#raf);
+					console.log('Canceled RAF');
+					this.#raf = undefined;
+				}
 				if (this.querySelector<HTMLInputElement>(`input[value="run"]:checked`)) {
 					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
 						'red'
 					);
-					const speed = this.#main!.querySelector<HTMLInputElement>(
+					const speed = this.#animationsElement!.querySelector<HTMLInputElement>(
 						'input[name="slow-mo"]:checked'
 					)?.value;
 					this.#animations.forEach((a) => {
 						a.currentTime === this.#longestDuration && (a.currentTime = this.#longestDuration! - 1);
 						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01;
-						a.play();
-						this.autoMoveSlider();
+						('stopped' in a && a.stopped) || a.play();
 					});
+					this.autoMoveSlider();
 				}
 				if (this.querySelector<HTMLInputElement>(`input[value="next"]:checked`)) {
 					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
 						'red'
 					);
-
 					this.#animations.forEach((a) => {
 						a.finish();
 					});
 				}
-				this.#main!.updateAnimationsHead();
+				this.#animationsElement!.updateAnimationsHead();
 			});
 		}
 
 		autoMoveSlider() {
 			const now = this.#clickTrack!.currentTime! as number;
 			setCurrentValue(`slider-${this.#id}`, now);
-			if (now < this.#longestDuration!) requestAnimationFrame(this.autoMoveSlider.bind(this));
+			this.#animationsElement!.movePseudos();
+			if (now < this.#longestDuration!) {
+				this.#raf = requestAnimationFrame(() => this.#raf && this.autoMoveSlider());
+			}
+			if (
+				this.#animationsElement!.querySelector<VtbagIcPseudoDetailsElement>(
+					'vtbag-ic-pseudo-details'
+				)
+					?.querySelector('h3')
+					?.innerText.startsWith(`${this.path}::view-transition`)
+			) {
+				setCurrentValue('details-slider', now);
+			}
 		}
 
-		topLevelGroups(rootGroup: Group, alpha = true) {
-			let html = '<div class="children">Groups: ';
+		topLevelGroupButtons(rootGroup: Group, alpha = true, hide = false) {
+			let html = `<div class="children" style="display:${hide ? 'none' : 'block'}">Groups: `;
 			const buttons = [...rootGroup.children];
 
 			if (alpha) {
@@ -441,7 +570,7 @@ ${styles.join('\n')}
 					/-vtbag-match-element-([0-9]+)/,
 					(_, num) => `match-element<sup>(${num})</sup>`
 				);
-				html += `<button data-group="${g.preOrder}" style="--vtn: b-${this.#id}-${g.preOrder}; border: 2px solid ${color(g)}">${name}</button>`;
+				html += `<button data-group="${gid(g)}" style="--vtn: b-${this.#id}-${gid(g)}; border: 2px solid ${color(g)}">${name}</button>`;
 			});
 			html += '</div>';
 			return html;

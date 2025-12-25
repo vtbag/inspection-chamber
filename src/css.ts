@@ -2,7 +2,7 @@ import { type Selector, type SelectorList, parse, generate } from 'css-tree';
 import { deriveCSSSelector } from './components/ic/element-selector';
 
 const animations = new Set<string>();
-const elements: { element: HTMLElement; pseudoElement: string }[] = [];
+const elements: { element: HTMLElement; pseudoElement: string; }[] = [];
 const pseudoElements = new Set<string>();
 let root: HTMLElement;
 
@@ -27,14 +27,17 @@ export function namedElements(viewTransitionRoot: HTMLElement = document.documen
 }
 
 function namedElementsOfSheet(sheet: CSSStyleSheet) {
-	if (sheet.disabled) return;
-	[...sheet.cssRules].forEach((rule) => namedElementsOfRule(rule));
+	try {
+		if (sheet.disabled) return;
+		[...sheet.cssRules].forEach((rule) => namedElementsOfRule(rule));
+	} catch (e) {
+		console.error('Could not access stylesheet', sheet, e);
+	}
 }
 
 function namedElementsOfRule(rule: CSSRule, keyframeName?: string) {
 	const name = rule.constructor.name;
 	if (
-		name === 'CSSImportRule' ||
 		name === 'CSSFontFaceRule' ||
 		name === 'CSSPageRule' ||
 		name === 'CSSNamespaceRule' ||
@@ -96,7 +99,7 @@ function declNamedElements(style: CSSStyleDeclaration) {
 function styledElements(parent: CSSRule | null) {
 	let selectors: string[] = ['&'];
 
-	for (;;) {
+	for (; ;) {
 		while (
 			parent &&
 			!(parent.constructor.name === 'CSSStyleRule' || parent.constructor.name === 'CSSScopeRule')
@@ -140,10 +143,10 @@ function collect(parent: CSSStyleRule | CSSScopeRule, selectors: string[]): stri
 		const scopes = scopeRuleParent.start
 			? splitSelectorList(scopeRuleParent.start)
 			: [
-					deriveCSSSelector(
-						parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
-					),
-				];
+				deriveCSSSelector(
+					parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
+				),
+			];
 
 		scopes.forEach((scope) =>
 			nested.forEach((nes) => {

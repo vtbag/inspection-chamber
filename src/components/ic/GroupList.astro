@@ -6,7 +6,6 @@ import Group from './Group.astro';
 <script>
 	import { getCurrentViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import type { Group } from './group';
-	import { key } from './scope';
 	import { addBlinds } from './blinds';
 
 	class ICGroupList extends HTMLElement {
@@ -38,7 +37,7 @@ import Group from './Group.astro';
 			this.render();
 		}
 
-		disconnectCallback() {
+		disconnectedCallback() {
 			this.#observer?.disconnect();
 		}
 
@@ -55,11 +54,9 @@ import Group from './Group.astro';
 		async render() {
 			if (this.isConnected && this.#dirty) {
 				this.#dirty = false;
-
-				const groups = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!.groupMaps.get(
-					key(this.#scope!.element)
-				)!;
-
+//todo simplify
+				const groups = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!.groupMaps.get(this.#scope!.element)!;
+					
 				this.replaceChildren();
 
 				const newGroupAnimations = new Map<string, Animation[]>();

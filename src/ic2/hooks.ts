@@ -3,11 +3,9 @@ export function setupHooks(context: Window) {
 	self.__vtbag ??= {};
 	self.__vtbag.ic2 ??= {};
 	self.__vtbag.ic2.context = context;
-	self.__vtbag.ic2.contextID = `[${crypto.randomUUID().slice(0, 4)}]`;
 	self.__vtbag.ic2.pageswap = pageswap;
 	self.__vtbag.ic2.pagereveal = pagereveal;
 	self.__vtbag.ic2.monkey = monkey;
-	self.__vtbag.ic2.iframe = self.document.querySelector('#ic-iframe') as HTMLIFrameElement;
 	self.__vtbag.ic2.animationStart = animationStart;
 	self.__vtbag.ic2.animationStop = animationStop;
 }
@@ -15,19 +13,24 @@ export function setupHooks(context: Window) {
 function pageswap(event: PageSwapEvent) {
 	console.log('enter pageswap', event);
 	const transition = event.viewTransition;
-	const root = (event.target as Window)?.document?.documentElement;
+
+	const doc = (event.target as Window).document;
+	const root = doc.documentElement;
 	if (transition) {
+		if (!('activeViewTransition' in doc)) doc.activeViewTransition = transition;
 		requestAnimationFrame(() => {
 			beforeCaptureOld(root, transition!);
 			setTimeout(() => afterCaptureOld(root, transition!));
-		});
+		});	
 	}
 }
 async function pagereveal(event: PageRevealEvent) {
 	console.log('enter pagereveal', event);
 	const transition = event.viewTransition;
-	const root = (event.target as Window)?.document?.documentElement;
+	const doc = (event.target as Window).document;
+	const root = doc.documentElement;
 	if (transition) {
+		if (!('activeViewTransition' in doc)) doc.activeViewTransition = transition;
 		transition.ready.finally(() => afterCaptureNew(root, transition));
 		transition.finished.finally(() => animationsWillFinish(root, transition));
 		await Promise.resolve(true);
@@ -42,7 +45,10 @@ function monkey<
 		this: Element | Document,
 		arg?: ViewTransitionUpdateCallback | StartViewTransitionOptions
 	): ViewTransition {
-		console.log('Patched startViewTransition called on', this, arg);
+		if (arg && "it's-me-vtbag-may-start-view-transition" in arg)
+			return original?.apply(this, [arg]) as ViewTransition;
+		const _trace = new Error().stack?.split('\n').slice(3).join('\n') ?? '';
+		if (0) console.log('Patched startViewTransition called on', this, _trace);
 		let transition: ViewTransition;
 		if (!original) {
 			throw new Error('startViewTransition is not defined on this context');
@@ -51,7 +57,6 @@ function monkey<
 			this.constructor.name === HTMLDocument.name
 				? (this as Document).documentElement
 				: (this as HTMLElement);
-
 		if (!arg) {
 			arg = async () => {
 				afterCaptureOld(root, transition);
@@ -78,6 +83,14 @@ function monkey<
 			};
 		}
 		transition = original.apply(this, [arg]);
+		if (this.constructor.name === HTMLDocument.name) {
+			if (!('activeViewTransition' in root.ownerDocument)) {
+				root.ownerDocument.activeViewTransition =
+					transition;
+			}
+		} else if (!('activeViewTransition' in this)) {
+			this.activeViewTransition = transition;
+		}
 		requestAnimationFrame(() => beforeCaptureOld(root, transition));
 		transition.ready.finally(() => afterCaptureNew(root, transition));
 		transition.finished.finally(() => {

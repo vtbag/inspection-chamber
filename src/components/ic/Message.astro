@@ -1,0 +1,52 @@
+
+<script>
+import { ICElement } from './ic-element';
+
+	class ICMessage extends ICElement {
+		protected render() {
+			this.innerHTML = '';
+			document.addEventListener('ic-show-message', (e: Event) => {
+				this.style.paddingBlock = '8px';
+				this.style.marginBlock = '4px';
+				this.style.maxHeight = '2rem';
+				this.innerHTML = (e as CustomEvent).detail;
+        this.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				setTimeout(() => {
+					this.style.paddingBlock = '0';
+					this.style.marginBlock = '0';
+					this.style.maxHeight = '0';
+				}, 4000);
+			});
+		}
+	}
+
+	customElements.define('vtbag-ic-message', ICMessage);
+</script>
+
+
+<style is:global>
+	@layer defaults, components, overrides;
+
+	@layer components {
+		@scope (vtbag-ic-message) {
+			:scope {
+				display: block;
+				border-radius: 6px;
+				background-color: light-dark(#a86, #543);
+				color: light-dark(#000, #fff);
+				font-size: 0.85rem;
+				margin: 4px;
+				margin-block: 0;
+				overflow: clip;
+				overflow-wrap: normal;
+				padding: 8px;
+				padding-block: 0;
+				transition: max-height 0.25s ease-in-out, padding-block 0.25s ease-in-out, margin-block 0.25s ease-in-out;
+				white-space: nowrap;
+				word-break: keep-all;
+				hyphens: manual;
+				max-height: 0;
+			}
+		}
+	}
+</style>

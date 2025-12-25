@@ -182,11 +182,11 @@
 }
 
 .input-led-item input:checked + label .radio-text {
-	color: var(--content-color);
+	color: var(--vtbag-ic-content-color);
 }
 
 .input-led-item :not(input:checked) + label .radio-text:hover {
-	color: color-mix(in srgb, var(--content-color), var(--label-color));
+	color: color-mix(in srgb, var(--vtbag-ic-content-color), var(--vtbag-ic-label-color));
 }
 
 .toggle-switch input[type='checkbox'] {
@@ -282,7 +282,7 @@ input[type='checkbox']:not(:checked) + label .off-label {
 
 .horizontal-slider-container .slider-track {
 	position: relative;
-	width: 180px;
+	width: 80%;
 	height: 8px;
 	top: 8px;
 }
@@ -301,7 +301,6 @@ input[type='checkbox']:not(:checked) + label .off-label {
 	top: 26px;
 	width: 200%;
 }
-
 
 .horizontal-slider-container input[type='range']::-webkit-slider-thumb {
 	appearance: none;

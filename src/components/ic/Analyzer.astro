@@ -1,0 +1,51 @@
+<script>
+	import { ICElement } from './ic-element';
+	import { ledGroup } from './led-group';
+
+	class ICAnalyzer extends ICElement {
+		protected render() {
+			this.classList.add('panel');
+
+			this.insertAdjacentHTML(
+				'beforeend',
+				ledGroup({
+					className: 'analyze',
+					groupName: 'analyze',
+					checked: sessionStorage.getItem('ic-analyzer-mode') || 'animation',
+					alternatives: [
+						{
+							label: 'Analyze animations',
+							value: 'animation',
+							id: 'animation',
+						},
+						{
+							label: 'Analyze capturing',
+							value: 'capture',
+							id: 'capture',
+						},
+					],
+				})
+			);
+			this.addEventListener('change', (e) => {
+				sessionStorage.setItem('ic-analyzer-mode', (e.target as HTMLInputElement).value);
+			});
+		}
+	}
+	customElements.define('vtbag-ic-analyzer', ICAnalyzer);
+</script>
+
+<style is:global>
+	@layer defaults, components, overrides;
+
+	@layer components {
+		@scope (vtbag-ic-analyzer) {
+			:scope {
+				display: block;
+				.input-led-group.analyze div {
+					display: flex;
+					justify-content: space-around;
+				}
+			}
+		}
+	}
+</style>

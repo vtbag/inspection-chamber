@@ -1,0 +1,64 @@
+@layer defaults, components, overrides;
+
+@layer components {
+	@scope (.toggle) {
+		:scope {
+			background: none;
+			border: none;
+			border-radius: 4px;
+			padding: 1px 6px;
+			cursor: pointer;
+			color: #888;
+			&:has(input:not(:disabled)):not([data-disabled]):hover {
+				color: light-dark(#222, #ddd);
+			}
+			&.visibility {
+				position: relative;
+				top: 2.5px;
+				left: 0px;
+				&:not(:has(input:checked)) {
+					color: #f008;
+				}
+			}
+			&.solo {
+				position: relative;
+				left: 2px;
+				&:has(input:checked) {
+					color: #f00;
+					font-weight: 900;
+				}
+			}
+			&.frame {
+				&:has(input:checked) {
+					color: darkslategray;
+					font-weight: 900;
+				}
+			}
+			&.frame.group {
+				&:has(input:checked) {
+					color: var(--vtbag-ic-group-color);
+				}
+			}
+			&.frame.image-pair {
+				&:has(input:checked) {
+					color: darkgoldenrod;
+				}
+			}
+			&.frame.old {
+				&:has(input:checked) {
+					color: darkslateblue;
+				}
+			}
+			&.frame.new {
+				&:has(input:checked) {
+					color: darkolivegreen;
+				}
+			}
+			input {
+				position: absolute;
+				opacity: 0;
+				pointer-events: none;
+			}
+		}
+	}
+}

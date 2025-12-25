@@ -1,0 +1,28 @@
+---
+import "./ic.css"
+---
+
+
+<script>
+	import { ICElement } from './ic-element';
+
+	class ICCaptures extends ICElement {
+		render() {
+			this.innerHTML = `CPAtuREs!`;
+		}
+	}
+	customElements.define('vtbag-ic-captures', ICCaptures);
+</script>
+
+<style is:global>
+	@layer defaults, components, overrides;
+
+	@layer components {
+		@scope (vtbag-ic-captures) {
+			:scope {
+				display: block;
+				view-transition-name: hold;
+			}
+		}
+	}
+</style>

@@ -6,14 +6,23 @@ export type Group = {
 	className: string;
 	ancestor: boolean;
 	children: Group[];
-	scope?: HTMLElement;
 	preOrder?: number;
 	postOrder?: number;
 	bfs?: number;
 };
 
-export function size(group: Group): number {
-	return (group.postOrder! - group.preOrder! + 1) / 2;
+export function gid(group?: Group): number {
+	return ~~(((group?.preOrder ?? 0) + 1) / 2);
+}
+
+export function size(group?: Group): number {
+	return ~~(((group?.postOrder ?? 0) - (group?.preOrder ?? 0) + 1) / 2);
+}
+
+export function color(group: Group): string {
+	let root = group;
+	while (root.parent) root = root.parent;
+	return `oklch(0.7 0.07 ${(360 / size(root)) * gid(group)}deg / 1)`;
 }
 
 export function nestGroups(
@@ -75,7 +84,7 @@ export function numberGroupsBFS(root: Group) {
 }
 
 export function print(group: Group, depth = 0) {
-	console.log(`${' '.repeat(depth * 2)}- ${group.name} (${group.preOrder}, ${group.postOrder})`);
+	console.log(`${' '.repeat(depth * 2)}- ${group.name}`);
 	group.children.forEach((child) => print(child, depth + 1));
 }
 
@@ -91,10 +100,4 @@ export function isSorted(group: Group): boolean {
 			idx === 0 ||
 			arr[idx - 1].name.replace(/^-vtbag-/, '').localeCompare(g.name.replace(/^-vtbag-/, '')) <= 0
 	);
-}
-
-export function color(group: Group): string {
-	let root = group;
-	while (root.parent) root = root.parent;
-	return `oklch(0.7 0.07 ${(360 / (root.postOrder! - root.preOrder! + 1)) * group.preOrder!}deg / 1)`;
 }

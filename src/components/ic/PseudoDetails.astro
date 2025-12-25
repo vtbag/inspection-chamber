@@ -1,0 +1,241 @@
+<script>
+	import {
+		hideMinmax,
+		showMinmax,
+		minmax,
+		resizeMinmax,
+		defaultTransitionDuration,
+	} from './minmax';
+	import { ICElement } from './ic-element';
+	import { slider } from './slider';
+	import { setMaxValue } from './slider';
+	import { slide } from 'astro:transitions';
+
+	let pseudoName = '';
+	let detailsRAF: number | undefined;
+	let count = 0;
+	let that: VtbagIcPseudoDetailsElement;
+
+	async function loop() {
+		const pseudo = document.querySelector<VtbagIcPseudoElement>(
+			`vtbag-ic-pseudo[data-link="${pseudoName}"]`
+		);
+		if (!pseudo) {
+			console.log('raf loop stopped');
+			detailsRAF = undefined;
+			that.set('');
+			return;
+		}
+		const style = (await pseudo.computedStyleCompact(true)).sort((a, b) =>
+			a.key.localeCompare(b.key)
+		);
+		const lines: string[] = [];
+		style.forEach(({ key, value, defaultValue, priority }) => {
+			if (value !== defaultValue) {
+				lines.push(`
+								<tr class="style-line">
+									<td class="key">${key}:</td>
+									<td class="value">${value}</td>
+									<td class="priority">${priority}</td>
+								</tr>`);
+			}
+		});
+
+		if (detailsRAF) {
+			const table = that.querySelector<HTMLElement>('table')!;
+			resizeMinmax(
+				that.querySelector<HTMLElement>('label.minmax')!,
+				() => (table.innerHTML = lines.join(''))
+			);
+
+			detailsRAF = requestAnimationFrame(loop);
+			if (++count % 100 === 0) {
+				console.log('raf loop still running');
+			}
+		}
+	}
+
+	class ICPseudoDetails extends ICElement {
+		#animationsElement: VtbagIcAnimationsElement | undefined;
+		render() {
+			this.#animationsElement = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!;
+
+			that = this;
+			if (!this.innerHTML) {
+				this.innerHTML = `<h3></h3><div class="content"></div>`;
+				const content = this.querySelector('.content') as HTMLElement;
+				minmax(
+					content,
+					pseudoName ? 'maximized' : 'minimized',
+					'Pseudo details',
+					undefined,
+					undefined,
+					(input) => {
+						if (input.checked) {
+							if (detailsRAF) {
+								console.log('cancelling raf');
+								cancelAnimationFrame(detailsRAF);
+								detailsRAF = undefined;
+								setTimeout(
+									() => (this.querySelector('.content')!.innerHTML = `<table></table>`),
+									defaultTransitionDuration
+								);
+							}
+						} else {
+							this.set(pseudoName);
+						}
+					}
+				);
+			}
+			that.querySelector<HTMLElement>('h3')!.textContent = pseudoName;
+			const content = this.querySelector('.content') as HTMLElement;
+			if (!content.innerHTML) {
+				content.innerHTML = `<table></table>`;
+			}
+
+			while (content.firstElementChild && content.firstElementChild.tagName !== 'TABLE') {
+				content.firstElementChild.remove();
+			}
+			if (pseudoName) {
+				const pseudo = document.querySelector<VtbagIcPseudoElement>(
+					`vtbag-ic-pseudo[data-link="${pseudoName}"]`
+				);
+				if (!pseudo) return;
+				const scope = pseudo.closest<VtbagIcScopeElement>('vtbag-ic-scope')!;
+				content.insertAdjacentHTML('afterbegin', '<br>');
+				let maxDuration = 0;
+				pseudo
+					.animations()
+					.reverse()
+					.forEach((a) => {
+						if ('alias' in a && a.alias === 'vtbag-ic-click-track') return;
+						const duration = a.effect?.getComputedTiming().endTime;
+						maxDuration = Math.max(maxDuration, (duration as number) ?? 0);
+						content.insertAdjacentHTML(
+							'afterbegin',
+							`<label style="align-items: center; display: flex; gap: 8px;"><input type="checkbox" ${'stopped' in a && a.stopped ? '' : 'checked'}> ${(a as CSSAnimation).animationName ?? ('alias' in a && a.alias) ?? 'unknown'} <span>${'stopped' in a && a.stopped ? `(stopped at ${~~a.currentTime!}ms)` : ''}</span></label>`
+						);
+						if ('stopped' in a && a.stopped && a.playState === 'running') {
+							a.pause();
+						}
+						content.firstElementChild!.addEventListener('change', (e) => {
+							const stoppable = a as Animation & { stopped: boolean };
+							const checkbox = e.target as HTMLInputElement;
+							stoppable.stopped = !checkbox.checked;
+							checkbox.parentElement!.lastElementChild!.textContent = stoppable.stopped
+								? `(stopped at ${~~a.currentTime!}ms)`
+								: '';
+							if (stoppable.stopped) {
+								stoppable.pause();
+							} else {
+								a.currentTime = parseInt(
+									content.querySelector<HTMLInputElement>('input[type=range]')!.value,
+									10
+								);
+								this.#animationsElement!.movePseudos();
+							}
+							if (
+								[...content.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].every(
+									(i) => i.checked
+								)
+							) {
+								pseudo.removeAttribute('data-stopped');
+								pseudo.twin.removeAttribute('data-stopped');
+								[...document.querySelectorAll('#identified-pseudos div')]
+									.find((div) => div.textContent === pseudoName)
+									?.removeAttribute('data-stopped');
+							} else {
+								pseudo.setAttribute('data-stopped', '');
+								pseudo.twin.setAttribute('data-stopped', '');
+								[...document.querySelectorAll('#identified-pseudos div')]
+									.find((div) => div.textContent === pseudoName)
+									?.setAttribute('data-stopped', '');
+							}
+							this.#animationsElement!.querySelector<HTMLElement>(
+								'.stopped-animations'
+							)!.style.display =
+								parent.document.querySelectorAll('#twins div[data-title][data-stopped]').length 
+									? 'grid'
+									: 'none';
+							resizeMinmax(this.querySelector('label.minmax')!, () => this.showHideSlider(content));
+						});
+					});
+				maxDuration === 0 || content.insertAdjacentHTML('afterbegin', '<br>');
+				content.lastElementChild!.insertAdjacentHTML(
+					'beforebegin',
+					slider('details-slider', 'detail')
+				);
+				this.showHideSlider(content);
+
+				setMaxValue(
+					'details-slider',
+					maxDuration,
+					parseInt(
+						scope.querySelector<HTMLInputElement>('input[name^="slider-"]')?.value ?? '0',
+						10
+					),
+					(e: Event) => {
+						const time = parseInt((e.target as HTMLInputElement).value, 10);
+						pseudo
+							.animations()
+							.forEach((a) => ('stopped' in a && a.stopped) || (a.currentTime = time));
+						this.#animationsElement!.movePseudos();
+					}
+				);
+			} else {
+				hideMinmax(this.querySelector('label.minmax')!);
+			}
+			const minimized = this.querySelector<HTMLInputElement>('.minmax input');
+			if (!minimized?.checked) {
+				if (!detailsRAF) {
+					detailsRAF = requestAnimationFrame(loop);
+					console.log('starting raf from render');
+				}
+			}
+		}
+
+		set(name: string) {
+			pseudoName = name;
+			const minimized = this.querySelector<HTMLInputElement>('.minmax input')!;
+			if (pseudoName) {
+				showMinmax(this.querySelector('label.minmax')!);
+				if (minimized.checked) minimized.click();
+			} else {
+				if (!minimized.checked) minimized.click();
+			}
+			this.render();
+		}
+
+		showHideSlider(content: HTMLElement) {
+			const slider = this.querySelector<HTMLInputElement>(
+				'.horizontal-slider-container:has(#details-slider)'
+			);
+			const display = [...content.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].some(
+				(i) => i.checked
+			)
+				? 'flex'
+				: 'none';
+			slider!.style.display = display;
+		}
+	}
+
+	customElements.define('vtbag-ic-pseudo-details', ICPseudoDetails);
+</script>
+
+<style is:global>
+	@layer defaults, components, overrides;
+
+	@layer components {
+		@scope (vtbag-ic-pseudo-details) {
+			:scope {
+				display: block;
+				grid-column: 1 / -1;
+				padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+				background: light-dark(#1a1a1a, #0a0a0a);
+				border-radius: 4px;
+				border: 1px solid light-dark(#3a3a3a, #2a2a2a);
+				box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+			}
+		}
+	}
+</style>
