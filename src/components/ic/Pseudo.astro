@@ -89,8 +89,18 @@
 					if (key === 'transform-origin' || key === 'perspective-origin') {
 						// detect fitting absolute values for 50%, 50% default.
 						const [w, h] = value.split(' ').map((v) => parseFloat(v) * 2);
-						const w2 = parseFloat(this.#computedStyle!.width) + parseFloat(this.#computedStyle!.paddingLeft) + parseFloat(this.#computedStyle!.paddingRight) + parseFloat(this.#computedStyle!.borderLeftWidth) + parseFloat(this.#computedStyle!.borderRightWidth);
-						const h2 = parseFloat(this.#computedStyle!.height) + parseFloat(this.#computedStyle!.paddingTop) + parseFloat(this.#computedStyle!.paddingBottom) + parseFloat(this.#computedStyle!.borderTopWidth) + parseFloat(this.#computedStyle!.borderBottomWidth);
+						const w2 =
+							parseFloat(this.#computedStyle!.width) +
+							parseFloat(this.#computedStyle!.paddingLeft) +
+							parseFloat(this.#computedStyle!.paddingRight) +
+							parseFloat(this.#computedStyle!.borderLeftWidth) +
+							parseFloat(this.#computedStyle!.borderRightWidth);
+						const h2 =
+							parseFloat(this.#computedStyle!.height) +
+							parseFloat(this.#computedStyle!.paddingTop) +
+							parseFloat(this.#computedStyle!.paddingBottom) +
+							parseFloat(this.#computedStyle!.borderTopWidth) +
+							parseFloat(this.#computedStyle!.borderBottomWidth);
 						if (Math.abs(w - w2) < 2 && Math.abs(h - h2) < 2) defaultValue = value;
 					}
 					if (value !== defaultValue && (value === 'auto' || value === 'normal'))
@@ -327,7 +337,7 @@
 				minmax(
 					this.lastElementChild as HTMLElement,
 					'maximized',
-					'Gsroup names',
+					'Group names',
 					sessionStorage,
 					'vtbag-ic-group-children-' + this.name()
 				);
@@ -344,8 +354,8 @@
 			group.classList.toggle('in-view', groupInView);
 			const groupId = (group.firstElementChild!.firstElementChild as HTMLElement).dataset.group;
 			this.closest('vtbag-ic-scope')!
-				.querySelector<HTMLElement>(`button[data-group="${groupId}"]`)
-				?.classList.toggle('in-view', groupInView);
+				.querySelectorAll<HTMLElement>(`button[data-group="${groupId}"]`)
+				.forEach((btn) => btn.classList.toggle('in-view', groupInView));
 		}
 	}
 

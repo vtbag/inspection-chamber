@@ -14,7 +14,7 @@ import Identify from '@/components/ic/Identify.astro';
 		mayStartViewTransition,
 	} from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { deriveCSSSelector } from './element-selector';
-	import { color, gid, type Group, isSorted } from './group';
+	import { color, gid, type Group, isSorted, linear } from './group';
 	import { highlight } from './highlight';
 	import { ledGroup, type LEDs, showLedGroup, hideLedGroup } from './led-group';
 	import { slider, setMaxValue, setCurrentValue } from './slider';
@@ -528,7 +528,7 @@ ${styles.join('\n')}
 					this.#animations.forEach((a) => {
 						a.currentTime === this.#longestDuration && (a.currentTime = this.#longestDuration! - 1);
 						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01;
-						'stopped' in a  || a.play();
+						'stopped' in a || a.play();
 					});
 					this.autoMoveSlider();
 				}
@@ -564,7 +564,7 @@ ${styles.join('\n')}
 
 		topLevelGroupButtons(rootGroup: Group, alpha = true, hide = false) {
 			let html = `<div class="children" style="display:${hide ? 'none' : 'block'}">Groups: `;
-			const buttons = [...rootGroup.children];
+			const buttons = linear(rootGroup); //[...rootGroup.children];
 
 			if (alpha) {
 				buttons.sort((a, b) =>
@@ -573,6 +573,7 @@ ${styles.join('\n')}
 			}
 
 			buttons.forEach((g) => {
+				if (g.parent === undefined) return;
 				const name = g.name.replace(
 					/-vtbag-match-element-([0-9]+)/,
 					(_, num) => `match-element<sup>(${num})</sup>`

@@ -108,7 +108,7 @@
 					.animations()
 					.toReversed()
 					.forEach((a) => {
-						if ('alias' in a && a.alias === 'vtbag-ic-click-trick') return;
+						if ('alias' in a && a.alias === 'vtbag-ic-click-track') return;
 						const duration = a.effect?.getComputedTiming().endTime;
 						maxDuration = Math.max(maxDuration, (duration as number) ?? 0);
 						content.insertAdjacentHTML(
