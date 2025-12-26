@@ -28,7 +28,6 @@ declare global {
 		get scopeId(): number;
 		get animations(): Animation[];
 		set animations(as: Animation[]);
-		get size(): string;
 		updateScopeHead(): void;
 	}
 	interface VtbagIcGroupListElement extends HTMLElement {
@@ -45,6 +44,7 @@ declare global {
 	}
 	interface VtbagIcPseudoElement extends HTMLElement {
 		twin: HTMLDivElement;
+		icGroup: VtbagIcGroupElement;
 		get exists(): boolean;
 		createTwin(): void;
 		moveTwin(): void;

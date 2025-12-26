@@ -5,7 +5,7 @@ import Group from './Group.astro';
 <Group />
 <script>
 	import { getCurrentViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
-	import type { Group } from './group';
+	import { type Group, linear } from './group';
 	import { addBlinds } from './blinds';
 
 	class ICGroupList extends HTMLElement {
@@ -54,9 +54,11 @@ import Group from './Group.astro';
 		async render() {
 			if (this.isConnected && this.#dirty) {
 				this.#dirty = false;
-//todo simplify
-				const groups = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!.groupMaps.get(this.#scope!.element)!;
-					
+				//todo simplify
+				const groups = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!.groupMaps.get(
+					this.#scope!.element
+				)!;
+
 				this.replaceChildren();
 
 				const newGroupAnimations = new Map<string, Animation[]>();
@@ -75,14 +77,9 @@ import Group from './Group.astro';
 					}
 				});
 
-				newGroupAnimations.forEach((groupAnimations, groupName) => {
-					if (groupName === '::view-transition') {
-						// todo: push animation to pseudo-element
-					} else {
-						let group = groups.get(groupName);
-						this.refreshGroup(group, groupAnimations);
-					}
-				});
+				linear(groups.get('@')).forEach((group) =>
+					group.parent && this.refreshGroup(group, newGroupAnimations.get(group.name) || [])
+				);
 				this.sort(
 					this.#scope!.querySelector<HTMLInputElement>('input[value="alpha"]')?.checked
 						? 'alpha'

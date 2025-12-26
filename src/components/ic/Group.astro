@@ -6,6 +6,7 @@ import Pseudo from './Pseudo.astro';
 <script>
 	import type { Group } from './group';
 	import { color, gid } from './group';
+import { minmax } from './minmax';
 	class ICGroup extends HTMLElement {
 		#animations: Animation[] = [];
 		#dirty = false;
@@ -56,7 +57,7 @@ import Pseudo from './Pseudo.astro';
 					`<style id="vtbag-color-${this.#scope!.scopeId}-${gid(this.group)}">::view-transition-group(${CSS.escape(this.group.name)}) { --vtbag-ic-group-color: ${col}; }</style>`
 				);
 				this.style.setProperty('--vtbag-ic-group-color', col);
-				this.style.outline = `4px inset var(--vtbag-ic-group-color)`;
+				
 
 				const { noOld, noNew, noChildren } = components(this.#scope!.element, name);
 
@@ -64,7 +65,7 @@ import Pseudo from './Pseudo.astro';
 					'afterbegin',
 					`
 	<div class="group-content"><h3 class="heading" data-group="${gid(this.group)}">${displayName(this.group)}</h3>
-		<vtbag-ic-pseudo name="group" ${this.#scope!.size === 'small' ? 'style="height: 0px"' : ''}'>
+		<vtbag-ic-pseudo name="group">
 			<vtbag-ic-pseudo name="image-pair"><div class="old-new">
 				${noOld ? '' : '<vtbag-ic-pseudo name="old"></vtbag-ic-pseudo>'}
 				${noNew ? '' : '<vtbag-ic-pseudo name="new"></vtbag-ic-pseudo>'}

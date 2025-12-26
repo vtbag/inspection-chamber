@@ -88,7 +88,7 @@ export function print(group: Group, depth = 0) {
 	group.children.forEach((child) => print(child, depth + 1));
 }
 
-function linear(group: Group, arr: Group[] = []): Group[] {
+export function linear(group: Group, arr: Group[] = []): Group[] {
 	arr.push(group);
 	group.children.forEach((child) => linear(child, arr));
 	return arr;

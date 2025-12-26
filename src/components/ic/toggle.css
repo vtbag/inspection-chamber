@@ -6,16 +6,13 @@
 			background: none;
 			border: none;
 			border-radius: 4px;
-			padding: 1px 6px;
+			padding: 1px 2	px;
 			cursor: pointer;
 			color: #888;
-			&:has(input:not(:disabled)):not([data-disabled]):hover {
-				color: light-dark(#222, #ddd);
-			}
 			&.visibility {
 				position: relative;
-				top: 2.5px;
-				left: 0px;
+				top: 1px;
+				left: 1px;
 				&:not(:has(input:checked)) {
 					color: #f008;
 				}

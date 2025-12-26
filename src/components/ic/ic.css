@@ -35,7 +35,12 @@
 		height: 0px;
 	}
 
-	#ic-iframe {
+	span.info {
+		color: light-dark(darkorange, orange);
+		font-style: italic;
+		font-size: 0.85rem;
+	}
+	#your-page {
 		border: none;
 		margin: 0;
 		padding: 0;
@@ -67,11 +72,11 @@
 		.window {
 			view-transition-name: window;
 			iframe {
-				view-transition-name: content;
+				view-transition-name: chamber-controls;
 			}
 		}
 		#dock iframe {
-			view-transition-name: content;
+			view-transition-name: chamber-controls;
 		}
 		&::view-transition-group(*) {
 			overflow: clip;
@@ -136,7 +141,7 @@
 		body {
 			color-scheme: dark;
 			--vtbag-ic-label-color: #999;
-			--vtbag-ic-content-color: #eee;
+			--vtbag-ic-content-color: #aaa;
 		}
 	}
 	@media (prefers-color-scheme: light) {
@@ -155,20 +160,51 @@
 	vtbag-ic-group-list {
 		flex: 1 1 70%;
 	}
-	vtbag-ic-pseudo span.name {
+	vtbag-ic-pseudo > span >span.name {
 		cursor: pointer;
 		&:hover {
 			color: light-dark(#000, #fff);
 		}
 	}
-	vtbag-ic-pseudo[data-stopped] > span > span.name {
-			color: light-dark(red, darkred);
+	button[data-group] {
+		color: light-dark( #666, #aaa	);
+		outline: 2px solid #8888;
+
 	}
+	button[data-group].in-view {
+		color: light-dark( #333, #ddd);
+		background-color: light-dark(#f0f0f0, #0a0a0a);
+	}	
+	button[data-group]:not(.in-view) {
+		outline-offset: -2px;
+	}
+	vtbag-ic-group h3 {
+		color: light-dark( #444, #aaa);
+	}
+
+	vtbag-ic-group.in-view h3 {
+		color: light-dark( green, #ddd);
+	}
+	vtbag-ic-pseudo.in-view > span >span.name {
+			color: light-dark( darkgreen, #aaa);
+	}
+	vtbag-ic-pseudo[data-stopped] > span > span.name {
+			color: light-dark( darkred, red);
+	}
+
+	vtbag-ic-group {
+		outline: 2px inset color(from var(--vtbag-ic-group-color) srgb r g b / 0.4);
+	}
+	vtbag-ic-group.in-view {
+		outline: 4px inset var(--vtbag-ic-group-color);
+	}
+
 	vtbag-ic-pseudo,
 	vtbag-ic-group {
 		padding: 0px 4px;
 		overflow: clip;
 	}
+
 	vtbag-ic-animations,
 	vtbag-ic-scope,
 	vtbag-ic-group-list,
@@ -255,6 +291,10 @@
 		border-radius: 4px;
 		border: 1px solid light-dark(#3a3a3a, #2a2a2a);
 		box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+	}
+	
+	.animations-head-main {
+		grid-column: span 2;
 	}
 
 	.scope-controls {
@@ -348,7 +388,7 @@
 	}*/
 	}
 
-	#ic-iframe,
+	#your-page,
 	.animations-head,
 	h2 {
 		background-color: light-dark(#f0f0f0, #0a0a0a);

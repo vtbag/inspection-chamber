@@ -66,8 +66,9 @@ import Identify from '@/components/ic/Identify.astro';
 			};
 			this.#sizeLEDs = {
 				className: 'size',
+				independent: true,
 				groupName: `scope-size-${this.#id}`,
-				checked: 'detailed',
+				checked: 'none',
 				alternatives: [
 					{
 						label: 'Compact',
@@ -139,10 +140,6 @@ import Identify from '@/components/ic/Identify.astro';
 			});
 			this.#intersectionObserver.observe(this);
 			this.render();
-		}
-
-		get size() {
-			return this.#sizeLEDs.checked;
 		}
 
 		get path() {
@@ -291,9 +288,11 @@ import Identify from '@/components/ic/Identify.astro';
 
 				groupList.style.display = '';
 
-				this.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo').forEach((pseudo) =>
-					pseudo.createTwin()
+				const pseudos = [...this.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo')].sort(
+					(a, b) => (a.icGroup?.group.preOrder ?? -1) - (b.icGroup?.group.preOrder ?? -1)
 				);
+				pseudos.forEach((pseudo) => pseudo.createTwin());
+				pseudos.forEach((pseudo) => parent.__vtbag.ic2?.intersectionObserver?.observe(pseudo.twin));
 
 				const error = (e: any) => console.error('View Transition error:', e, ' Cause:', e.cause);
 				this.setupSlider();
@@ -387,7 +386,9 @@ import Identify from '@/components/ic/Identify.astro';
 				const id = button.dataset.group;
 				const group =
 					button.tagName !== 'BUTTON'
-						? (this.querySelector('.scope-head-main') as HTMLDivElement)
+						? (this.querySelector<VtbagIcGroupElement>(
+								`vtbag-ic-group:has(button[data-group="${id}"])`
+							) ?? (this.querySelector('.scope-head-main') as HTMLDivElement))
 						: this.querySelector<VtbagIcGroupElement>(`vtbag-ic-group:has(h3[data-group="${id}"])`);
 				if (button.tagName === 'BUTTON') {
 					const minimized = this.querySelector<HTMLInputElement>(
@@ -432,7 +433,9 @@ import Identify from '@/components/ic/Identify.astro';
 		}
 		private addResizeListener(error: (e: any) => void) {
 			this.querySelector('.input-led-group.size')?.addEventListener('change', (e) => {
-				this.#sizeLEDs.checked = (e.target as HTMLInputElement).value;
+				const compact = this.querySelector<HTMLInputElement>(`input[value="compact"]`)!.checked;
+				const detailed = this.querySelector<HTMLInputElement>(`input[value="detailed"]`)!.checked;
+				if (!detailed && !compact) return;
 
 				const styles: string[] = [];
 				document.querySelectorAll<VtbagIcGroupElement>('vtbag-ic-group').forEach((g) => {
@@ -450,14 +453,13 @@ import Identify from '@/components/ic/Identify.astro';
 ${styles.join('\n')}
 </style>`
 				);
+
 				const transition = mayStartViewTransition!(
 					{
 						update: () => {
-							const compact =
-								this.querySelector<HTMLInputElement>(`input[value="compact"]`)!.checked;
 							this.querySelectorAll<VtbagIcGroupElement>(
 								'vtbag-ic-group vtbag-ic-pseudo[name="group"]'
-							).forEach((pseudo) => pseudo.classList[compact ? 'add' : 'remove']('compact'));
+							).forEach((pseudo) => pseudo.classList.toggle('compact', compact));
 						},
 						types: ['resize'],
 					},
@@ -465,9 +467,10 @@ ${styles.join('\n')}
 				);
 				transition.updateCallbackDone.catch(error);
 				transition.ready.catch(error);
-				transition.finished.then(() =>
-					document.head.querySelector('style[data-vtbag="size-vt"]')?.remove()
-				);
+				transition.finished.then(() => {
+					document.head.querySelector('style[data-vtbag="size-vt"]')?.remove();
+					this.querySelector<HTMLInputElement>('.input-led-group.size input:checked')?.click();
+				});
 			});
 		}
 
@@ -512,6 +515,10 @@ ${styles.join('\n')}
 					this.#raf = undefined;
 				}
 				if (this.querySelector<HTMLInputElement>(`input[value="run"]:checked`)) {
+					this.#animationsElement
+						?.querySelector<HTMLInputElement>('#reset-stopped-animations')
+						?.click();
+
 					this.querySelector<HTMLInputElement>(`input[name^="freeze"]:checked`)!.classList.remove(
 						'red'
 					);
@@ -521,7 +528,7 @@ ${styles.join('\n')}
 					this.#animations.forEach((a) => {
 						a.currentTime === this.#longestDuration && (a.currentTime = this.#longestDuration! - 1);
 						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01;
-						('stopped' in a && a.stopped) || a.play();
+						'stopped' in a  || a.play();
 					});
 					this.autoMoveSlider();
 				}

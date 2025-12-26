@@ -47,32 +47,7 @@ import Window from '@/components/Window.astro';
 					`<html lang="en" style="overflow: clip">` +
 					document.head.outerHTML +
 					`<body style="display: flex; overflow: clip;">
-			<vtbag-ic-main >
-			<svg style="display: none;" aria-hidden="true">
-					<defs>
-						<symbol id="icon-eye-off" viewBox="0 0 24 24">
-							<path
-								d="M17.94 17.94A10.37 10.37 0 0 1 12 20C7 20 2.73 16.11 1 12c.73-1.63 1.8-3.06 3.06-4.23"
-							></path>
-							<path d="M9.9 9.9a3 3 0 1 1 4.24 4.24"></path>
-							<path d="M21 21L3 3"></path>
-							<path d="M14.12 14.12a3 3 0 0 1-4.24-4.24"></path>
-							<path
-								d="M6.06 6.06A10.37 10.37 0 0 1 12 4c5 0 9.27 3.89 11 8-.73 1.63-1.8 3.06-3.06 4.23"
-							></path>
-						</symbol>
-						<symbol id="icon-eye-on" viewBox="0 0 24 24">
-							<path
-								d="M17.94 17.94A10.37 10.37 0 0 1 12 20C7 20 2.73 16.11 1 12c.73-1.63 1.8-3.06 3.06-4.23"
-							></path>
-							<path d="M9.9 9.9a3 3 0 1 1 4.24 4.24"></path>
-							<path d="M14.12 14.12a3 3 0 0 1-4.24-4.24"></path>
-							<path
-								d="M6.06 6.06A10.37 10.37 0 0 1 12 4c5 0 9.27 3.89 11 8-.73 1.63-1.8 3.06-3.06 4.23"
-							></path>
-						</symbol>
-			</defs></svg>	
-		</vtbag-ic-main>
+			<vtbag-ic-main></vtbag-ic-main>
 	</body>
 </html>`;
 				dock.insertAdjacentHTML(
@@ -261,19 +236,23 @@ import Window from '@/components/Window.astro';
 					self.__vtbag.ic2!.context = iframeWindow;
 				}
 				setupHooks(document.querySelector<HTMLIFrameElement>('#content')!.contentWindow!);
-					self.__vtbag.ic2!.intersectionObserver = new IntersectionObserver(
-						(entries) => {
-							entries.forEach((entry) => {
-								const link = (entry.target as HTMLElement).dataset.link;
-								if (!link) return; 
-								 self.__vtbag.ic2!.context?.document.querySelector<VtbagIcPseudoElement>(`vtbag-ic-pseudo[title=${link}]`)?.onIntersectionChange(entry);
-							});
-						},
-						{
-							root: document.querySelector<HTMLIFrameElement>('#twins')!,
-							threshold: 0,
-						}
-					);
+				self.__vtbag.ic2!.intersectionObserver = new IntersectionObserver(
+					(entries) => {
+						entries.forEach((entry) => {
+							const link = (entry.target as HTMLElement).dataset.title;
+							if (!link) return;
+							self.__vtbag
+								.ic2!.context?.document.querySelector<VtbagIcPseudoElement>(
+									`vtbag-ic-pseudo[data-link="${link}"]`
+								)
+								?.onIntersectionChange(entry);
+						});
+					},
+					{
+						root: document.querySelector<HTMLIFrameElement>('#twins')!,
+						threshold: 0,
+					}
+				);
 			}
 		</script>
 		<style is:global>

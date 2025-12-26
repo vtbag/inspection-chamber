@@ -14,7 +14,6 @@ import './studio.css';
 			<span id="scopes">Scopes:</span>
 			<span id="scope-buttons"></span>
 		</div>
-		<vtbag-ic-pseudo-details></vtbag-ic-pseudo-details>
 	</div>
 	<div class="scope-container" style="--vtn: scope-container"></div>
 </template>
@@ -58,6 +57,7 @@ import './studio.css';
 							this.updateAnimationsHead();
 							if (this.#scopes.size === 0) {
 								this.querySelector<VtbagIcIdentifyElement>('vtbag-ic-identify')?.hide();
+								this.querySelector<HTMLInputElement>('#reset-stopped-animations')?.click();
 							}
 						},
 						types: ['vt-exit'],
@@ -119,9 +119,14 @@ import './studio.css';
 				animationHead.firstElementChild!.querySelector<HTMLInputElement>('input[type=checkbox]')!;
 			reset.classList.add('red');
 			reset.addEventListener('click', () => {
+				const run = this.querySelector('#run:checked');
 				reset.checked = true;
 				this.#rootDocument!.getAnimations().forEach((a) => {
-					'stopped' in a && delete a.stopped;
+					if ('stopped' in a) {
+						a.currentTime = parseInt((a.stopped as HTMLInputElement).value, 10);
+						delete a.stopped;
+						run && a.play();
+					}
 				});
 				parent.document
 					.querySelectorAll<HTMLElement>('#twins div[data-stopped]')
@@ -132,6 +137,12 @@ import './studio.css';
 				this.querySelectorAll<HTMLElement>(`vtbag-ic-pseudo[data-stopped]`).forEach((pseudo) =>
 					pseudo.removeAttribute('data-stopped')
 				);
+				const detail = this.querySelector<VtbagIcPseudoDetailsElement>('vtbag-ic-pseudo-details');
+				const minimized = detail?.querySelector<HTMLInputElement>('.minmax input')!;
+				if (!minimized.checked) {
+					const pseudo = detail?.querySelector('h3')?.textContent;
+					pseudo && detail?.set(pseudo);
+				}
 				this.querySelector<HTMLElement>('.stopped-animations')!.style.display = 'none';
 			});
 			hideLedGroup(this.querySelector<HTMLDivElement>('.input-led-group.stopped-animations')!);
@@ -192,6 +203,10 @@ import './studio.css';
 				'To enable speed control, select Run mode.'
 			);
 
+			animationHead.insertAdjacentHTML(
+				'beforeend',
+				'<vtbag-ic-pseudo-details></vtbag-ic-pseudo-details>'
+			);
 			animationHead.insertAdjacentHTML('beforeend', '<vtbag-ic-identify></vtbag-ic-identify>');
 
 			this.querySelector('.freeze')!.addEventListener('click', (e) => {
@@ -286,6 +301,7 @@ import './studio.css';
 				return;
 			} else {
 				this.#rootDocument?.getAnimations().forEach((a) => a.pause());
+				queueMicrotask(() => this.#rootDocument?.getAnimations().forEach((a) => a.pause()));
 				update = () => {
 					this.querySelector<VtbagIcIdentifyElement>('vtbag-ic-identify')?.show();
 					this.querySelector<HTMLDivElement>('.animations-head-main')!.style.display = '';
@@ -332,14 +348,24 @@ import './studio.css';
 
 		refreshAnimations(animations: Animation[], render = true) {
 			const newScopes = new Map<HTMLElement, Animation[]>();
-
+			let count = 0;
 			animations.forEach((a) => {
 				if (
 					a.effect?.pseudoElement?.startsWith('::view-transition') &&
 					// todo: deal with other types of animation
 					a.effect?.target
 				) {
-					if (a.constructor.name !== 'CSSAnimation') console.log('!!!', a);
+					if (a.constructor.name !== 'CSSAnimation') {
+						const aliased: Animation & { alias?: string } = a;
+						if (a.constructor.name === 'Animation') {
+							aliased.alias = `WAAPI animation (${properties(a)})`;
+						} else if (a.constructor.name === 'CSSTransition') {
+							aliased.alias = `CSS Transition (${(a as CSSTransition).transitionProperty})`;
+						} else {
+							aliased.alias = `Unknown animation type: ${a.constructor.name} (${count++})`;
+						}
+					}
+
 					const scope = a.effect!.target!;
 					let animations = newScopes.get(scope);
 					if (!animations) {
@@ -347,6 +373,18 @@ import './studio.css';
 						newScopes.set(scope, animations);
 					}
 					animations.push(a);
+
+					function properties(a: CSSAnimation) {
+						return [
+							...new Set(
+								a.effect
+									?.getKeyframes()
+									.flatMap(({ offset, computedOffset, easing, composite, ...props }) =>
+										Object.keys(props)
+									)
+							),
+						].join(', ');
+					}
 				}
 			});
 			render &&
@@ -406,7 +444,7 @@ import './studio.css';
 			const movePseudosCallback = () => {
 				const twins = parent.document.documentElement.classList.contains('show-twins');
 
-				if (twins) {
+				if (true || twins) {
 					if (this.#retriggerPseudosToMove && this.#pseudosToMove.length === 0) {
 						this.querySelectorAll('vtbag-ic-pseudo').forEach((p) => this.#pseudosToMove.push(p));
 						this.#retriggerPseudosToMove = false;

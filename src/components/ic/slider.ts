@@ -1,4 +1,4 @@
-export function  slider(id: string, name: string): string {
+export function slider(id: string, name: string): string {
 	return `
 <div class="horizontal-slider-container" style="view-transition-name: hsc-${id}; --vtc: slider">
 	<div class="slider-track">
@@ -31,11 +31,13 @@ export function setMaxValue(id: string, max: number, now: number, onInput: (even
 }
 
 export function setCurrentValue(id: string, current: number) {
-	const input = document.querySelector<HTMLInputElement>(`#${id}`)!;
-	const container = document.querySelector<HTMLElement>(`.horizontal-slider-container:has(#${id}`)!;
-	input.value = '' + current;
-	container.querySelector<HTMLElement>(`.slider-value .current`)!.innerText = `${input.value}ms`;
-	container
-		.querySelector<HTMLElement>(`.slider-fill`)
-		?.style.setProperty('width', `calc(${(Number(input.value) / Number(input.max)) * 100}% + 3px)`);
+	const input = document.querySelector<HTMLInputElement>(`#${id}`);
+	const container = document.querySelector<HTMLElement>(`.horizontal-slider-container:has(#${id}`);
+	if (input && container) {
+		input.value = '' + current;
+		container.querySelector<HTMLElement>(`.slider-value .current`)!.innerText = `${input.value}ms`;
+		container
+			.querySelector<HTMLElement>(`.slider-fill`)
+			?.style.setProperty('width', `calc(${(Number(input.value) / Number(input.max)) * 100}% + 3px)`);
+	}
 }

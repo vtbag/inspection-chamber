@@ -2,6 +2,7 @@
 	import { color, gid, type Group } from './group';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import './toggle.css';
+	import { minmax } from './minmax';
 
 	const twinProperties = {
 		position: '',
@@ -25,13 +26,24 @@
 
 	const allProperties = Array.from(
 		getComputedStyle(parent.document.querySelector('#default')!)
-	).filter((p) => !p.startsWith('--vtbag-ic-') && !p.includes('block-') && !p.includes('inline-')&& !p.includes('-block') && !p.includes('-inline')  );
+	).filter(
+		(p) =>
+			!p.startsWith('--vtbag-ic-') &&
+			!p.includes('-start-start-') &&
+			!p.includes('-start-end-') &&
+			!p.includes('-end-start-') &&
+			!p.includes('-end-end-') &&
+			!p.includes('block-') &&
+			!p.includes('inline-') &&
+			!p.includes('-block') &&
+			!p.includes('-inline')
+	);
 
 	class ICPseudo extends HTMLElement {
 		#computedStyle: CSSStyleDeclaration | undefined;
 		#animations: Animation[] | undefined;
 		id = '';
-		icParent?: VtbagIcPseudoElement;
+		icParentPseudo?: VtbagIcPseudoElement;
 		icGroup?: VtbagIcGroupElement;
 		icScope?: VtbagIcScopeElement;
 		#twin?: HTMLDivElement;
@@ -48,6 +60,7 @@
 		connectedMoveCallback() {}
 
 		disconnectedCallback() {
+			parent.__vtbag.ic2?.intersectionObserver?.unobserve(this.#twin!);
 			this.#twin?.remove();
 		}
 
@@ -75,10 +88,10 @@
 					}
 					if (key === 'transform-origin' || key === 'perspective-origin') {
 						// detect fitting absolute values for 50%, 50% default.
-						const [w, h] = value.split(' ').map((v) => ~~(parseFloat(v) * 2));
-						const w2 = parseInt(this.#computedStyle!.width, 10);
-						const h2 = parseInt(this.#computedStyle!.height, 10);
-						if (w === w2 && h === h2) defaultValue = value;
+						const [w, h] = value.split(' ').map((v) => parseFloat(v) * 2);
+						const w2 = parseFloat(this.#computedStyle!.width) + parseFloat(this.#computedStyle!.paddingLeft) + parseFloat(this.#computedStyle!.paddingRight) + parseFloat(this.#computedStyle!.borderLeftWidth) + parseFloat(this.#computedStyle!.borderRightWidth);
+						const h2 = parseFloat(this.#computedStyle!.height) + parseFloat(this.#computedStyle!.paddingTop) + parseFloat(this.#computedStyle!.paddingBottom) + parseFloat(this.#computedStyle!.borderTopWidth) + parseFloat(this.#computedStyle!.borderBottomWidth);
+						if (Math.abs(w - w2) < 2 && Math.abs(h - h2) < 2) defaultValue = value;
 					}
 					if (value !== defaultValue && (value === 'auto' || value === 'normal'))
 						console.log(key, defaultValue, value);
@@ -97,18 +110,23 @@
 		}
 
 		animations() {
-			return this.#animations ??= this.icScope?.animations.filter((a) => a.effect?.pseudoElement === this.name()) || [];	;
+			return (this.#animations ??=
+				this.icScope?.animations.filter((a) => a.effect?.pseudoElement === this.name()) || []);
 		}
 		render() {
 			if (this.isConnected) {
 				const kind = this.getAttribute('name');
 				this.icGroup = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
 				if (kind === '::view-transition') {
-					this.icParent = undefined;
+					this.icParentPseudo = undefined;
 					this.icGroup = undefined;
 					this.icScope = this.closest('vtbag-ic-scope') as VtbagIcScopeElement;
 				} else {
-					this.icParent = this.parentElement!.closest('vtbag-ic-pseudo') as VtbagIcPseudoElement;
+					this.icParentPseudo =
+						kind === 'group'
+							? undefined
+							: (this.parentElement!.closest('vtbag-ic-pseudo') as VtbagIcPseudoElement);
+
 					this.icScope = this.icGroup.scope;
 				}
 				const scope = this.icScope.element;
@@ -119,10 +137,7 @@
 					scope,
 					this.name(true)
 				);
-				//this.allProperties = Array.from(this.#computedStyle!);
 
-			
-					
 				const twins = parent.document.querySelector('#twins')!;
 				const defaultDiv = twins.querySelector<HTMLDivElement>('#default')!;
 				ICPseudo.defaultStyles = twins.ownerDocument.defaultView?.getComputedStyle(defaultDiv)!;
@@ -132,8 +147,8 @@
 				const framed = scope.ownerDocument.body.querySelector(`#vtbag-frame-${this.id}`);
 				this.insertAdjacentHTML(
 					'afterbegin',
-					`<span class="pseudo-head"><span class="name">${this.getAttribute('name')?.replace('image-pair', 'pair').replace('group-children', 'children') || '::view-transition'}</span>
-					<label class="toggle frame ${this.getAttribute('name')}"><input type="checkbox" ${framed ? 'checked' : ''}>🖽</label><label class="toggle visibility"><input type="checkbox" checked><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-eye-on"/></svg></label
+					`<span class="pseudo-head"><span class="name">${this.getAttribute('name') || '::view-transition'}</span>
+					<label class="toggle frame ${this.getAttribute('name')}"><input type="checkbox" ${framed ? 'checked' : ''}>🖽</label><label class="toggle visibility"><input type="checkbox" checked>◎</label
 						>${
 							this.getAttribute('name') === 'group'
 								? `<label class="toggle solo"><input type="checkbox">s</label>`
@@ -147,12 +162,28 @@
 			}
 		}
 		createTwin() {
-			const twins = parent.document.querySelector('#twins')!;
+			const twins = parent.document.querySelector<HTMLDivElement>('#twins')!;
 			this.#twin = twins.ownerDocument.createElement('div')!;
 			this.#twin.dataset.title = (this.icScope?.path ?? '') + this.name();
 			this.dataset.link = this.#twin.dataset.title!;
 			this.moveTwin();
-			(this.icParent?.twin ?? twins).appendChild(this.#twin);
+			let parentPseudo = this.icParentPseudo || null;
+			if (!parentPseudo) {
+				const parentGroupName = this.icGroup?.group.parent?.name;
+				if (parentGroupName) {
+					if (this.icGroup?.group.parent?.parent) {
+						const parentPseudoName =
+							this.icScope!.path + '::view-transition-group-children(' + parentGroupName + ')';
+						parentPseudo = this.icScope!.querySelector<VtbagIcPseudoElement>(
+							`vtbag-ic-pseudo[data-link='${parentPseudoName}']`
+						);
+					} else {
+						parentPseudo = this.parentElement!.closest<VtbagIcPseudoElement>(`vtbag-ic-pseudo`);
+					}
+				}
+			}
+			this.icParentPseudo = parentPseudo ?? undefined;
+			(parentPseudo?.twin ?? twins).appendChild(this.#twin);
 		}
 
 		async moveTwin() {
@@ -214,9 +245,7 @@
 			const scope = this.icScope!.element;
 			this.querySelector<HTMLInputElement>('.visibility input')!.addEventListener('click', (e) => {
 				const checkbox = e.target as HTMLInputElement;
-				const use = checkbox.nextElementSibling!.querySelector('use')!;
 				const checked = checkbox.checked;
-				use.href.baseVal = checked ? '#icon-eye-on' : '#icon-eye-off';
 				scope.ownerDocument.body.querySelector(`#vtbag-vis-${this.id}`)?.remove();
 				if (!checked) {
 					scope.ownerDocument.body.insertAdjacentHTML(
@@ -260,14 +289,24 @@
 
 				solos.forEach((v) => v !== checkbox && ((v.checked = false), v.removeAttribute('checked')));
 
-				const me = checkbox.closest('vtbag-ic-pseudo');
+				const me = checkbox.closest('vtbag-ic-pseudo')!;
 				document
 					.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo[name="group"]')
-					.forEach(
-						(i) =>
-							i !== me &&
-							i.querySelector<HTMLInputElement>('.pseudo-head .visibility input')!.click()
-					);
+					.forEach((i) => {
+						!path(i, me) &&
+							!path(me, i) &&
+							i.querySelector<HTMLInputElement>('.pseudo-head .visibility input')!.click();
+
+						function path(a: VtbagIcPseudoElement, b: VtbagIcPseudoElement) {
+							let pa = a as ICPseudo;
+							let pb = b as ICPseudo;
+							while (pa.icParentPseudo) {
+								if (pa === pb) return true;
+								pa = pa.icParentPseudo as ICPseudo;
+							}
+							return false;
+						}
+					});
 			});
 		}
 
@@ -285,10 +324,28 @@
 				);
 				html += '</div>';
 				this.insertAdjacentHTML('beforeend', html);
+				minmax(
+					this.lastElementChild as HTMLElement,
+					'maximized',
+					'Gsroup names',
+					sessionStorage,
+					'vtbag-ic-group-children-' + this.name()
+				);
 			}
 		}
 
 		onIntersectionChange(entry: IntersectionObserverEntry) {
+			this.classList.toggle('in-view', entry.isIntersecting);
+			const group = this.closest('vtbag-ic-group');
+			if (!group) return;
+			const groupInView = [...group.querySelectorAll<HTMLElement>('vtbag-ic-pseudo')].some((p) =>
+				p.classList.contains('in-view')
+			);
+			group.classList.toggle('in-view', groupInView);
+			const groupId = (group.firstElementChild!.firstElementChild as HTMLElement).dataset.group;
+			this.closest('vtbag-ic-scope')!
+				.querySelector<HTMLElement>(`button[data-group="${groupId}"]`)
+				?.classList.toggle('in-view', groupInView);
 		}
 	}
 
