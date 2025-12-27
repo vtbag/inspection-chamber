@@ -195,7 +195,7 @@ import Identify from '@/components/ic/Identify.astro';
 				this.#dirty = false;
 				let html = `<div class="scope-head"><div class="scope-head-main"><h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>`;
 				this.setAttribute('data-scope', this.path);
-				html += this.topLevelGroupButtons(this.#rootGroup!, false, true);
+				html += this.allGroupButtons(this.#rootGroup!, false, true);
 				html += '</div>';
 
 				html += slider(`slider-${this.#id}`, `slider-${this.#id}`);
@@ -432,7 +432,7 @@ import Identify from '@/components/ic/Identify.astro';
 			);
 		}
 		private addResizeListener(error: (e: any) => void) {
-			this.querySelector('.input-led-group.size')?.addEventListener('change', (e) => {
+			this.querySelector('.input-led-group.size')?.addEventListener('change', () => {
 				const compact = this.querySelector<HTMLInputElement>(`input[value="compact"]`)!.checked;
 				const detailed = this.querySelector<HTMLInputElement>(`input[value="detailed"]`)!.checked;
 				if (!detailed && !compact) return;
@@ -485,9 +485,11 @@ ${styles.join('\n')}
 							const children = this.querySelector('.children')!;
 							children.insertAdjacentHTML(
 								'afterend',
-								this.topLevelGroupButtons(this.#rootGroup!, alpha)
+								this.allGroupButtons(this.#rootGroup!, alpha)
 							);
+							const news = children.nextElementSibling as HTMLElement;
 							children.remove();
+							[...news.children].forEach(element => element.classList.toggle('in-view', children.querySelector(`[data-group="${element.getAttribute('data-group')}"]`)?.classList.contains('in-view') ?? false));
 							this.addButtonEnterLeaveListeners();
 						},
 						types: ['sort'],
@@ -562,7 +564,7 @@ ${styles.join('\n')}
 			}
 		}
 
-		topLevelGroupButtons(rootGroup: Group, alpha = true, hide = false) {
+		allGroupButtons(rootGroup: Group, alpha = true, hide = false) {
 			let html = `<div class="children" style="display:${hide ? 'none' : 'block'}">Groups: `;
 			const buttons = linear(rootGroup); //[...rootGroup.children];
 

@@ -197,7 +197,7 @@
 					}
 				);
 			} else {
-				hideMinmax(this.querySelector('label.minmax')!);
+				hideMinmax(this.querySelector<HTMLElement>('label.minmax')!);
 			}
 			const minimized = this.querySelector<HTMLInputElement>('.minmax input');
 			if (!minimized?.checked) {
@@ -212,7 +212,7 @@
 			pseudoName = name;
 			const minimized = this.querySelector<HTMLInputElement>('.minmax input')!;
 			if (pseudoName) {
-				showMinmax(this.querySelector('label.minmax')!);
+				showMinmax(this.querySelector<HTMLElement>('label.minmax')!);
 				if (minimized.checked) {
 					minimized.click();
 					setTimeout(() => {
