@@ -19,14 +19,12 @@ import './studio.css';
 </template>
 <script>
 	import { addBlinds } from './blinds';
-	import { capture } from './capture';
+	import { moduleGroupMaps } from './capture';
 	import { type Group } from './group';
 	import { highlight } from './highlight';
 	import { disableLedGroup, enableLedGroup, hideLedGroup, ledGroup } from './led-group';
 	import { allRoots } from '@/css';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
-
-	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
 
 	class ICAnimations extends HTMLElement {
 		#initialized = false;
@@ -51,7 +49,7 @@ import './studio.css';
 							allRoots.delete(root);
 							!this.#scopes
 								.keys()
-								.some((element) => element.ownerDocument.documentElement === element) &&
+								.some((rootElement) => rootElement.ownerDocument.documentElement === rootElement) &&
 								parent.document.documentElement.classList.remove('action');
 							this.renderHead();
 							this.updateAnimationsHead();
@@ -288,7 +286,12 @@ import './studio.css';
 
 		mayRender = (e: Event) => {
 			const detail = (e as CustomEvent).detail;
-			this.#rootDocument = detail.root.ownerDocument;
+			const transitionRoot: HTMLElement = detail.root;
+			this.#rootDocument = transitionRoot.ownerDocument;
+
+			if (transitionRoot === this.#rootDocument.documentElement)
+				parent.document.documentElement.classList.add('action');
+
 			let update = () => {};
 
 			if (this.querySelector<HTMLInputElement>('#run')?.checked) {
@@ -454,7 +457,7 @@ import './studio.css';
 						setTimeout(movePseudosCallback);
 					}
 				} else {
-				//	this.#pseudosToMove.length = 0;
+					//	this.#pseudosToMove.length = 0;
 				}
 			};
 			this.#retriggerPseudosToMove = true;
@@ -465,35 +468,6 @@ import './studio.css';
 	if (!customElements.get('vtbag-ic-animations'))
 		customElements.define('vtbag-ic-animations', ICAnimations);
 
-	['ic-before-capture-old', 'ic-before-capture-new'].forEach((eventName) =>
-		self.addEventListener(eventName, (e) => {
-			const transitionRoot = (e as CustomEvent).detail.root;
-			if (transitionRoot.tagName === 'HTML')
-				parent.document.documentElement.classList.add('action');
-			const groups =
-				moduleGroupMaps.get(transitionRoot) ??
-				new Map<string, Group>([
-					['@', { name: '' + moduleGroupMaps.size, className: '', children: [], ancestor: false }],
-				]);
-			const sheet = capture(transitionRoot, groups);
-			moduleGroupMaps.set(transitionRoot, groups);
-
-			const head = transitionRoot.ownerDocument.head;
-			head.insertAdjacentHTML(
-				'beforeend',
-				`<style id="vtbag-ic-temp-style-${groups.get('@')!.name}">${sheet}</style>`
-			);
-		})
-	);
-
-	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
-		self.addEventListener(event, (e) => {
-			const root = (e as CustomEvent).detail.root;
-			root.ownerDocument.head
-				.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(root)?.get('@')?.name}`)
-				?.remove();
-		})
-	);
 
 	self.addEventListener('ic-before-capture-new', (e) => {
 		const head = (e as CustomEvent).detail.root.ownerDocument.head;

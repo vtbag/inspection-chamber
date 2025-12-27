@@ -6,7 +6,9 @@ import { linkToParent, sort, type SparseDOMNode } from './sparse-dom';
 const ids = new WeakMap<Element, string>();
 let idCount = 0;
 
-export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>): string {
+export	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
+
+function capture(transitionRoot: HTMLElement, groups: Map<string, Group>): string {
 	let sheet = '';
 	const seen = new Set<string>();
 	const elementMap = new Map<Element, SparseDOMNode>();
@@ -91,3 +93,32 @@ export function capture(transitionRoot: HTMLElement, groups: Map<string, Group>)
 
 	return sheet;
 }
+
+
+['ic-before-capture-old', 'ic-before-capture-new'].forEach((eventName) =>
+		self.addEventListener(eventName, (e) => {
+			const transitionRoot = (e as CustomEvent).detail.root;
+			const groups =
+				moduleGroupMaps.get(transitionRoot) ??
+				new Map<string, Group>([
+					['@', { name: '' + moduleGroupMaps.size, className: '', children: [], ancestor: false }],
+				]);
+			const sheet = capture(transitionRoot, groups);
+			moduleGroupMaps.set(transitionRoot, groups);
+
+			const head = transitionRoot.ownerDocument.head;
+			head.insertAdjacentHTML(
+				'beforeend',
+				`<style id="vtbag-ic-temp-style-${groups.get('@')!.name}">${sheet}</style>`
+			);
+		})
+	);
+
+	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
+		self.addEventListener(event, (e) => {
+			const root = (e as CustomEvent).detail.root;
+			root.ownerDocument.head
+				.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(root)?.get('@')?.name}`)
+				?.remove();
+		})
+	);
