@@ -2,7 +2,13 @@ import { type Selector, type SelectorList, parse, generate } from 'css-tree';
 import { deriveCSSSelector } from './components/ic/element-selector';
 
 const animations = new Set<string>();
-const elements: { element: HTMLElement; pseudoElement: string; }[] = [];
+const elements: {
+	element: HTMLElement;
+	pseudoElement: string;
+	selector: string;
+	property: string;
+	value: string;
+}[] = [];
 const pseudoElements = new Set<string>();
 let root: HTMLElement;
 
@@ -13,11 +19,25 @@ export function namedElements(viewTransitionRoot: HTMLElement = document.documen
 	elements.length = 0;
 
 	allRoots.forEach(
-		(r) => root.contains(r) && elements.push({ element: r, pseudoElement: undefined! })
+		(r) =>
+			root.contains(r) &&
+			elements.push({
+				element: r,
+				pseudoElement: undefined!,
+				selector: 'transitionRoot',
+				property: 'view-transition-name',
+				value: 'root',
+			})
 	);
-	root
-		.querySelectorAll<HTMLElement>('[style*=view-transition-]')
-		.forEach((el) => elements.push({ element: el, pseudoElement: undefined! }));
+	root.querySelectorAll<HTMLElement>('[style*=view-transition-]').forEach((el) =>
+		elements.push({
+			element: el,
+			pseudoElement: undefined!,
+			selector: 'element.style',
+			property: 'view-transition-name',
+			value: (el as HTMLElement).style.viewTransitionName,
+		})
+	);
 	animations.clear();
 	pseudoElements.clear();
 	[...root.ownerDocument.styleSheets, ...root.ownerDocument.adoptedStyleSheets].forEach((sheet) =>
@@ -92,14 +112,15 @@ function frameNamedElements(style: CSSStyleDeclaration, keyframeName: string) {
 
 function declNamedElements(style: CSSStyleDeclaration) {
 	for (let i = 0; i < style.length; ++i) {
-		if (style.item(i).startsWith('view-transition-')) return styledElements(style.parentRule);
+		if (style.item(i).startsWith('view-transition-'))
+			return styledElements(style.parentRule, style.item(i), style[style.item(i) as any]);
 	}
 }
 
-function styledElements(parent: CSSRule | null) {
+function styledElements(parent: CSSRule | null, property: string, value: string) {
 	let selectors: string[] = ['&'];
 
-	for (; ;) {
+	for (;;) {
 		while (
 			parent &&
 			!(parent.constructor.name === 'CSSStyleRule' || parent.constructor.name === 'CSSScopeRule')
@@ -125,7 +146,9 @@ function styledElements(parent: CSSRule | null) {
 			pseudoElement = original.slice(sel.length).trim();
 			[...root.ownerDocument.querySelectorAll<HTMLElement>(sel)]
 				.filter((el) => root.contains(el))
-				.forEach((element) => elements.push({ element, pseudoElement }));
+				.forEach((element) =>
+					elements.push({ element, pseudoElement, selector: original, property, value })
+				);
 		});
 		break;
 	}
@@ -143,10 +166,10 @@ function collect(parent: CSSStyleRule | CSSScopeRule, selectors: string[]): stri
 		const scopes = scopeRuleParent.start
 			? splitSelectorList(scopeRuleParent.start)
 			: [
-				deriveCSSSelector(
-					parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
-				),
-			];
+					deriveCSSSelector(
+						parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
+					),
+				];
 
 		scopes.forEach((scope) =>
 			nested.forEach((nes) => {

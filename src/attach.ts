@@ -5,6 +5,7 @@ if (parent !== self) {
 } else {
 	// This is the top window
 	// Nothing is urgent here and we do not want to mess with loading.
+	console.log('top window detected, scheduling document replacement');
 	requestIdleCallback(() => {
 		replaceDocument(location.href, document.title);
 	});

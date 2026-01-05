@@ -18,11 +18,11 @@ import Window from '@/components/Window.astro';
 			<div id="default"></div>
 		</div>
 		<iframe
-			id="ic-iframe"
+			id="your-page"
 			src="/vtbag_inspection_chamber_src__/"
-			style="height: 100%; width: calc(100% - 425px)"></iframe>
+			style="height: 100%; width: calc(100% - 385px)"></iframe>
 		<div id="dragBar"></div>
-		<div id="dock" style="height: 100%; width: 400px;"></div>
+		<div id="dock" style="height: 100%; width: 360px;"></div>
 		<Window style="display: none; z-index:2">
 			<div slot="title" style="display: flex; flex-direction: row; align-items: center">
 				<img id="logo" width="32" height="32" slot="title" src="/bot1.png" />
@@ -33,7 +33,7 @@ import Window from '@/components/Window.astro';
 			import { setupHooks } from '@/ic2/hooks';
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
-			const iframe = document.getElementById('ic-iframe')!;
+			const iframe = document.getElementById('your-page')!;
 			if (iframe) {
 				const DRAG_BAR_WIDTH = 5;
 				const DRAG_BAR_WIDTH_PX = DRAG_BAR_WIDTH + 'px';

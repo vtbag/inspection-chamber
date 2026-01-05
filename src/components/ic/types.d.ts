@@ -50,11 +50,17 @@ declare global {
 		moveTwin(): void;
 		name(escaped = false): string;
 		animations(): Animation[];
-		async computedStyleCompact(all = false): Promise<{ key: string; value: string; defaultValue: string; priority: string; }[]>;
+		computedStyleCompact(
+			all = false
+		): Promise<{ key: string; value: string; defaultValue: string; priority: string }[]>;
 		onIntersectionChange(entry: IntersectionObserverEntry);
 	}
 	interface VtbagIcPseudoDetailsElement extends HTMLElement {
 		set(pseudo: string): void;
+	}
+	interface VtbagIcViewTransitionCaptureElement extends HTMLElement {
+		calledOn: HTMLElement | Document;
+		init(calledOn: HTMLElement | Document, transitionRoot: HTMLElement): void;
 	}
 	interface HTMLElementTagNameMap {
 		'vtbag-ic-animations': VtbagIcAnimationsElement;
@@ -65,4 +71,4 @@ declare global {
 	}
 }
 
-export { };
+export {};

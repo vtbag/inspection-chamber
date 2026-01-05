@@ -18,7 +18,6 @@ export function minmax(
 		}
 	}
 
-
 	content.insertAdjacentHTML(
 		'beforebegin',
 		initial === 'minimized'

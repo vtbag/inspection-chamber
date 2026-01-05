@@ -1,14 +1,19 @@
 import { namedElements, allRoots } from '@/css';
 import { deriveCSSSelector } from './element-selector';
 import { nestGroups, numberGroupsDFS, type Group } from './group';
-import { linkToParent, sort, type SparseDOMNode } from './sparse-dom';
+import { linkToParent, print as printSDN, sort, type SparseDOMNode } from './sparse-dom';
 
 const ids = new WeakMap<Element, string>();
 let idCount = 0;
 
-export	const moduleGroupMaps = new Map<Element, Map<string, Group>>();
+export const moduleGroupMaps = new Map<Element, Map<string, Group>>();
 
-function capture(transitionRoot: HTMLElement, groups: Map<string, Group>): string {
+function capture(
+	transitionRoot: HTMLElement,
+	groups: Map<string, Group>,
+	oldOrNew: 'old' | 'new'
+): string {
+	console.log("capture", oldOrNew, groups, transitionRoot)
 	let sheet = '';
 	const seen = new Set<string>();
 	const elementMap = new Map<Element, SparseDOMNode>();
@@ -88,37 +93,51 @@ function capture(transitionRoot: HTMLElement, groups: Map<string, Group>): strin
 	sort(rootNode);
 
 	const groupRoot = groups.get('@')!;
-	nestGroups(rootNode, groupRoot, groupRoot, groups);
+	groupRoot[oldOrNew] = rootNode;
+	nestGroups(rootNode, groupRoot, groupRoot, groups, oldOrNew);
 	numberGroupsDFS(groupRoot);
 
 	return sheet;
 }
 
-
 ['ic-before-capture-old', 'ic-before-capture-new'].forEach((eventName) =>
-		self.addEventListener(eventName, (e) => {
-			const transitionRoot = (e as CustomEvent).detail.root;
-			const groups =
-				moduleGroupMaps.get(transitionRoot) ??
-				new Map<string, Group>([
-					['@', { name: '' + moduleGroupMaps.size, className: '', children: [], ancestor: false }],
-				]);
-			const sheet = capture(transitionRoot, groups);
-			moduleGroupMaps.set(transitionRoot, groups);
+	self.addEventListener(eventName, (e) => {
+		const transitionRoot = (e as CustomEvent).detail.root;
+		let groups;
+		let sheet;
+		if (eventName === 'ic-before-capture-old') {
+			groups = new Map<string, Group>([
+				['@', { name: '' + moduleGroupMaps.size, className: '', children: [], ancestor: false }],
+			]);
+			sheet = capture(transitionRoot, groups, 'old');
+		} else {
+			groups = moduleGroupMaps.get(transitionRoot)!;
+			sheet = capture(transitionRoot, groups, 'new');
+		}
+		moduleGroupMaps.set(transitionRoot, groups);
 
-			const head = transitionRoot.ownerDocument.head;
-			head.insertAdjacentHTML(
-				'beforeend',
-				`<style id="vtbag-ic-temp-style-${groups.get('@')!.name}">${sheet}</style>`
-			);
-		})
-	);
+		const head = transitionRoot.ownerDocument.head;
+		head.insertAdjacentHTML(
+			'beforeend',
+			`<style id="vtbag-ic-temp-style-${groups.get('@')!.name}">${sheet}</style>`
+		);
+	})
+);
 
-	['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
-		self.addEventListener(event, (e) => {
-			const root = (e as CustomEvent).detail.root;
-			root.ownerDocument.head
-				.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(root)?.get('@')?.name}`)
-				?.remove();
-		})
-	);
+['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
+	self.addEventListener(event, (e) => {
+		const root = (e as CustomEvent).detail.root;
+		root.ownerDocument.head
+			.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(root)?.get('@')?.name}`)
+			?.remove();
+	})
+);
+
+self.addEventListener('ic-about-to-finish', (e) => {
+	const transitionRoot = (e as CustomEvent).detail.root;
+	moduleGroupMaps.delete(transitionRoot);
+	allRoots.delete(transitionRoot);
+	parent.__vtbag.ic2!.vtMap!.delete(transitionRoot);
+	transitionRoot.ownerDocument.documentElement === transitionRoot &&
+		parent.__vtbag.ic2!.vtMap!.delete(transitionRoot.ownerDocument);
+});

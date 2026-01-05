@@ -6,6 +6,8 @@ export type Group = {
 	className: string;
 	ancestor: boolean;
 	children: Group[];
+	old?: SparseDOMNode;
+	new?: SparseDOMNode;
 	preOrder?: number;
 	postOrder?: number;
 	bfs?: number;
@@ -29,19 +31,24 @@ export function nestGroups(
 	node: SparseDOMNode,
 	parent: Group,
 	container: Group,
-	groups: Map<string, Group>
+	groups: Map<string, Group>,
+	oldOrNew: 'old' | 'new'
 ) {
 	if (node.viewTransitionName === 'none') {
-		node.children.forEach((child) => nestGroups(child, parent, container, groups));
+		node.children.forEach((child) => nestGroups(child, parent, container, groups, oldOrNew));
 	} else {
 		let group = groups.get(node.viewTransitionName);
-		if (!group) {
+		if (group) {
+			group.new = node;
+		} else {
 			group = {
 				children: [],
 				name: node.viewTransitionName,
 				className: node.viewTransitionClass!,
 				ancestor: true,
 			};
+			group[oldOrNew] = node;
+
 			groups.set(node.viewTransitionName, group);
 			if (node.viewTransitionGroup === 'nearest') {
 				parent.children.push(group);
@@ -62,7 +69,13 @@ export function nestGroups(
 			}
 		}
 		node.children.forEach((child) =>
-			nestGroups(child, group, node.viewTransitionGroup !== 'normal' ? group : container, groups)
+			nestGroups(
+				child,
+				group,
+				node.viewTransitionGroup !== 'normal' ? group : container,
+				groups,
+				oldOrNew
+			)
 		);
 		group.ancestor = false;
 	}

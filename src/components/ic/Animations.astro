@@ -23,7 +23,6 @@ import './studio.css';
 	import { type Group } from './group';
 	import { highlight } from './highlight';
 	import { disableLedGroup, enableLedGroup, hideLedGroup, ledGroup } from './led-group';
-	import { allRoots } from '@/css';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 	class ICAnimations extends HTMLElement {
@@ -46,7 +45,6 @@ import './studio.css';
 							const scope = this.#scopes.get(root)!;
 							this.#scopes.delete(root);
 							scope?.remove();
-							allRoots.delete(root);
 							!this.#scopes
 								.keys()
 								.some((rootElement) => rootElement.ownerDocument.documentElement === rootElement) &&
@@ -74,6 +72,7 @@ import './studio.css';
 			this.querySelector<VtbagIcScopeElement>(
 				'vtbag-ic-scope'
 			)?.element.ownerDocument.activeViewTransition?.skipTransition();
+			removeEventListener('ic-after-capture-new', this.mayRender);
 		}
 
 		connectedCallback() {
@@ -272,6 +271,7 @@ import './studio.css';
 			});
 
 			addEventListener('ic-after-capture-new', this.mayRender);
+			// track animations that are created late during the transition
 			//	addEventListener('ic-animation-start', this.mayRender);
 
 			this.querySelector<HTMLSelectElement>('#scope-buttons')!.addEventListener('click', (e) => {

@@ -7,14 +7,17 @@
 		<title>Animations Test iframe</title>
 		<meta charset="UTF-8" />
 		<style is:inline>
+			@view-transition {
+				navigation: auto
+			}
 			:root,
 			body {
 				margin: 0;
 				padding: 0;
 			}
 			:root {
-				color-scheme: dark;
-				background-color: #222;
+				background-color: light-dark(#eee, #222);
+				color: light-dark(#111, #eee)	;
 				view-transition-name: none;
 			}
 			* {
@@ -28,6 +31,9 @@
 			}
 			header p {
 				view-transition-name: ¶;
+			}
+			:root header p {
+				view-transition-name: paragraph;
 			}
 			div:nth-of-type(1) {
 				border: 2px solid darkgreen;
@@ -86,7 +92,9 @@
 				width: 100%;
 			}
 			::view-transition-group(empty) {
-				transition: 200ms ease-in-out left, 300ms linear scale;
+				transition:
+					200ms ease-in-out left,
+					300ms linear scale;
 				left: -50px;
 				scale: 2;
 				@start-state {
@@ -94,6 +102,34 @@
 					scale: 1;
 				}
 			}
+			:active-view-transition-type(capture-old) {
+				i {
+					view-transition-name: coi;
+				}
+				b {
+					view-transition-name: cob;
+				}
+			}
+
+			:active-view-transition-type(capture-new) {
+				i {
+					view-transition-name: cni;
+				}
+				b {
+					view-transition-name: cnb;
+				}
+			}
+			:active-view-transition-type(shuffle-old) {
+				aside {
+					view-transition-name: oaside;
+				}
+				:active-view-transition-type(shuffle-new) {
+					aside {
+						view-transition-name: naside;
+					}
+				}
+			}
+			:active-view-transition-type;
 		</style>
 		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
 		<script is:inline src="/attach.js"></script>
@@ -103,20 +139,22 @@
 			style="max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif;"
 		>
 			<header style="text-align: center; margin-bottom: 3rem;">
-				<kbd id="empty">?</kbd>
 				<h1
 					style="view-transition-name: h1\\!; font-size: 3rem; margin-bottom: 1rem; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"
 				>
 					Welcome to Our Platform
 				</h1>
 				<section>
-					Holla, Lorem ipsum dolor sit amet consectetur adipisicing elit. Suscipit magni ex vero
-					commodi neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat
-					laudantium provident tenetur consectetur adipisci cumque!
+					<a href="/realistic/">Click me</a>
+					Holla, Lorem <i>ipsum</i>
+					<b>dolor</b>dolor sit amet consectetur adipisicing elit. Suscipit magni ex vero commodi
+					neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat laudantium
+					provident tenetur consectetur adipisci cumque!
 				</section>
-				<p style="font-size: 1.25rem; color: #a0aec0; max-width: 600px; margin: 0 auto;">
+				<p style="font-size: 1.25rem; color: light-dark(#5f513f, #a0aec0); max-width: 600px; margin: 0 auto;">
 					Discover amazing features and unlock your potential with our innovative solutions.
 				</p>
+				<kbd id="empty">?</kbd>
 			</header>
 			<div
 				style="text-align: center; margin-bottom: 2rem; view-transition-name: div; view-transition-group: contain"
@@ -143,13 +181,13 @@
 			</div>
 
 			<section style="view-transition-name: section; margin-bottom: 3rem;">
-				<h2 style="font-size: 2rem; margin-bottom: 1rem; color: #e2e8f0;">Why Choose Us?</h2>
-				<p style="line-height: 1.8; color: #cbd5e0; margin-bottom: 1rem;">
+				<h2 style="font-size: 2rem; margin-bottom: 1rem; color: light-dark(#1d170f,#e2e8f0);">Why Choose Us?</h2>
+				<p style="line-height: 1.8; color: light-dark(#342a1f,#cbd5e0); margin-bottom: 1rem;">
 					We believe in creating exceptional experiences that make a difference. Our platform is
 					designed with you in mind, offering intuitive tools and powerful features that help you
 					achieve your goals faster.
 				</p>
-				<p style="line-height: 1.8; color: #cbd5e0;">
+				<p style="line-height: 1.8; color: light-dark(#342a1f,#cbd5e0);">
 					Join thousands of satisfied users who have transformed their workflow and discovered new
 					possibilities with our cutting-edge technology.
 				</p>
@@ -194,6 +232,7 @@
 			<script>
 				import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
+				const nested = () => {
 				const h1 = document.querySelector('h1')!;
 				const expand = document.getElementById('expand-button');
 				const img1 = document.getElementById('bot')!;
@@ -201,10 +240,15 @@
 				let isExpanded = false;
 				const shuffle = document.getElementById('shuffle-button')!;
 				const aside = document.querySelector('aside')!;
+				const link = document.querySelector('a')!;
+				link.href = '/realistic/?cacheBust=' + Date.now();
+
 
 				expand?.addEventListener('click', () => {
-					const transition = mayStartViewTransition({
+					const transition = mayStartViewTransition!({
 						update() {
+							transition.types.add('capture-new');
+							transition.types.delete('capture-old');
 							if (isExpanded) {
 								h1.innerText = 'Welcome to Our Platform';
 								img2.style.display = 'none';
@@ -220,10 +264,12 @@
 
 							isExpanded = !isExpanded;
 							const header = document.querySelector('header');
-							header?.appendChild(header.firstElementChild!);
-						},
-						types: ['image-expand'],
+							header!.appendChild(header!.firstElementChild!);
+							console.log("header", header);
+							},
+						types: ['image-expand', 'capture-old'],
 					});
+
 					transition.ready.then(() => {
 						document.documentElement.animate(
 							[
@@ -243,18 +289,26 @@
 				});
 
 				shuffle?.addEventListener('click', () => {
-					mayStartViewTransition(
+					const transition = mayStartViewTransition(
 						{
 							update() {
+								transition.types.add('shuffle-new');
+								transition.types.delete('shuffle-old');
 								for (let i = aside.children.length; i >= 0; i--) {
 									aside.appendChild(aside.children[~~(Math.random() * i)]);
 								}
 							},
-							types: ['shuffle-letters'],
+							types: ['shuffle-letters', 'shuffle-old'],
 						},
-						{ scope: aside }
+						{ scope: aside, useTypesPolyfill: 'always' }
 					);
-				});
+				});}
+
+				callNested();
+
+				function callNested() {
+					nested();
+				}
 			</script>
 		</main>
 	</body>

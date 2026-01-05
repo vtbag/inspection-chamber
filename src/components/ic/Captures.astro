@@ -1,15 +1,75 @@
 ---
-import "./ic.css"
+import ViewTransitionCapture from './ViewTransitionCapture.astro';
 ---
 
-
+<ViewTransitionCapture />
 <script>
 	import { ICElement } from './ic-element';
-
+	import { ledGroup } from './led-group';
+	const captures = new Map<Element, VtbagIcViewTransitionCaptureElement>();
 	class ICCaptures extends ICElement {
-		render() {
-			this.innerHTML = `CPAtuREs!`;
+		protected render() {
+			this.classList.add('panel');
+			this.innerHTML =
+				ledGroup({
+					independent: true,
+					groupName: 'capture-mode',
+					checked: 'none',
+					className: 'capture-options',
+					alternatives: [
+						{ id: 'old-only', value: 'old-only', label: 'Capture old images, only' },
+						{ id: 'freeze-types', value: 'freeze-types', label: 'Freeze types' },
+					],
+				}) +
+				`<p class="explainer"><i>Captures will be listed here when your page starts a view transition.</i></p>`;
+
+			this.querySelector('.capture-options #old-only')!.addEventListener('change', (event) => {
+				parent.__vtbag!.ic2!.captureOldOnly = (event.target as HTMLInputElement).checked;
+			});
+			this.querySelector('.capture-options #freeze-types')!.addEventListener('change', (event) => {
+				const target = event.target as HTMLInputElement;
+				target.classList.toggle('red', target.checked);
+				parent.__vtbag!.ic2!.captureFreezeTypes = target.checked;
+				if (!target.checked) {
+					parent.location.reload();
+				} else {
+					self.addEventListener('ic-after-capture-old', (e) => {
+						const detail = (e as CustomEvent).detail;
+						const root = detail.root;
+						if (root.ownerDocument.documentElement === root) {
+							parent.document.documentElement.classList.add('action');
+							detail.viewTransition.finished.finally(() => {
+								parent.document.documentElement.classList.remove('action');
+							});
+						}
+					});
+				}
+			});
+
+			self.addEventListener('ic-after-capture-old', this.showCaptureResult);
+			self.addEventListener('ic-after-capture-new', this.showCaptureResult);
 		}
+		showCaptureResult = (event: Event) => {
+			if (
+				(event.type === 'ic-after-capture-old') !==
+				this.querySelector<HTMLInputElement>('.capture-options input')?.checked
+			)
+				return;
+
+			this.querySelector('.explainer')?.remove();
+
+			parent.__vtbag!.ic2!.vtMap?.keys().forEach((key) => {
+				const transitionRoot = key.ownerDocument ? key : key.documentElement;
+				captures.get(transitionRoot)?.remove();
+				this.insertAdjacentHTML(
+					'beforeend',
+					`<vtbag-ic-view-transition-capture></vtbag-ic-view-transition-capture>`
+				);
+				const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
+				captureElement.init(key, transitionRoot);
+				captures.set(transitionRoot, captureElement);
+			});
+		};
 	}
 	customElements.define('vtbag-ic-captures', ICCaptures);
 </script>
@@ -21,7 +81,29 @@ import "./ic.css"
 		@scope (vtbag-ic-captures) {
 			:scope {
 				display: block;
+				margin: 0 4px;
+
 				view-transition-name: hold;
+				.input-led-group.capture-options div {
+					display: flex;
+					justify-content: space-around;
+				}
+				p {
+					margin: 4px;
+					padding: 4px;
+					font-size: 0.9rem;
+				}
+				.print {
+					cursor: pointer;
+					user-select: none;
+				}
+					strong {
+						color: light-dark(#222, #ddd);
+					}
+				.highlight {
+					color: light-dark(#222222, #dddddd);
+					cursor: pointer;
+				}
 			}
 		}
 	}

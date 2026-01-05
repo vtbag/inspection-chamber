@@ -10,11 +10,11 @@
 	@scope (.minmax) {
 		:scope {
 			position: absolute;
-			top: -5px;
-			right: 8px;
+			top: 0px;
+			right: 4px;
 			&.toggle {
 				top: 4px;
-				background-color: light-dark(#fff,#000);
+				background-color: light-dark(#fff, #000);
 				&:after {
 					content: ' ⭱';
 				}

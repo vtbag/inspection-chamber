@@ -1,3 +1,5 @@
+import { deriveCSSSelector } from './element-selector';
+
 export type SparseDOMNode = {
 	viewTransitionName: string;
 	viewTransitionGroup?: string;
@@ -92,6 +94,7 @@ export function sort(node: SparseDOMNode) {
 			child.children.length = 0;
 		}
 	}
+
 	node.children.sort((a, b) =>
 		a.paintGroup !== b.paintGroup
 			? a.paintGroup! - b.paintGroup!

@@ -24,18 +24,16 @@ import Captures from './Captures.astro';
 			<div class="main-head">
 				<vtbag-ic-analyzer></vtbag-ic-analyzer>
 			</div>
-			<vtbag-ic-animations></vtbag-ic-animations>
-			<vtbag-ic-captures></vtbag-ic-captures>`;
-			const rerender = () => {
-				document.startViewTransition!(
-					{
-						update: () => this.render(),
-						types: ['swap-analyzer'],
-					},
-		//			{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
-				).ready.then(()=>console.log('rerendered main view transition'), (error) => console.error('view transition failed', error));
-			};
-			this.querySelector<HTMLDivElement>('div.main-head')!.addEventListener('change', rerender);
+			`;
+			this.addEventListener('ic-analyzer-ready', () =>
+				this.insertAdjacentHTML(
+					'beforeend',
+					this.querySelector<HTMLElement>('vtbag-ic-analyzer input[value="animation"]:checked')
+						? '<vtbag-ic-animations></vtbag-ic-animations>'
+						: '<vtbag-ic-captures></vtbag-ic-captures>'
+				)
+			);
+			this.querySelector("vtbag-ic-analyzer")?.addEventListener('change', parent.location.reload.bind(parent.location));
 		}
 	}
 	customElements.define('vtbag-ic-main', ICMain);
@@ -52,7 +50,8 @@ import Captures from './Captures.astro';
 				overflow-y: auto;
 				overflow-x: clip;
 				scrollbar-gutter: stable;
-				.main-head {
+				.main-head,
+				.main-body {
 					display: grid;
 					border-radius: 4px;
 					grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));

@@ -38,6 +38,9 @@ export function setCurrentValue(id: string, current: number) {
 		container.querySelector<HTMLElement>(`.slider-value .current`)!.innerText = `${input.value}ms`;
 		container
 			.querySelector<HTMLElement>(`.slider-fill`)
-			?.style.setProperty('width', `calc(${(Number(input.value) / Number(input.max)) * 100}% + 3px)`);
+			?.style.setProperty(
+				'width',
+				`calc(${(Number(input.value) / Number(input.max)) * 100}% + 3px)`
+			);
 	}
 }

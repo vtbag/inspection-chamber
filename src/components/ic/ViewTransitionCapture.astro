@@ -1,0 +1,183 @@
+<script>
+	import { moduleGroupMaps } from './capture';
+	import { deriveCSSSelector } from './element-selector';
+	import type { Group } from './group';
+	import { highlight } from './highlight';
+	import { ICElement } from './ic-element';
+	import { minmax } from './minmax';
+
+	type CaptureEntry = {
+		old?: Element;
+		new?: Element;
+		children?: CaptureRecord;
+	};
+	type CaptureRecord = Record<string, CaptureEntry>;
+
+	class ICViewTransitionCapture extends ICElement {
+		calledOn: Document | HTMLElement | undefined;
+		transitionRoot: HTMLElement | undefined;
+
+		init(calledOn: Document | HTMLElement, transitionRoot: HTMLElement) {
+			this.calledOn = calledOn;
+			this.transitionRoot = transitionRoot;
+		}
+
+		protected render() {
+			const captures: CaptureRecord = {};
+			let current: CaptureRecord[] = [];
+
+			const dump = (elem: HTMLElement, group?: Group, level = 0) => {
+				if (!group) return;
+				const indent = '&nbsp;'.repeat(level * 2);
+				let record: CaptureRecord | undefined;
+				let entry: CaptureEntry | undefined;
+				if (group.parent) {
+					entry = {
+						children: {},
+					};
+					if (group.old) entry.old = group.old.element;
+					if (group.new) entry.new = group.new.element;
+					record = current.at(-1)!;
+					record[group.name] = entry;
+
+					elem.insertAdjacentHTML(
+						'beforeend',
+						`<details>
+							<summary>${indent}<strong>${group.name}</strong></summary> 
+						${group.old ? `<div>${indent}<span class="highlight old">${deriveCSSSelector(group.old.element)}</span> (old)</div>` : ''}
+						${group.new ? `<div>${indent}<span class="highlight new">${deriveCSSSelector(group.new.element)}</span> (new)</div>` : ''}</details>`
+					);
+					const classList = elem.lastElementChild!.querySelector('summary strong')?.classList;
+					classList?.toggle('with-children', group.children.length > 0);
+					classList?.toggle('new', !!group.new);
+					classList?.toggle('old', !!group.old);
+					elem
+						.lastElementChild!.querySelector('summary')
+						?.addEventListener('pointerenter', () =>
+							highlight(group[group.new ? 'new' : 'old']?.element)
+						);
+					elem
+						.lastElementChild!.querySelector('.highlight.old')
+						?.addEventListener('pointerenter', () => highlight(group.old?.element));
+					elem
+						.lastElementChild!.querySelector('.highlight.old')
+						?.addEventListener('click', () => console.log(group.old?.element));
+					elem
+						.lastElementChild!.querySelector('.highlight.new')
+						?.addEventListener('pointerenter', () => highlight(group.new?.element));
+					elem
+						.lastElementChild!.querySelector('.highlight.new')
+						?.addEventListener('click', () => console.dir(group.new?.element));
+				}
+				const childRecord = entry?.children || captures;
+				current.push(childRecord);
+				group.children.forEach((child: Group) => {
+					dump(group.parent ? (elem.lastElementChild as HTMLElement) : elem, child, level + 1);
+				});
+				current.pop();
+				if (entry && Object.keys(entry.children!).length === 0) {
+					delete entry.children;
+				}
+			};
+
+			const features = parent.__vtbag.ic2?.vtMap?.get(this.calledOn!);
+			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
+
+			const group: Group | undefined = moduleGroupMaps.get(this.transitionRoot!)?.get('@');
+
+			this.insertAdjacentHTML(
+				'beforeend',
+				`<h3>${this.calledOn?.ownerDocument ? deriveCSSSelector(this.calledOn) : 'document global'}</h3><p>View transition started at ${new Date(features?.time ?? 0).toLocaleTimeString()} <span class="print" title="Make info available in Devtools console">[🖶]</span></p>
+				<p>Active view transition types during capture of old images: <strong>${
+					[...(features?.oldTypes ?? [])].join(', ') || 'none'
+				}</strong></p>				
+					${
+						oldOnly
+							? ''
+							: `<p>Active view transition types during capture of new images: <strong>${
+									[...(features?.newTypes ?? [])].join(', ') || 'none'
+								}</strong></p>`
+					}
+				<div class=content></div>`
+			);
+			const content = this.querySelector('.content') as HTMLElement;
+			minmax(
+				content,
+				'minimized',
+				'Captured Animation Groups',
+				sessionStorage,
+				`capture-root-${this.calledOn?.ownerDocument ? deriveCSSSelector(this.calledOn) : 'document global'}`
+			);
+			const styleOn =
+				'color: light-dark(black, white); background-color: light-dark(#dfd, #242); padding: 2px 4px; border-radius: 4px; font-size: 1.2em;';
+
+			this.querySelector('.print')?.addEventListener('click', () => {
+				console.log(
+					'%cInspection Chamber%c\n\nView transition on %O was started from this code location:\n%s\nand captured the following elements\n%O',
+					styleOn,
+					'',
+					this.calledOn,
+					'\n' + features?.trace,
+					captures
+				);
+			});
+			dump(content, group);
+		}
+	}
+	customElements.define('vtbag-ic-view-transition-capture', ICViewTransitionCapture);
+</script>
+
+<style is:global>
+	@layer defaults, components, overrides;
+
+	@layer components {
+		@scope (vtbag-ic-view-transition-capture) {
+			:scope {
+				display: block;
+				padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+				background: light-dark(#f6f6f6, #0a0a0a);
+				border-radius: 4px;
+				border: 1px solid light-dark(#d6d6d6, #2a2a2a);
+				box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+				p {
+					margin: 4px;
+					padding: 4px;
+					font-size: 0.9rem;
+				}
+				.print {
+					cursor: pointer;
+					user-select: none;
+					color: light-dark(darkgreen, yellowgreen);
+				}
+				summary strong {
+					cursor: pointer;
+					&.old {
+						color: darkslateblue;
+					}
+					&.new {
+						color: darkolivegreen;
+					}
+					&.old.new {
+						color: darkgoldenrod;
+					}
+					&.with-children::after {
+						content: ' (with children)';
+					}
+				}
+				.highlight {
+					color: light-dark(#222222, #dddddd);
+					cursor: pointer;
+					&.old {
+						color: darkslateblue;
+					}
+					&.new {
+						color: darkolivegreen;
+					}
+				}
+				details > :not(summary) {
+					margin-left: 1rem;
+				}
+			}
+		}
+	}
+</style>

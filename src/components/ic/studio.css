@@ -62,15 +62,15 @@
 	height: 48px;
 	background: linear-gradient(
 		180deg,
-		light-dark(#4a4a4a, #2a2a2a) 0%,
-		light-dark(#3a3a3a, #1a1a1a) 100%
+		light-dark(#d6d6d6, #2a2a2a) 0%,
+		light-dark(#e6e6e6, #1a1a1a) 100%
 	);
 	border-radius: 24px;
 	box-shadow:
 		0 2px 8px rgba(0, 0, 0, 0.4),
 		inset 0 1px 0 rgba(255, 255, 255, 0.2),
 		inset 0 -1px 0 rgba(0, 0, 0, 0.3);
-	border: 1px solid light-dark(#555, #333);
+	border: 1px solid light-dark(#ccc, #333);
 }
 
 .toggle-labels {
@@ -148,15 +148,15 @@
 	width: 12px;
 	height: 12px;
 	border-radius: 50%;
-	background: light-dark(#2a2a2a, #1a1a1a);
-	border: 1px solid light-dark(#1a1a1a, #0a0a0a);
+	background: light-dark(#e6e6e6, #1a1a1a);
+	border: 1px solid light-dark(#f6f6f6, #0a0a0a);
 	box-shadow:
 		inset 0 2px 3px rgba(0, 0, 0, 0.5),
 		0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .input-led-item input:checked + label .led {
-	background: radial-gradient(circle, #6bff3588 0%, #44cc2088 100%);
+	background: radial-gradient(circle, light-dark(#0c0, #6bff3588) 0%, #44cc2088 100%);
 	box-shadow:
 		0 0 8px rgba(107, 255, 53, 0.6),
 		0 0 12px rgba(107, 255, 53, 0.4),
@@ -309,10 +309,10 @@ input[type='checkbox']:not(:checked) + label .off-label {
 	border-radius: 5px;
 	background: linear-gradient(
 		135deg,
-		light-dark(#4a4a4a, #2a6a2a) 0%,
-		light-dark(#3a3a3a, #1a1a1a) 100%
+		light-dark(#ccddbb, #2a6a2a) 0%,
+		light-dark(#e6e6e6, #1a1a1a) 100%
 	);
-	border: 1px solid light-dark(#555, #366);
+	border: 1px solid light-dark(#9c9, #366);
 	box-shadow:
 		0 2px 6px rgba(0, 0, 0, 0.4),
 		inset 0 1px 2px rgba(255, 255, 255, 0.2);
@@ -325,10 +325,10 @@ input[type='checkbox']:not(:checked) + label .off-label {
 	border-radius: 5px;
 	background: linear-gradient(
 		135deg,
-		light-dark(#4a4a4a, #2a6a2a) 0%,
-		light-dark(#3a3a3a, #1a1a1a) 100%
+		light-dark(#ccddbb, #2a6a2a) 0%,
+		light-dark(#e6e6e6, #1a1a1a) 100%
 	);
-	border: 1px solid light-dark(#555, #366);
+	border: 1px solid light-dark(#9c9, #366);
 	box-shadow:
 		0 2px 6px rgba(0, 0, 0, 0.4),
 		inset 0 1px 2px rgba(255, 255, 255, 0.2);
@@ -341,8 +341,8 @@ input[type='checkbox']:not(:checked) + label .off-label {
 	width: 100%;
 	height: 8px;
 	border-radius: 4px;
-	background: light-dark(#1a1a1a, #0a2a0a);
-	border: 1px solid light-dark(#3a3a3a, #2a4a2a);
+	background: light-dark(#ccddbb, #0a2a0a);
+	border: 1px solid light-dark(#d0d6d0, #2a4a2a);
 	box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
 	top: 0;
 	left: 0;
@@ -353,8 +353,8 @@ input[type='checkbox']:not(:checked) + label .off-label {
 	height: 8px;
 	background: linear-gradient(
 		45deg,
-		light-dark(#356b35, #334433) 0%,
-		light-dark(#558555, #778877) 100%
+		light-dark(#ccddbb, #334433) 0%,
+		light-dark(#606858, #778877) 100%
 	);
 	border-radius: 4px;
 	top: 0;
@@ -374,7 +374,7 @@ input[type='checkbox']:not(:checked) + label .off-label {
 	width: 100%;
 }
 .slider-value .current {
-	color: light-dark(#6bff35, #44cc33);
+	color: light-dark(darkgreen, yellowgreen);
 	text-shadow: 0 0 4px light-dark(rgba(255, 107, 53, 0.2), rgba(255, 136, 85, 0.3));
 }
 

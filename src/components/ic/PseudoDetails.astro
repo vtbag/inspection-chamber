@@ -1,3 +1,6 @@
+---
+import './ic.css';
+---
 <script>
 	import {
 		hideMinmax,
@@ -113,12 +116,12 @@
 						maxDuration = Math.max(maxDuration, (duration as number) ?? 0);
 						content.insertAdjacentHTML(
 							'afterbegin',
-							`<div style="align-items: center; display: flex; gap: 8px;"><label><input type="checkbox" ${'stopped' in a ? '' : 'checked'}> ${(a as CSSAnimation).animationName ?? (('alias' in a && a.alias) || 'unknown')}</label><span>${'stopped' in a ? `(stopped at ${~~a.currentTime!}ms)` : ''}</span><span style="cursor: pointer;" class="log">🖶</span></div>`
+							`<div style="align-items: center; display: flex; gap: 8px;"><label><input type="checkbox" ${'stopped' in a ? '' : 'checked'}> ${(a as CSSAnimation).animationName ?? (('alias' in a && a.alias) || 'unknown')} <span>${'stopped' in a ? `(stopped at ${~~a.currentTime!}ms)` : ''}</span></label><span style="cursor: pointer;" class="devtools" title="Make animation available in Devtools console">[🖶]</span></div>`
 						);
 						++count;
 						content
-							.firstElementChild!.querySelector('.log')!
-							.addEventListener('click', () => console.log(a));
+							.firstElementChild!.querySelector('.devtools')!
+							.addEventListener('click', () => console.dir(a));
 						if ('stopped' in a && a.playState === 'running') {
 							a.pause();
 						}
@@ -252,10 +255,16 @@
 				display: block;
 				grid-column: 1 / -1;
 				padding: 0.5rem 0.75rem 0.5rem 0.75rem;
-				background: light-dark(#1a1a1a, #0a0a0a);
+				background: light-dark(#f6f6f6, #0a0a0a);
 				border-radius: 4px;
-				border: 1px solid light-dark(#3a3a3a, #2a2a2a);
+				border: 1px solid light-dark(#d6d6d6, #2a2a2a);
 				box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+
+				.devtools {
+					color: green;
+					cursor: pointer;
+					user-select: none;
+				}
 			}
 		}
 	}
