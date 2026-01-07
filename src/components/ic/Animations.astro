@@ -27,7 +27,6 @@ import './studio.css';
 
 	class ICAnimations extends HTMLElement {
 		#initialized = false;
-		groupMaps: Map<Element, Map<string, Group>>;
 		#scopes = new Map<HTMLElement, VtbagIcScopeElement>();
 		#observer?: ResizeObserver;
 		#rootDocument?: Document;
@@ -36,7 +35,6 @@ import './studio.css';
 
 		constructor() {
 			super();
-			this.groupMaps = moduleGroupMaps;
 			self.addEventListener('ic-about-to-finish', (e) => {
 				mayStartViewTransition(
 					{
@@ -395,7 +393,7 @@ import './studio.css';
 					let scope = this.#scopes.get(element)!;
 					if (!scope) {
 						scope = document.createElement('vtbag-ic-scope');
-						scope.init(element, this.groupMaps.get(element)!.get('@')!, animations);
+						scope.init(element, moduleGroupMaps.get(element)!.get('@')!, animations);
 						this.#scopes.set(element, scope);
 						this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
 					}

@@ -21,6 +21,7 @@ import Identify from '@/components/ic/Identify.astro';
 	import { addBlinds } from './blinds';
 	import { frameToggles } from './multi-frame';
 	import { minmax, defaultTransitionDuration } from './minmax';
+	import { any } from 'astro:schema';
 
 	let nextId = 0;
 	const scopeMap = new WeakMap<HTMLElement, number>();
@@ -43,6 +44,7 @@ import Identify from '@/components/ic/Identify.astro';
 		#animationsElement?: VtbagIcAnimationsElement;
 		#frameToggleRefresh?: () => void;
 		#raf?: number;
+		#resynced: boolean = false;
 
 		constructor() {
 			super();
@@ -330,7 +332,7 @@ import Identify from '@/components/ic/Identify.astro';
 			setMaxValue(
 				`slider-${this.#id}`,
 				this.#longestDuration,
-				this.#animations[0].currentTime as number,
+				this.#animations[0].currentTime as number, // todo: better minimum of all animations?
 				(e) => {
 					const time = parseInt((e.target as HTMLInputElement).value, 10);
 					this.animations.forEach(
@@ -347,27 +349,21 @@ import Identify from '@/components/ic/Identify.astro';
 		}
 
 		resync() {
-			// Make Firefox happy. issue?
-			if (navigator.userAgent.toLowerCase().includes('firefox')) {
-				const paused = this.#animations[0]?.playState === 'paused';
-				const time = this.#animations[0]?.currentTime;
-				const rate = this.#animations[0]?.playbackRate;
-				if (paused) {
-					this.#animations.forEach((a) => {
-						a.playbackRate = 0.0001;
-						a.play();
+			if (this.#resynced) return;
+			this.#resynced = true;
+			this.#animations
+				.filter(
+					(a) =>
+						a.playState === 'paused' && a.effect?.pseudoElement?.startsWith('::view-transition')
+				)
+				.forEach((a) => {
+					const now = a.currentTime;
+					a.currentTime === 0 ? a.currentTime++ : (a.currentTime as number)--;
+					requestAnimationFrame(() => {
+						a.currentTime = now;
+						this.#resynced = false;
 					});
-					requestAnimationFrame(() =>
-						requestAnimationFrame(() =>
-							this.#animations.forEach((a) => {
-								a.pause();
-								a.playbackRate = rate;
-								a.currentTime = time;
-							})
-						)
-					);
-				}
-			}
+				});
 		}
 
 		updateScopeHead() {
@@ -489,7 +485,14 @@ ${styles.join('\n')}
 							);
 							const news = children.nextElementSibling as HTMLElement;
 							children.remove();
-							[...news.children].forEach(element => element.classList.toggle('in-view', children.querySelector(`[data-group="${element.getAttribute('data-group')}"]`)?.classList.contains('in-view') ?? false));
+							[...news.children].forEach((element) =>
+								element.classList.toggle(
+									'in-view',
+									children
+										.querySelector(`[data-group="${element.getAttribute('data-group')}"]`)
+										?.classList.contains('in-view') ?? false
+								)
+							);
 							this.addButtonEnterLeaveListeners();
 						},
 						types: ['sort'],

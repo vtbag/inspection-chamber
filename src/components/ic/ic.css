@@ -610,7 +610,7 @@
 	font-synthesis-small-caps: auto;
 	font-synthesis-style: auto;
 	font-synthesis-weight: auto;
-	height: auto;
+	height: 0;
 	hyphens: manual;
 	inline-size: auto;
 	letter-spacing: normal;
@@ -619,6 +619,6 @@
 	pointer-events: auto;
 	text-rendering: auto;
 	unicode-bidi: normal;
-	width: auto;
+	width: 0;
 	-webkit-font-smoothing: auto;
 }

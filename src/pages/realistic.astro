@@ -6,18 +6,21 @@
 	<head>
 		<title>Animations Test iframe</title>
 		<meta charset="UTF-8" />
+		<link rel="expect" href="#body" blocking="render" />
 		<style is:inline>
 			@view-transition {
-				navigation: auto
+				navigation: auto;
 			}
 			:root,
 			body {
 				margin: 0;
 				padding: 0;
+				scrollbar-gutter: stable;
 			}
 			:root {
+				color-scheme: dark light;
 				background-color: light-dark(#eee, #222);
-				color: light-dark(#111, #eee)	;
+				color: light-dark(#111, #eee);
 				view-transition-name: none;
 			}
 			* {
@@ -134,7 +137,7 @@
 		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
 		<script is:inline src="/attach.js"></script>
 	</head>
-	<body>
+	<body id="body">
 		<main
 			style="max-width: 800px; margin: 0 auto; padding: 2rem; font-family: system-ui, sans-serif;"
 		>
@@ -146,12 +149,14 @@
 				</h1>
 				<section>
 					<a href="/realistic/">Click me</a>
-					Holla, Lorem <i>ipsum</i>
+					 Holla, Lorem <i>ipsum</i>
 					<b>dolor</b>dolor sit amet consectetur adipisicing elit. Suscipit magni ex vero commodi
 					neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat laudantium
 					provident tenetur consectetur adipisci cumque!
 				</section>
-				<p style="font-size: 1.25rem; color: light-dark(#5f513f, #a0aec0); max-width: 600px; margin: 0 auto;">
+				<p
+					style="font-size: 1.25rem; color: light-dark(#5f513f, #a0aec0); max-width: 600px; margin: 0 auto;"
+				>
 					Discover amazing features and unlock your potential with our innovative solutions.
 				</p>
 				<kbd id="empty">?</kbd>
@@ -181,7 +186,9 @@
 			</div>
 
 			<section style="view-transition-name: section; margin-bottom: 3rem;">
-				<h2 style="font-size: 2rem; margin-bottom: 1rem; color: light-dark(#1d170f,#e2e8f0);">Why Choose Us?</h2>
+				<h2 style="font-size: 2rem; margin-bottom: 1rem; color: light-dark(#1d170f,#e2e8f0);">
+					Why Choose Us?
+				</h2>
 				<p style="line-height: 1.8; color: light-dark(#342a1f,#cbd5e0); margin-bottom: 1rem;">
 					We believe in creating exceptional experiences that make a difference. Our platform is
 					designed with you in mind, offering intuitive tools and powerful features that help you
@@ -192,7 +199,25 @@
 					possibilities with our cutting-edge technology.
 				</p>
 			</section>
+			<script is:inline>
+				const h1 = document.querySelector('h1');
+				const expand = document.getElementById('expand-button');
+				const img1 = document.getElementById('bot');
+				const img2 = document.getElementById('heroine');
+				const link = document.querySelector('a');
+				const num = parseInt(new URLSearchParams(location.search).get('cacheBust') ?? '0', 10);
+				link.href = '/realistic/?cacheBust=' + (num + 1);
+				if (num && num & 1) {
+					h1.innerText = 'Welcome';
+					img1.style.display = 'none';
+					img2.style.display = 'inline';
+					if (expand) expand.textContent = 'Shrink image';
+					document.body.classList.add('expanded');
 
+					const header = document.querySelector('header');
+					header.appendChild(header.firstElementChild);
+				}
+			</script>
 			<aside>
 				<span style="view-transition-name: \\@lpha">a</span><span
 					style="view-transition-name: bravo-\\$">b</span
@@ -233,76 +258,73 @@
 				import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 				const nested = () => {
-				const h1 = document.querySelector('h1')!;
-				const expand = document.getElementById('expand-button');
-				const img1 = document.getElementById('bot')!;
-				const img2 = document.getElementById('heroine')!;
-				let isExpanded = false;
-				const shuffle = document.getElementById('shuffle-button')!;
-				const aside = document.querySelector('aside')!;
-				const link = document.querySelector('a')!;
-				link.href = '/realistic/?cacheBust=' + Date.now();
+					const h1 = document.querySelector('h1')!;
+					const expand = document.getElementById('expand-button');
+					const img1 = document.getElementById('bot')!;
+					const img2 = document.getElementById('heroine')!;
+					let isExpanded = false;
+					const shuffle = document.getElementById('shuffle-button')!;
+					const aside = document.querySelector('aside')!;
 
+					expand?.addEventListener('click', () => {
+						const transition = mayStartViewTransition!({
+							update() {
+								transition.types?.add('capture-new');
+								transition.types?.delete('capture-old');
+								if (isExpanded) {
+									h1.innerText = 'Welcome to Our Platform';
+									img2.style.display = 'none';
+									img1.style.display = 'inline';
+									if (expand) expand.textContent = 'Expand the small image';
+								} else {
+									h1.innerText = 'Welcome';
+									img1.style.display = 'none';
+									img2.style.display = 'inline';
+									if (expand) expand.textContent = 'Shrink image';
+								}
+								document.body.classList.toggle('expanded', !isExpanded);
 
-				expand?.addEventListener('click', () => {
-					const transition = mayStartViewTransition!({
-						update() {
-							transition.types.add('capture-new');
-							transition.types.delete('capture-old');
-							if (isExpanded) {
-								h1.innerText = 'Welcome to Our Platform';
-								img2.style.display = 'none';
-								img1.style.display = 'inline';
-								if (expand) expand.textContent = 'Expand the small image';
-							} else {
-								h1.innerText = 'Welcome';
-								img1.style.display = 'none';
-								img2.style.display = 'inline';
-								if (expand) expand.textContent = 'Shrink image';
-							}
-							document.body.classList.toggle('expanded', !isExpanded);
-
-							isExpanded = !isExpanded;
-							const header = document.querySelector('header');
-							header!.appendChild(header!.firstElementChild!);
-							console.log("header", header);
+								isExpanded = !isExpanded;
+								const header = document.querySelector('header');
+								header!.appendChild(header!.firstElementChild!);
 							},
-						types: ['image-expand', 'capture-old'],
+							types: ['image-expand', 'capture-old'],
+						});
+
+						transition.ready.then(() => {
+							document.documentElement.animate(
+								[
+									{ offset: 0, accentColor: 'black' },
+									{ offset: 1, accentColor: 'white' },
+								],
+								{ duration: 300, pseudoElement: '::view-transition-old(img)' }
+							);
+						});
+					});
+					expand?.addEventListener('mouseenter', () => {
+						if (expand) expand.style.transform = 'translateY(-2px)';
 					});
 
-					transition.ready.then(() => {
-						document.documentElement.animate(
-							[
-								{ offset: 0, accentColor: 'black' },
-								{ offset: 1, accentColor: 'white' },
-							],
-							{ duration: 300, pseudoElement: '::view-transition-old(img)' }
+					expand?.addEventListener('mouseleave', () => {
+						if (expand) expand.style.transform = 'translateY(0)';
+					});
+
+					shuffle?.addEventListener('click', () => {
+						const transition = mayStartViewTransition(
+							{
+								update() {
+									transition.types?.add('shuffle-new');
+									transition.types?.delete('shuffle-old');
+									for (let i = aside.children.length; i >= 0; i--) {
+										aside.appendChild(aside.children[~~(Math.random() * i)]);
+									}
+								},
+								types: ['shuffle-letters', 'shuffle-old'],
+							},
+							{ scope: aside, useTypesPolyfill: 'always' }
 						);
 					});
-				});
-				expand?.addEventListener('mouseenter', () => {
-					if (expand) expand.style.transform = 'translateY(-2px)';
-				});
-
-				expand?.addEventListener('mouseleave', () => {
-					if (expand) expand.style.transform = 'translateY(0)';
-				});
-
-				shuffle?.addEventListener('click', () => {
-					const transition = mayStartViewTransition(
-						{
-							update() {
-								transition.types.add('shuffle-new');
-								transition.types.delete('shuffle-old');
-								for (let i = aside.children.length; i >= 0; i--) {
-									aside.appendChild(aside.children[~~(Math.random() * i)]);
-								}
-							},
-							types: ['shuffle-letters', 'shuffle-old'],
-						},
-						{ scope: aside, useTypesPolyfill: 'always' }
-					);
-				});}
+				};
 
 				callNested();
 

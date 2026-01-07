@@ -114,3 +114,77 @@ export function isSorted(group: Group): boolean {
 			arr[idx - 1].name.replace(/^-vtbag-/, '').localeCompare(g.name.replace(/^-vtbag-/, '')) <= 0
 	);
 }
+
+export type SerializedGroupNode = {
+	name: string;
+	className: string;
+	ancestor: boolean;
+	children: number[];
+	preOrder?: number;
+	postOrder?: number;
+	bfs?: number;
+	oldViewTransitionGroup?: string;
+	oldViewTransitionClass?: string;
+	oldPseudoElement?: string;
+};
+
+export function serializeGroupGraph(root: Group): SerializedGroupNode[] {
+	const nodes: SerializedGroupNode[] = [];
+	const flattened = linear(root);
+	flattened.forEach((group) => {
+		const node: SerializedGroupNode = {
+			name: group.name,
+			className: group.className,
+			ancestor: group.ancestor,
+			children: group.children.map((child) => child.preOrder!),
+			preOrder: group.preOrder,
+			postOrder: group.postOrder,
+			bfs: group.bfs,
+			oldViewTransitionGroup: group.old!.viewTransitionGroup,
+			oldViewTransitionClass: group.old!.viewTransitionClass,
+			oldPseudoElement: group.old!.pseudoElement,
+		};
+		nodes.push(node);
+	});
+	return nodes;
+}
+
+export function deserializeGroupGraph(nodes: SerializedGroupNode[]): Group {
+	const groupMap = new Map<number, Group>();
+	nodes.forEach((node) => {
+		groupMap.set(node.preOrder!, {
+			name: node.name,
+			className: node.className,
+			ancestor: node.ancestor,
+			children: [],
+			preOrder: node.preOrder!,
+			postOrder: node.postOrder,
+			bfs: node.bfs,
+			old: deserializeSparseDOMNode(node),
+		});
+	});
+
+	nodes.forEach((node) => {
+		const id = node.preOrder!;
+		const group = groupMap.get(id)!;
+		group.children = node.children.map((childId) => {
+			const child = groupMap.get(childId)!;
+			child.parent = group;
+			return child;
+		});
+	});
+	return groupMap.get(1)!;
+}
+
+function deserializeSparseDOMNode(node?: SerializedGroupNode): SparseDOMNode | undefined {
+	if (!node) return undefined;
+	return {
+		viewTransitionName: 'serialized',
+		viewTransitionGroup: node.oldViewTransitionGroup,
+		viewTransitionClass: node.oldViewTransitionClass,
+		pseudoElement: node.oldPseudoElement,
+		style: {} as CSSStyleDeclaration,
+		element: document.createElement('div'),
+		children: [],
+	};
+}

@@ -14,7 +14,6 @@ declare namespace JSX {
 declare global {
 	interface VtbagIcAnimationsElement extends HTMLElement {
 		updateAnimationsHead(): unknown;
-		groupMaps: Map<HTMLElement, Map<string, Group>>;
 		movePseudos(): void;
 	}
 	interface VtbagIcIdentifyElement extends HTMLElement {
@@ -60,7 +59,7 @@ declare global {
 	}
 	interface VtbagIcViewTransitionCaptureElement extends HTMLElement {
 		calledOn: HTMLElement | Document;
-		init(calledOn: HTMLElement | Document, transitionRoot: HTMLElement): void;
+		init(calledOn: HTMLElement): void;
 	}
 	interface HTMLElementTagNameMap {
 		'vtbag-ic-animations': VtbagIcAnimationsElement;

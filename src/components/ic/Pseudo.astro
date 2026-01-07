@@ -80,6 +80,7 @@
 			for (const key of all ? allProperties : Object.keys(twinProperties!)) {
 				await (async () => {
 					let defaultValue = ICPseudo.defaultStyles!.getPropertyValue(key);
+					if (key === 'width'||key==='height') defaultValue='auto';
 					const value = this.#computedStyle!.getPropertyValue(key);
 					const priority = this.#computedStyle!.getPropertyPriority(key);
 					if (performance.now() - start > 10) {

@@ -7,43 +7,55 @@
 	import { minmax } from './minmax';
 
 	type CaptureEntry = {
-		old?: Element;
-		new?: Element;
+		oldNamedElement?: Element;
+		newNamedElement?: Element;
+		groupProperty?: string;
+		classProperty?: string;
 		children?: CaptureRecord;
 	};
 	type CaptureRecord = Record<string, CaptureEntry>;
 
 	class ICViewTransitionCapture extends ICElement {
-		calledOn: Document | HTMLElement | undefined;
-		transitionRoot: HTMLElement | undefined;
+		calledOn: HTMLElement | undefined;
+		allSet = false;
 
-		init(calledOn: Document | HTMLElement, transitionRoot: HTMLElement) {
+		init(calledOn: HTMLElement) {
 			this.calledOn = calledOn;
-			this.transitionRoot = transitionRoot;
+			this.allSet = true;
+			this.render();
 		}
 
 		protected render() {
-			const captures: CaptureRecord = {};
+			if (!this.allSet) return;
+			const captures: CaptureRecord = Object.create(null);
 			let current: CaptureRecord[] = [];
 
 			const dump = (elem: HTMLElement, group?: Group, level = 0) => {
 				if (!group) return;
 				const indent = '&nbsp;'.repeat(level * 2);
-				let record: CaptureRecord | undefined;
-				let entry: CaptureEntry | undefined;
+				let record: CaptureRecord;
+				let entry: CaptureEntry = undefined!;
 				if (group.parent) {
-					entry = {
-						children: {},
-					};
-					if (group.old) entry.old = group.old.element;
-					if (group.new) entry.new = group.new.element;
+					entry = Object.create(null);
+					entry.children = Object.create(null);
+
+					if (group.old) entry.oldNamedElement = group.old.element;
+					if (group.new) entry.newNamedElement = group.new.element;
+					// if there is a new element, its view-transition-class property dominates
+					if (group.old && group.old.viewTransitionClass !== 'none') entry.classProperty = group.old.viewTransitionClass;
+					if (group.new && group.new.viewTransitionClass !== 'none') entry.classProperty = group.new.viewTransitionClass;
+					if (entry.classProperty === undefined) delete entry.classProperty;
+					// if there is an old element, its view-transition-group property dominates
+					if (group.new && group.new.viewTransitionGroup !== 'normal') entry.groupProperty = group.new.viewTransitionGroup;
+					if (group.old && group.old.viewTransitionGroup !== 'normal') entry.groupProperty = group.old.viewTransitionGroup;
+					if (entry.groupProperty === undefined) delete entry.groupProperty;
 					record = current.at(-1)!;
 					record[group.name] = entry;
 
 					elem.insertAdjacentHTML(
 						'beforeend',
 						`<details>
-							<summary>${indent}<strong>${group.name}</strong></summary> 
+							<summary>${indent}<strong>${group.name}</strong>${entry.classProperty ? ` [classes: ${entry.classProperty}]` : ''}${entry.groupProperty ? ` [grouping: ${entry.groupProperty}]` : ''}</summary> 
 						${group.old ? `<div>${indent}<span class="highlight old">${deriveCSSSelector(group.old.element)}</span> (old)</div>` : ''}
 						${group.new ? `<div>${indent}<span class="highlight new">${deriveCSSSelector(group.new.element)}</span> (new)</div>` : ''}</details>`
 					);
@@ -83,7 +95,7 @@
 			const features = parent.__vtbag.ic2?.vtMap?.get(this.calledOn!);
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
-			const group: Group | undefined = moduleGroupMaps.get(this.transitionRoot!)?.get('@');
+			const group: Group | undefined = moduleGroupMaps.get(this.calledOn!)?.get('@');
 
 			this.insertAdjacentHTML(
 				'beforeend',
@@ -112,14 +124,23 @@
 				'color: light-dark(black, white); background-color: light-dark(#dfd, #242); padding: 2px 4px; border-radius: 4px; font-size: 1.2em;';
 
 			this.querySelector('.print')?.addEventListener('click', () => {
-				console.log(
-					'%cInspection Chamber%c\n\nView transition on %O was started from this code location:\n%s\nand captured the following elements\n%O',
-					styleOn,
-					'',
-					this.calledOn,
-					'\n' + features?.trace,
-					captures
-				);
+				if (!this.calledOn) {
+					console.log(
+						'%cInspection Chamber%c\n\nCross-document view transition captured the following elements\n%O',
+						styleOn,
+						'',
+						captures
+					);
+				} else {
+					console.log(
+						'%cInspection Chamber%c\n\nView transition on %O was started from this code location:\n%s\nand captured the following elements\n%O',
+						styleOn,
+						'',
+						this.calledOn,
+						'\n' + features?.trace,
+						captures
+					);
+				}
 			});
 			dump(content, group);
 		}
@@ -162,6 +183,7 @@
 					}
 					&.with-children::after {
 						content: ' (with children)';
+						color: #888;
 					}
 				}
 				.highlight {

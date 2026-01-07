@@ -6,7 +6,6 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 <script>
 	import { ICElement } from './ic-element';
 	import { ledGroup } from './led-group';
-	const captures = new Map<Element, VtbagIcViewTransitionCaptureElement>();
 	class ICCaptures extends ICElement {
 		protected render() {
 			this.classList.add('panel');
@@ -50,24 +49,19 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 			self.addEventListener('ic-after-capture-new', this.showCaptureResult);
 		}
 		showCaptureResult = (event: Event) => {
-			if (
-				(event.type === 'ic-after-capture-old') !==
-				this.querySelector<HTMLInputElement>('.capture-options input')?.checked
-			)
-				return;
+			const isOldCapture = event.type === 'ic-after-capture-old';
+			const showOnlyOldCapture = parent.__vtbag!.ic2!.captureOldOnly ?? false;
 
+			if (isOldCapture !== showOnlyOldCapture) return;
 			this.querySelector('.explainer')?.remove();
 
 			parent.__vtbag!.ic2!.vtMap?.keys().forEach((key) => {
-				const transitionRoot = key.ownerDocument ? key : key.documentElement;
-				captures.get(transitionRoot)?.remove();
 				this.insertAdjacentHTML(
 					'beforeend',
 					`<vtbag-ic-view-transition-capture></vtbag-ic-view-transition-capture>`
 				);
 				const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
-				captureElement.init(key, transitionRoot);
-				captures.set(transitionRoot, captureElement);
+				captureElement.init(key);
 			});
 		};
 	}

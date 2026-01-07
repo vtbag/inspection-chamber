@@ -20,9 +20,9 @@ import Window from '@/components/Window.astro';
 		<iframe
 			id="your-page"
 			src="/vtbag_inspection_chamber_src__/"
-			style="height: 100%; width: calc(100% - 385px)"></iframe>
+			style="height: 100%; width: calc(100% - 405px)"></iframe>
 		<div id="dragBar"></div>
-		<div id="dock" style="height: 100%; width: 360px;"></div>
+		<div id="dock" style="height: 100%; width: 380px;"></div>
 		<Window style="display: none; z-index:2">
 			<div slot="title" style="display: flex; flex-direction: row; align-items: center">
 				<img id="logo" width="32" height="32" slot="title" src="/bot1.png" />
@@ -233,7 +233,7 @@ import Window from '@/components/Window.astro';
 						}
 					}
 					let iframeWindow = document.querySelector<HTMLIFrameElement>('#content')!.contentWindow!;
-					self.__vtbag.ic2!.context = iframeWindow;
+					self.__vtbag.ic2!.chamberWindow = iframeWindow;
 				}
 				setupHooks(document.querySelector<HTMLIFrameElement>('#content')!.contentWindow!);
 				self.__vtbag.ic2!.intersectionObserver = new IntersectionObserver(
@@ -242,7 +242,7 @@ import Window from '@/components/Window.astro';
 							const link = (entry.target as HTMLElement).dataset.title;
 							if (!link) return;
 							self.__vtbag
-								.ic2!.context?.document.querySelector<VtbagIcPseudoElement>(
+								.ic2!.chamberWindow?.document.querySelector<VtbagIcPseudoElement>(
 									`vtbag-ic-pseudo[data-link="${link}"]`
 								)
 								?.onIntersectionChange(entry);

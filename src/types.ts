@@ -1,4 +1,4 @@
-import type { Features } from "./components/ic/features";
+import type { Features } from './components/ic/features';
 
 export type InspectionChamber = {
 	viewTransition?: ViewTransition | null | undefined;
@@ -17,23 +17,24 @@ export type InspectionChamber = {
 	pushBack?: HTMLDivElement | null;
 };
 export type IC2 = {
+	specialBackNavigation: boolean;
 	animationStart?: (event: AnimationEvent) => void;
 	animationStop?: (event: AnimationEvent) => void;
-	context?: Window;
+	chamberWindow?: Window;
 	monkey?:
-	| (<
-		T extends
-		| typeof Element.prototype.startViewTransition
-		| typeof document.startViewTransition,
-	>(
-		original: T
-	) => T)
-	| undefined;
+		| (<
+				T extends
+					| typeof Element.prototype.startViewTransition
+					| typeof document.startViewTransition,
+		  >(
+				original: T
+		  ) => T)
+		| undefined;
 	pagereveal?: (event: PageRevealEvent) => void;
 	pageswap?: (event: PageSwapEvent) => void;
 	document?: HTMLElement;
 	intersectionObserver?: IntersectionObserver;
-	vtMap?: Map<HTMLElement | Document, Features>;
+	vtMap?: Map<HTMLElement, Features>;
 	captureOldOnly?: boolean;
 	captureFreezeTypes?: boolean;
 	captureFrozen: ViewTransition[];

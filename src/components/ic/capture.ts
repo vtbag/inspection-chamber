@@ -1,7 +1,14 @@
 import { namedElements, allRoots } from '@/css';
 import { deriveCSSSelector } from './element-selector';
-import { nestGroups, numberGroupsDFS, type Group } from './group';
-import { linkToParent, print as printSDN, sort, type SparseDOMNode } from './sparse-dom';
+import {
+	deserializeGroupGraph,
+	nestGroups,
+	numberGroupsDFS,
+	serializeGroupGraph,
+	type Group,
+} from './group';
+import { linkToParent, sort, type SparseDOMNode } from './sparse-dom';
+import { transform } from 'typescript';
 
 const ids = new WeakMap<Element, string>();
 let idCount = 0;
@@ -13,7 +20,7 @@ function capture(
 	groups: Map<string, Group>,
 	oldOrNew: 'old' | 'new'
 ): string {
-	console.log("capture", oldOrNew, groups, transitionRoot)
+	console.log('capture', oldOrNew, groups, transitionRoot);
 	let sheet = '';
 	const seen = new Set<string>();
 	const elementMap = new Map<Element, SparseDOMNode>();
@@ -101,20 +108,42 @@ function capture(
 }
 
 ['ic-before-capture-old', 'ic-before-capture-new'].forEach((eventName) =>
-	self.addEventListener(eventName, (e) => {
-		const transitionRoot = (e as CustomEvent).detail.root;
+	self.addEventListener(eventName, (event) => {
+		const detail = (event as CustomEvent).detail;
+		const transitionRoot = detail.root;
+		const crossDocument = detail.features.crossDocument;
 		let groups;
 		let sheet;
+
 		if (eventName === 'ic-before-capture-old') {
 			groups = new Map<string, Group>([
 				['@', { name: '' + moduleGroupMaps.size, className: '', children: [], ancestor: false }],
 			]);
+			moduleGroupMaps.set(transitionRoot, groups);
 			sheet = capture(transitionRoot, groups, 'old');
+			if (crossDocument) {
+				moduleGroupMaps.set(undefined!, groups);
+				sessionStorage.setItem(
+					'vtbag-ic-old-root-group',
+					JSON.stringify(serializeGroupGraph(groups.get('@')!), null, 2)
+				);
+			}
 		} else {
+			if (crossDocument) {
+				moduleGroupMaps.set(
+					undefined!,
+					new Map<string, Group>([
+						[
+							'@',
+							deserializeGroupGraph(JSON.parse(sessionStorage.getItem('vtbag-ic-old-root-group')!)),
+						],
+					])
+				);
+				moduleGroupMaps.set(transitionRoot, moduleGroupMaps.get(undefined!)!);
+			}
 			groups = moduleGroupMaps.get(transitionRoot)!;
 			sheet = capture(transitionRoot, groups, 'new');
 		}
-		moduleGroupMaps.set(transitionRoot, groups);
 
 		const head = transitionRoot.ownerDocument.head;
 		head.insertAdjacentHTML(
@@ -124,9 +153,10 @@ function capture(
 	})
 );
 
-['ic-after-capture-old', 'ic-after-capture-new'].forEach((event) =>
-	self.addEventListener(event, (e) => {
-		const root = (e as CustomEvent).detail.root;
+['ic-after-capture-old', 'ic-after-capture-new'].forEach((eventName) =>
+	self.addEventListener(eventName, (event) => {
+		const detail = (event as CustomEvent).detail;
+		const root = detail.root;
 		root.ownerDocument.head
 			.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(root)?.get('@')?.name}`)
 			?.remove();
@@ -139,5 +169,5 @@ self.addEventListener('ic-about-to-finish', (e) => {
 	allRoots.delete(transitionRoot);
 	parent.__vtbag.ic2!.vtMap!.delete(transitionRoot);
 	transitionRoot.ownerDocument.documentElement === transitionRoot &&
-		parent.__vtbag.ic2!.vtMap!.delete(transitionRoot.ownerDocument);
+		parent.__vtbag.ic2!.vtMap!.delete(undefined!);
 });

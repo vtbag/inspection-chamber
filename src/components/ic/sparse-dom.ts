@@ -1,5 +1,3 @@
-import { deriveCSSSelector } from './element-selector';
-
 export type SparseDOMNode = {
 	viewTransitionName: string;
 	viewTransitionGroup?: string;

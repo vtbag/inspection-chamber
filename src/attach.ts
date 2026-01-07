@@ -47,7 +47,7 @@ function setup() {
 		return;
 	}
 	let target = parent;
-	while (target.__vtbag?.ic2 && target.__vtbag?.ic2?.context === self) {
+	while (target.__vtbag?.ic2 && target.__vtbag?.ic2?.chamberWindow === self) {
 		if (target === target.parent) break;
 		target = target.parent;
 	}
