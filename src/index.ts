@@ -53,7 +53,7 @@ function initSpecimen() {
 		const originalStartViewTransition = top!.document.startViewTransition;
 		if (!originalStartViewTransition) return;
 
-		const rewrite = (cb?: UpdateCallback) => async () => {
+		const rewrite = (cb?: ViewTransitionUpdateCallback) => async () => {
 			await Promise.resolve();
 			cb && (await cb());
 			pageReveal();
@@ -61,16 +61,16 @@ function initSpecimen() {
 
 		if (CSS.supports('selector(:active-view-transition-type(x))')) {
 			// level 2 signature
-			frameDocument.startViewTransition = (obj: StartViewTransitionParameter | UpdateCallback) => {
-				const param: StartViewTransitionParameter = { types: [], update: undefined };
+			frameDocument.startViewTransition = (obj?: ViewTransitionUpdateCallback | StartViewTransitionOptions) => {
+				const param: StartViewTransitionOptions = { types: undefined, update: undefined };
 				('@vtbag');
 				pageSwap();
 
 				if (!obj || obj instanceof Function) {
 					param.update = rewrite(obj);
 				} else {
-					param.types = obj.types;
-					param.update = rewrite(obj.update);
+					param.types = obj.types ?? undefined;
+					param.update = rewrite(obj.update ?? undefined);
 				}
 				return (inspectionChamber.viewTransition = originalStartViewTransition.call(
 					frameDocument,
@@ -79,7 +79,7 @@ function initSpecimen() {
 			};
 		} else {
 			// level 1 signature
-			frameDocument.startViewTransition = (cb: UpdateCallback) => {
+			frameDocument.startViewTransition = (cb: ViewTransitionUpdateCallback) => {
 				'@vtbag';
 				pageSwap();
 				return (inspectionChamber.viewTransition = originalStartViewTransition.call(
@@ -111,7 +111,7 @@ function pageReveal() {
 
 function beforeUpdateCallbackDone() {
 	setVtActive();
-	const root = top!.document.documentElement;
+	// const _root = top!.document.documentElement;
 	const viewTransition = inspectionChamber.viewTransition!;
 	const modusFunction: Record<Modus, () => void> = {
 		bypass: () => {},

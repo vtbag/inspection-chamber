@@ -54,12 +54,12 @@ export function initDragging(
 
 	draggable.ownerDocument.addEventListener(
 		'mouseup',
-		(e) => dragged === draggable && stopDragging(),
+		(_e) => dragged === draggable && stopDragging(),
 		{ passive: true }
 	);
 	draggable.ownerDocument.addEventListener(
 		'touchend',
-		(e) => dragged === draggable && stopDragging(),
+		(_e) => dragged === draggable && stopDragging(),
 		{ passive: true }
 	);
 }

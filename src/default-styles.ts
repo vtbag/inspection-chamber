@@ -1,6 +1,7 @@
 const allProps: string[] = [];
 const redundantProps = ['top', 'left', 'right', 'bottom'];
-const basicProps = [
+/*
+const _basicProps = [
 	'animation',
 	'direction',
 	'height',
@@ -15,7 +16,7 @@ const basicProps = [
 	'writing-mode',
 	'z-index',
 ];
-
+*/
 let defaultStyleValues: Record<string, string>;
 
 export function setNonDefaultProps(elemStyle: CSSStyleDeclaration, style: CSSStyleDeclaration) {

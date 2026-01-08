@@ -1,6 +1,6 @@
 import { updateLiveValues } from '../animations';
 import { getModus } from './modus';
-import { showSomeAnimations, THROTTLING_DELAY, updateNameVisibility } from './names';
+import { THROTTLING_DELAY, updateNameVisibility } from './names';
 import { vtActive } from './transition';
 
 export function controlledPlay() {

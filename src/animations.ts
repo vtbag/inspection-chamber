@@ -1,4 +1,4 @@
-import { getNonDefaultPropNames, getNonDefaultProps } from './default-styles';
+import { getNonDefaultPropNames } from './default-styles';
 import { control, namesOfAnimation } from './panel/full-control';
 import { plugInPanel } from './panel/inner';
 import { getModus } from './panel/modus';
@@ -192,7 +192,7 @@ export function listAnimations(name: string) {
 					a.effect?.pseudoElement === `::view-transition-${pseudo}(${name})`
 				);
 			})
-			.forEach((animation, idx) => {
+			.forEach((animation) => {
 				const animationString = (a: Animation) => {
 					const t = a.effect?.getTiming();
 					return `${t?.duration || '0'}ms ${t?.easing ?? ''}  ${t?.delay ?? '0'}ms   ${t?.iterations ?? ''} ${t?.direction ?? ''} ${t?.fill ?? ''} ${a.playState}`;

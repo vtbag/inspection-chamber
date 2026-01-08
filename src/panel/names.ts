@@ -26,7 +26,7 @@ export function updateNames(
 		top!.document.querySelector<HTMLElement>('#vtbag-ui-names div')!.style.display =
 			rightTransitionNames ? 'flex' : 'none';
 		const list = top!.document.querySelector('#vtbag-ui-names > ol')!;
-		(rightTransitionNames ? names! : [...leftTransitionNames].sort()).forEach((name, idx) => {
+		(rightTransitionNames ? names! : [...leftTransitionNames].sort()).forEach((name) => {
 			const li = top!.document.createElement('li');
 			li.innerText = name;
 			if (rightTransitionNames && leftTransitionNames.has(name)) {
