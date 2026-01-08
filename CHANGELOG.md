@@ -1,6 +1,12 @@
 # @vtbag/inspection-chamber
 
-## 1.0.22 - 2025-0709
+## 1.0.23 - 2026-01-08
+
+### Patch Changes
+
+- 0b590c4: Fixes an issue, where changing visibility of pseudo-elements did not work for cross-document view transitions.
+
+## 1.0.22 - 2025-07-09
 
 ### Patch Changes
 
