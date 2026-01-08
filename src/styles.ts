@@ -11,6 +11,21 @@ export function setStyles(
 			prepend ? 'afterbegin' : 'beforeend',
 			`<style id="${id}">${styles}</style>`
 		);
+
+	if (top!.__vtbag.inspectionChamber!.crossDocument) {
+		const animations = doc.getAnimations();
+		const pivot = animations.find(
+			(a) => a.playState === 'paused' && a.effect?.pseudoElement?.startsWith('::view-transition')
+		);
+		if (pivot)
+			animations.forEach((a) => {
+				const now = a.currentTime;
+				a.currentTime === 0 ? a.currentTime++ : (a.currentTime as number)--;
+				requestAnimationFrame(() => {
+					a.currentTime = now;
+				});
+			});
+	}
 }
 
 export function addFrames(show: boolean, namedOnly: boolean) {

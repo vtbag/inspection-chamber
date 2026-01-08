@@ -56,12 +56,15 @@ function initSpecimen() {
 		const rewrite = (cb?: ViewTransitionUpdateCallback) => async () => {
 			await Promise.resolve();
 			cb && (await cb());
+			top!.__vtbag.inspectionChamber!.crossDocument = false;
 			pageReveal();
 		};
 
 		if (CSS.supports('selector(:active-view-transition-type(x))')) {
 			// level 2 signature
-			frameDocument.startViewTransition = (obj?: ViewTransitionUpdateCallback | StartViewTransitionOptions) => {
+			frameDocument.startViewTransition = (
+				obj?: ViewTransitionUpdateCallback | StartViewTransitionOptions
+			) => {
 				const param: StartViewTransitionOptions = { types: undefined, update: undefined };
 				('@vtbag');
 				pageSwap();
@@ -99,6 +102,7 @@ function pageSwap() {
 function prePageReveal(e: Event) {
 	inspectionChamber.viewTransition =
 		('viewTransition' in e && (e.viewTransition as ViewTransition)) || undefined;
+	top!.__vtbag.inspectionChamber!.crossDocument = true;
 	pageReveal();
 }
 function pageReveal() {

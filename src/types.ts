@@ -12,6 +12,7 @@ export type InspectionChamber = {
 	mainPanel?: HTMLDivElement;
 	innerPanel?: HTMLDivElement;
 	pushBack?: HTMLDivElement | null;
+	crossDocument?: boolean;
 };
 
 declare global {
