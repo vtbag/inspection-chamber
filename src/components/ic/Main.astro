@@ -25,15 +25,17 @@ import Captures from './Captures.astro';
 				<vtbag-ic-analyzer></vtbag-ic-analyzer>
 			</div>
 			`;
-			this.addEventListener('ic-analyzer-ready', () =>
-				this.insertAdjacentHTML(
-					'beforeend',
-					this.querySelector<HTMLElement>('vtbag-ic-analyzer input[value="animation"]:checked')
-						? '<vtbag-ic-animations></vtbag-ic-animations>'
-						: '<vtbag-ic-captures></vtbag-ic-captures>'
-				)
+			this.insertAdjacentHTML(
+				'beforeend',
+				this.querySelector<HTMLElement>('vtbag-ic-analyzer input[value="animation"]:checked')
+					? '<vtbag-ic-animations></vtbag-ic-animations>'
+					: '<vtbag-ic-captures></vtbag-ic-captures>'
 			);
-			this.querySelector("vtbag-ic-analyzer")?.addEventListener('change', parent.location.reload.bind(parent.location));
+
+			this.querySelector('vtbag-ic-analyzer')?.addEventListener(
+				'change',
+				parent.location.reload.bind(parent.location)
+			);
 		}
 	}
 	customElements.define('vtbag-ic-main', ICMain);

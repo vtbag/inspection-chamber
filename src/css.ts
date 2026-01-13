@@ -51,7 +51,7 @@ function namedElementsOfSheet(sheet: CSSStyleSheet) {
 		if (sheet.disabled) return;
 		[...sheet.cssRules].forEach((rule) => namedElementsOfRule(rule));
 	} catch (e) {
-		console.error('Could not access stylesheet', sheet, e);
+		console.info('[inspection-chamber] Could not access (cross-origin?) stylesheet', sheet, e);
 	}
 }
 
@@ -98,14 +98,14 @@ function namedElementsOfRule(rule: CSSRule, keyframeName?: string) {
 	if (name === 'CSSKeyframeRule')
 		return frameNamedElements((rule as CSSKeyframeRule).style, keyframeName!);
 
-	console.error('Unknown CSSRule', rule);
+	console.error('[inspection-chamber] Unknown CSSRule', rule);
 }
 
 function frameNamedElements(style: CSSStyleDeclaration, keyframeName: string) {
 	for (let i = 0; i < style.length; ++i) {
 		if (style.item(i).startsWith('view-transition-')) {
 			animations.add(keyframeName);
-			console.log('animation', keyframeName);
+			console.warn('[inspection-chamber] animation', keyframeName);
 		}
 	}
 }

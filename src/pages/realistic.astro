@@ -8,12 +8,19 @@
 		<meta charset="UTF-8" />
 		<link rel="expect" href="#body" blocking="render" />
 		<style is:inline>
+			:root[data-page='0'] {
+				--realistic-types: image-expand capture-old;
+			}
+			:root[data-page='1'] {
+				--realistic-types: image-expand capture-new;
+			}
 			@view-transition {
 				navigation: auto;
+				types: foo;
 			}
 			:root,
 			body {
-				margin: 0;
+				margin: 0;	
 				padding: 0;
 				scrollbar-gutter: stable;
 			}
@@ -208,6 +215,14 @@
 				const num = parseInt(new URLSearchParams(location.search).get('cacheBust') ?? '0', 10);
 				link.href = '/realistic/?cacheBust=' + (num + 1);
 				if (num && num & 1) {
+					document.head.insertAdjacentHTML(
+						'beforeend',
+						`
+						<style>@view-transition{
+							navigation: auto;
+							types: cross-document image-expand capture-new;
+						}</style>`
+					);
 					h1.innerText = 'Welcome';
 					img1.style.display = 'none';
 					img2.style.display = 'inline';
@@ -216,6 +231,15 @@
 
 					const header = document.querySelector('header');
 					header.appendChild(header.firstElementChild);
+				} else {
+					document.head.insertAdjacentHTML(
+						'beforeend',
+						`
+						<style>@view-transition{
+							navigation: auto;
+							types: cross-document image-expand capture-old;
+						}</style>`
+					);
 				}
 			</script>
 			<aside>

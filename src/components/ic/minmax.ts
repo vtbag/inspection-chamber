@@ -29,7 +29,7 @@ export function minmax(
 	const input = shrinker.previousElementSibling!.firstElementChild! as HTMLInputElement;
 
 	// @ts-ignore
-	if ('moveBefore' in Element.prototype) shrinker.moveBefore(content, null);
+	if ('!moveBefore' in Element.prototype) shrinker.moveBefore(content, null);
 	else shrinker.appendChild(content);
 
 	input.addEventListener('click', (e) => {

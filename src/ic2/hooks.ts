@@ -1,11 +1,9 @@
 import type { Features } from '@/components/ic/features';
-import { voidElementNames } from 'astro/runtime/server/index.js';
 
 export function setupHooks(chamberWindow: Window) {
-	console.log('setupHooks');
+	console.log('[inspection chamber] setupHooks');
 	self.__vtbag ??= {};
 	self.__vtbag.ic2 ??= {
-		captureFrozen: [],
 		chamberWindow,
 		pageswap,
 		pagereveal,
@@ -13,63 +11,78 @@ export function setupHooks(chamberWindow: Window) {
 		animationStart,
 		animationStop,
 		vtMap: new Map(),
-		specialBackNavigation: false,
+		crossDocumentBackNavigation: false,
 	};
 }
 
 function pageswap(event: PageSwapEvent) {
-
-	console.log('pageswap hook');
-	if (parent.__vtbag.ic2!.specialBackNavigation) {
-		console.log('Skipping pageswap for special back navigation');
+	const transition = event.viewTransition;
+	if (!transition) return;
+	if (parent.__vtbag.ic2!.crossDocumentBackNavigation) {
 		event.stopImmediatePropagation();
 		return;
 	}
-	const transition = event.viewTransition;
 	const doc = (event.target as Window).document;
 	const root = doc.documentElement;
-	if (transition) {
-		if (!('activeViewTransition' in doc)) doc.activeViewTransition = transition;
-		requestAnimationFrame(() => {
-			const features = crossDocumentFeatures();
-			beforeCaptureOld(root, transition!, features);
-			parent.__vtbag.ic2!.captureOldOnly || setTimeout(() => afterCaptureOld(root, transition!, features));
-		});
-	}
+
+	if (!('activeViewTransition' in doc)) doc.activeViewTransition = transition;
+	requestAnimationFrame(() => {
+		const features = crossDocumentFeatures();
+		beforeCaptureOld(root, transition!, features);
+		parent.__vtbag.ic2!.captureOldOnly ||
+			setTimeout(() => afterCaptureOld(root, transition!, features));
+	});
 }
 
 async function pagereveal(event: PageRevealEvent) {
-	console.log('pagereveal hook');
 	const transition = event.viewTransition;
+	if (!transition) return;
 	const doc = (event.target as Window).document;
 	const root = doc.documentElement;
 	const features = crossDocumentFeatures();
 
-	if (parent.__vtbag.ic2!.specialBackNavigation) {
-		console.log('Terminating special back navigation');
-		event.viewTransition?.skipTransition();
-		parent.__vtbag.ic2!.specialBackNavigation = false;
+	if (parent.__vtbag.ic2!.crossDocumentBackNavigation) {
+		if (parent.__vtbag.ic2!.captureFreezeTypes) {
+			transition.ready.then(() =>
+				root.ownerDocument.getAnimations().forEach((animation) => {
+					if (animation.effect?.target === root) {
+						animation.pause();
+						animation.currentTime = animation.effect.getComputedTiming().endTime!;
+					}
+				})
+			);
+		} else event.viewTransition?.skipTransition();
+		parent.__vtbag.ic2!.crossDocumentBackNavigation = false;
 		event.stopImmediatePropagation();
 		afterCaptureOld(root, transition!, features);
-
 		return;
 	}
-	if (transition) {
-		if (parent.__vtbag.ic2!.captureOldOnly) {
-			console.log('Capturing old only - going back in history');
-			(event.target as Window).document.documentElement.style.opacity = '0';
-			history.back();
-			parent.__vtbag.ic2!.specialBackNavigation = true;
-			event.stopImmediatePropagation();
-			return;
-		};
 
-		if (!('activeViewTransition' in doc)) doc.activeViewTransition = transition;
-		transition.ready.finally(() => afterCaptureNew(root, transition, features));
-		transition.finished.finally(() => animationsWillFinish(root, transition, features));
-		await Promise.resolve(true);
-		beforeCaptureNew(root, transition, features);
+	if (parent.__vtbag.ic2!.captureOldOnly) {
+		(event.target as Window).document.documentElement.style.opacity = '0';
+		parent.__vtbag.ic2!.crossDocumentBackNavigation = true;
+		event.stopImmediatePropagation();
+		history.back();
+		return;
 	}
+
+	if (!('activeViewTransition' in doc)) doc.activeViewTransition = transition;
+	transition.ready.finally(() => {
+		afterCaptureNew(root, transition, features);
+		if (
+			parent.__vtbag.ic2!.chamberWindow?.sessionStorage.getItem('ic-analyzer-mode') === 'capture'
+		) {
+			root.ownerDocument.getAnimations().forEach((animation) => {
+				if (animation.effect?.target === root) {
+					if (parent.__vtbag.ic2!.captureFreezeTypes) animation.pause();
+					animation.currentTime = animation.effect.getComputedTiming().endTime!;
+				}
+			});
+		}
+	});
+	transition.finished.finally(() => animationsWillFinish(root, transition, features));
+	await Promise.resolve(true);
+	beforeCaptureNew(root, transition, features);
 }
 
 function monkey<
@@ -145,19 +158,23 @@ function monkey<
 	} as T;
 }
 
-function deactivate(transition: ViewTransition, transitionRoot: HTMLElement, document: Document, features: Features) {
+function deactivate(
+	transition: ViewTransition,
+	transitionRoot: HTMLElement,
+	document: Document,
+	features: Features
+) {
 	{
+		(transitionRoot as any).vtbagFlushUpdates?.();
+
 		transition.ready.then(() => {
 			const freeze = parent.__vtbag.ic2!.captureFreezeTypes;
-			if (freeze) parent.__vtbag.ic2!.captureFrozen.push(transition);
 			document.getAnimations().forEach((animation) => {
 				if (animation.effect?.target === transitionRoot) {
 					if (freeze) {
 						animation.pause();
-						animation.currentTime = animation.effect.getComputedTiming().endTime!;
 					}
-				} else {
-					animation.finish();
+					animation.currentTime = animation.effect.getComputedTiming().endTime!;
 				}
 			});
 			afterCaptureNew(transitionRoot, transition, features);
@@ -169,16 +186,15 @@ function deactivate(transition: ViewTransition, transitionRoot: HTMLElement, doc
 		return new Proxy(transition, {
 			get(_, prop) {
 				if (prop === 'ready' || prop === 'finished' || prop === 'updateCallbackFinished') {
-					return new Promise<void>(() => { });
+					return new Promise<void>(() => {});
 				}
 				if (prop === 'waitUntil') {
-					return (_: Promise<unknown>) => { };
+					return (_: Promise<unknown>) => {};
 				}
 				return Reflect.get(transition, prop);
 			},
 		});
 	}
-
 }
 
 function crossDocumentFeatures() {
@@ -210,49 +226,47 @@ function animationStop(event: AnimationEvent) {
 }
 
 function beforeCaptureOld(root: HTMLElement, viewTransition: ViewTransition, features: Features) {
-	console.log('beforeCaptureOld start');
 	features.oldTypes = new Set(viewTransition.types);
 	self.__vtbag.ic2!.chamberWindow!.dispatchEvent(
 		new CustomEvent('ic-before-capture-old', {
 			detail: { root, viewTransition, features },
 		})
 	);
-	console.log('beforeCaptureOld complete');
 }
+
 function afterCaptureOld(root: HTMLElement, viewTransition: ViewTransition, features: Features) {
-	console.log('afterCaptureOld start');
 	self.__vtbag.ic2!.chamberWindow!.dispatchEvent(
 		new CustomEvent('ic-after-capture-old', {
 			detail: { root, viewTransition, features },
 		})
 	);
-	console.log('afterCaptureOld complete');
 }
+
 function beforeCaptureNew(root: HTMLElement, viewTransition: ViewTransition, features: Features) {
-	console.log('beforeCaptureNew start');
 	features.newTypes = new Set(viewTransition.types);
 	self.__vtbag.ic2!.chamberWindow!.dispatchEvent(
 		new CustomEvent('ic-before-capture-new', {
 			detail: { root, viewTransition, features },
 		})
 	);
-	console.log('beforeCaptureNew complete');
 }
+
 function afterCaptureNew(root: HTMLElement, viewTransition: ViewTransition, features: Features) {
-	console.log('afterCaptureNew start');
 	self.__vtbag.ic2!.chamberWindow!.dispatchEvent(
 		new CustomEvent('ic-after-capture-new', {
 			detail: { root, viewTransition, features },
 		})
 	);
-	console.log('afterCaptureNew complete');
 }
-function animationsWillFinish(root: HTMLElement, viewTransition: ViewTransition, features: Features) {
-	console.log('animationsWillFinish');
+
+function animationsWillFinish(
+	root: HTMLElement,
+	viewTransition: ViewTransition,
+	features: Features
+) {
 	self.__vtbag.ic2!.chamberWindow!.dispatchEvent(
 		new CustomEvent('ic-about-to-finish', {
 			detail: { root, viewTransition, features },
 		})
 	);
-	console.log('animationsWillFinish complete');
 }

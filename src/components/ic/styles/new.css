@@ -1,0 +1,5 @@
+@layer reset, theme, basics, components, overrides;
+
+@import './ic-reset.css';
+@import './ic-theme.css';
+@import './ic-basics.css';

@@ -5,7 +5,7 @@ if (parent !== self) {
 } else {
 	// This is the top window
 	// Nothing is urgent here and we do not want to mess with loading.
-	console.log('top window detected, scheduling document replacement');
+	console.info('[inspection-chamber] Top window detected, scheduling document replacement');
 	requestIdleCallback(() => {
 		replaceDocument(location.href, document.title);
 	});
@@ -33,7 +33,7 @@ async function replaceDocument(href: string, title: string) {
 
 function setup() {
 	const reload = () => {
-		console.log('Waiting for parent to be ready', parent?.__vtbag);
+		console.info('[inspection-chamber] Waiting for parent context to get ready', parent?.__vtbag);
 		setTimeout(() => {
 			const iframe = window.frameElement as HTMLIFrameElement;
 			if (iframe.src) iframe.contentWindow?.location.reload();
@@ -41,7 +41,7 @@ function setup() {
 		}, 500);
 	};
 
-	console.log('init', parent.__vtbag);
+	console.info('[inspection-chamber] checking parent context', parent.__vtbag);
 	if (!parent.__vtbag?.ic2) {
 		reload();
 		return;
@@ -66,8 +66,8 @@ function setup() {
 	if (originalDocumentStartViewTransition) {
 		document.startViewTransition = target.__vtbag.ic2.monkey!(originalDocumentStartViewTransition);
 	}
-	addEventListener('pageswap', target.__vtbag.ic2.pageswap!);
-	addEventListener('pagereveal', target.__vtbag.ic2.pagereveal!);
+	addEventListener('pageswap', target.__vtbag.ic2.pageswap!, { capture: true });
+	addEventListener('pagereveal', target.__vtbag.ic2.pagereveal!, { capture: true });
 	addEventListener('animationstart', target.__vtbag.ic2.animationStart!);
 	addEventListener('animationend', target.__vtbag.ic2.animationStop!);
 }

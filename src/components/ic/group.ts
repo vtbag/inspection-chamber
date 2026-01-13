@@ -1,3 +1,4 @@
+import { deriveCSSSelector } from './element-selector';
 import { type SparseDOMNode } from './sparse-dom';
 
 export type Group = {
@@ -114,6 +115,17 @@ export function isSorted(group: Group): boolean {
 			arr[idx - 1].name.replace(/^-vtbag-/, '').localeCompare(g.name.replace(/^-vtbag-/, '')) <= 0
 	);
 }
+
+/* ---------------------------------------------------------------- */
+
+export function relocate(group: Group, document: Document) {
+	group.children.forEach((child) => relocate(child, document));
+	if (group.old && group.old.element.ownerDocument !== document)
+		group.old.element = document.querySelector(deriveCSSSelector(group.old.element))!;
+	if (group.new && group.new.element.ownerDocument !== document)
+		group.new.element = document.querySelector(deriveCSSSelector(group.new.element))!;
+}
+/* ---------------------------------------------------------------- */
 
 export type SerializedGroupNode = {
 	name: string;

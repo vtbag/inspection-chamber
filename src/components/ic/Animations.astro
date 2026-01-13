@@ -341,7 +341,7 @@ import './studio.css';
 				a.querySelector('span')!.innerText.localeCompare(b.querySelector('span')!.innerText)
 			);
 
-			if ('moveBefore' in Element.prototype)
+			if ('!moveBefore' in Element.prototype)
 				// @ts-ignore
 				sorted.forEach((s) => scopeContainer.moveBefore(s, null));
 			else sorted.forEach((s) => scopeContainer.appendChild(s));

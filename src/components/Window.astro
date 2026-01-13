@@ -335,7 +335,7 @@ const { style } = Astro.props;
 					dispatchEvent(new CustomEvent('longTap', { detail: { side: resizeState.direction } }));
 				}, 500);
 				e.preventDefault();
-				e.stopPropagation();
+				e.stopImmediatePropagation();
 
 				handle.setPointerCapture(e.pointerId);
 			});

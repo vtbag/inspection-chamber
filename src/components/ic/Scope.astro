@@ -109,7 +109,6 @@ import Identify from '@/components/ic/Identify.astro';
 		}
 
 		disconnectedCallback() {
-			this.#animations = [];
 			this.#resizeObserver?.disconnect();
 			this.#intersectionObserver?.disconnect();
 		}
@@ -134,7 +133,6 @@ import Identify from '@/components/ic/Identify.astro';
 					} else {
 						if (this.#raf !== undefined) {
 							cancelAnimationFrame(this.#raf);
-							console.log('Canceled RAF due to intersection');
 							this.#raf = undefined;
 						}
 					}
@@ -335,6 +333,7 @@ import Identify from '@/components/ic/Identify.astro';
 				this.#animations[0].currentTime as number, // todo: better minimum of all animations?
 				(e) => {
 					const time = parseInt((e.target as HTMLInputElement).value, 10);
+
 					this.animations.forEach(
 						(a) => (a as Animation & { stopped?: boolean }).stopped || (a.currentTime = time)
 					);
@@ -516,7 +515,6 @@ ${styles.join('\n')}
 				}
 				if (this.#raf !== undefined) {
 					cancelAnimationFrame(this.#raf);
-					console.log('Canceled RAF');
 					this.#raf = undefined;
 				}
 				if (this.querySelector<HTMLInputElement>(`input[value="run"]:checked`)) {

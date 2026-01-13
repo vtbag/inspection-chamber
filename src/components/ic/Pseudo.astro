@@ -3,6 +3,7 @@
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import './toggle.css';
 	import { minmax } from './minmax';
+	import { ICElement } from './ic-element';
 
 	const twinProperties = {
 		position: '',
@@ -39,7 +40,7 @@
 			!p.includes('-inline')
 	);
 
-	class ICPseudo extends HTMLElement {
+	class ICPseudo extends ICElement {
 		#computedStyle: CSSStyleDeclaration | undefined;
 		#animations: Animation[] | undefined;
 		id = '';
@@ -49,18 +50,11 @@
 		#twin?: HTMLDivElement;
 		static defaultStyles: CSSStyleDeclaration | undefined;
 
-		constructor() {
-			super();
-		}
-
-		connectedCallback() {
-			this.render();
-		}
 
 		connectedMoveCallback() {}
 
-		disconnectedCallback() {
-			parent.__vtbag.ic2?.intersectionObserver?.unobserve(this.#twin!);
+		tearDown() {
+			this.#twin && parent.__vtbag.ic2?.intersectionObserver?.unobserve(this.#twin);
 			this.#twin?.remove();
 		}
 
@@ -80,7 +74,7 @@
 			for (const key of all ? allProperties : Object.keys(twinProperties!)) {
 				await (async () => {
 					let defaultValue = ICPseudo.defaultStyles!.getPropertyValue(key);
-					if (key === 'width'||key==='height') defaultValue='auto';
+					if (key === 'width' || key === 'height') defaultValue = 'auto';
 					const value = this.#computedStyle!.getPropertyValue(key);
 					const priority = this.#computedStyle!.getPropertyPriority(key);
 					if (performance.now() - start > 10) {
@@ -105,7 +99,7 @@
 						if (Math.abs(w - w2) < 2 && Math.abs(h - h2) < 2) defaultValue = value;
 					}
 					if (value !== defaultValue && (value === 'auto' || value === 'normal'))
-						console.log(key, defaultValue, value);
+						console.error(key, defaultValue, value);
 					result.push({ key, value, defaultValue, priority });
 				})();
 			}
@@ -124,54 +118,55 @@
 			return (this.#animations ??=
 				this.icScope?.animations.filter((a) => a.effect?.pseudoElement === this.name()) || []);
 		}
+
 		render() {
-			if (this.isConnected) {
-				const kind = this.getAttribute('name');
-				this.icGroup = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
-				if (kind === '::view-transition') {
-					this.icParentPseudo = undefined;
-					this.icGroup = undefined;
-					this.icScope = this.closest('vtbag-ic-scope') as VtbagIcScopeElement;
-				} else {
-					this.icParentPseudo =
-						kind === 'group'
-							? undefined
-							: (this.parentElement!.closest('vtbag-ic-pseudo') as VtbagIcPseudoElement);
+			const kind = this.getAttribute('name');
+			this.icGroup = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
+			if (kind === '::view-transition') {
+				this.icParentPseudo = undefined;
+				this.icGroup = undefined;
+				this.icScope = this.closest('vtbag-ic-scope') as VtbagIcScopeElement;
+			} else {
+				this.icParentPseudo =
+					kind === 'group'
+						? undefined
+						: (this.parentElement!.closest('vtbag-ic-pseudo') as VtbagIcPseudoElement);
 
-					this.icScope = this.icGroup.scope;
-				}
-				const scope = this.icScope.element;
-				this.id = `${this.icScope.scopeId}-${gid(this.icGroup?.group)}-${kind}`;
+				this.icScope = this.icGroup.scope;
+			}
+			const scope = this.icScope.element;
+			this.id = `${this.icScope.scopeId}-${gid(this.icGroup?.group)}-${kind}`;
 
-				// todo: simplify
-				this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(
-					scope,
-					this.name(true)
-				);
+			// todo: simplify
+			this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(
+				scope,
+				this.name(true)
+			);
 
-				const twins = parent.document.querySelector('#twins')!;
-				const defaultDiv = twins.querySelector<HTMLDivElement>('#default')!;
-				ICPseudo.defaultStyles = twins.ownerDocument.defaultView?.getComputedStyle(defaultDiv)!;
+			const twins = parent.document.querySelector('#twins')!;
+			const defaultDiv = twins.querySelector<HTMLDivElement>('#default')!;
+			ICPseudo.defaultStyles = twins.ownerDocument.defaultView?.getComputedStyle(defaultDiv)!;
 
-				// potentially "slotted" elements
+			// potentially "slotted" elements
 
-				const framed = scope.ownerDocument.body.querySelector(`#vtbag-frame-${this.id}`);
-				this.insertAdjacentHTML(
-					'afterbegin',
-					`<span class="pseudo-head"><span class="name">${this.getAttribute('name') || '::view-transition'}</span>
+			const framed = scope.ownerDocument.body.querySelector(`#vtbag-frame-${this.id}`);
+			this.insertAdjacentHTML(
+				'afterbegin',
+				`<span class="pseudo-head"><span class="name">${this.getAttribute('name') || '::view-transition'}</span>
 					<label class="toggle frame ${this.getAttribute('name')}"><input type="checkbox" ${framed ? 'checked' : ''}>🖽</label><label class="toggle visibility"><input type="checkbox" checked>◎</label
 						>${
 							this.getAttribute('name') === 'group'
 								? `<label class="toggle solo"><input type="checkbox">s</label>`
 								: ''
 						}</span>`
-				);
-				this.frame();
-				this.visibility();
-				this.solo();
-				this.groupChildren();
-			}
+			);
+			this.frame();
+			this.visibility();
+			this.solo();
+			this.groupChildren();
 		}
+
+
 		createTwin() {
 			const twins = parent.document.querySelector<HTMLDivElement>('#twins')!;
 			this.#twin = twins.ownerDocument.createElement('div')!;
@@ -221,12 +216,12 @@
 					kind === 'group'
 						? 'var(--vtbag-ic-group-color)'
 						: kind === 'old'
-							? 'darkslateblue'
+							? 'light-dark(darkslateblue, slateblue)'
 							: kind === 'new'
 								? 'darkolivegreen'
 								: kind === 'image-pair'
 									? 'darkgoldenrod'
-									: 'darkslategray';
+									: 'light-dark(darkslategray, darkcyan)';
 
 				const thickness =
 					kind === 'group'

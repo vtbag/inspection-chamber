@@ -8,7 +8,6 @@ import {
 	type Group,
 } from './group';
 import { linkToParent, sort, type SparseDOMNode } from './sparse-dom';
-import { transform } from 'typescript';
 
 const ids = new WeakMap<Element, string>();
 let idCount = 0;
@@ -20,7 +19,6 @@ function capture(
 	groups: Map<string, Group>,
 	oldOrNew: 'old' | 'new'
 ): string {
-	console.log('capture', oldOrNew, groups, transitionRoot);
 	let sheet = '';
 	const seen = new Set<string>();
 	const elementMap = new Map<Element, SparseDOMNode>();
@@ -123,21 +121,23 @@ function capture(
 			sheet = capture(transitionRoot, groups, 'old');
 			if (crossDocument) {
 				moduleGroupMaps.set(undefined!, groups);
-				sessionStorage.setItem(
-					'vtbag-ic-old-root-group',
-					JSON.stringify(serializeGroupGraph(groups.get('@')!), null, 2)
-				);
+				// sessionStorage.setItem(
+				// 	'vtbag-ic-old-root-group',
+				// 	JSON.stringify(serializeGroupGraph(groups.get('@')!), null, 2)
+				// );
+				parent.__vtbag.ic2!.crossDocumentGroups = groups;
 			}
 		} else {
 			if (crossDocument) {
 				moduleGroupMaps.set(
 					undefined!,
-					new Map<string, Group>([
+					/*new Map<string, Group>([
 						[
 							'@',
 							deserializeGroupGraph(JSON.parse(sessionStorage.getItem('vtbag-ic-old-root-group')!)),
 						],
-					])
+					])*/
+					parent.__vtbag.ic2!.crossDocumentGroups!
 				);
 				moduleGroupMaps.set(transitionRoot, moduleGroupMaps.get(undefined!)!);
 			}

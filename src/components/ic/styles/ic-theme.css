@@ -1,0 +1,77 @@
+@layer theme {
+	:root {
+		color-scheme: light dark;
+
+		--ic-color-primary: light-dark(#00cc5f, #00ff73);
+		--ic-color-primary-hover: light-dark(#00b355, #00cc5f);
+		--ic-color-primary-active: light-dark(#009a4a, #00b355);
+
+		--ic-color-secondary: light-dark(#e0e0e0, #2a2a2a);
+		--ic-color-secondary-hover: light-dark(#c6c6c6, #3d3d3d);
+		--ic-color-secondary-active: light-dark(#adadad, #525252);
+
+		--ic-color-surface: light-dark(#f5f5f5, #1e1e1e);
+		--ic-color-border: light-dark(#d1d1d1, #404040);
+
+		--ic-color-bg-primary: light-dark(#ffffff, #1e1e1e);
+		--ic-color-bg-secondary: light-dark(#f9fafb, #2d2d2d);
+		--ic-color-text-primary: light-dark(#1f2937, #e5e7eb);
+		--ic-color-text-secondary: light-dark(#6b7280, #9ca3af);
+		--ic-color-border: light-dark(#e5e7eb, #404040);
+
+		--ic-old-color: light-dark(darkslateblue, slateblue);
+		--ic-new-color: darkolivegreen;
+		--ic-image-pair-color: darkgoldenrod;
+
+		accent-color: var(--ic-color-primary);
+
+		--ic-font-labels: 'Roboto Condensed', sans-serif;
+		--ic-font-logo: 'Audiowide', sans-serif;
+
+		--duration-fast: 150ms;
+		--duration-normal: 300ms;
+		--duration-slow: 500ms;
+
+		--ease-linear: linear;
+		--ease-in: cubic-bezier(0.4, 0, 1, 1);
+		--ease-out: cubic-bezier(0, 0, 0.2, 1);
+		--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+		--ic-panel-padding: 1rem;
+		--ic-gap: 0.5rem;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		color-scheme: dark;
+		--vtbag-ic-label-color: #999;
+		--vtbag-ic-content-color: #aaa;
+	}
+}
+@media (prefers-color-scheme: light) {
+	:root {
+		color-scheme: light;
+		--vtbag-ic-label-color: #777;
+		--vtbag-ic-content-color: #111;
+	}
+}
+h1 {
+	font-size: 1.1rem;
+}
+h2 {
+	font-size: 1.2rem;
+	font-family: var(--vtbag-ic-font-logo);
+	color: light-dark(#586878, #bdf);
+	margin: 4px 2px 6px 4px;
+}
+
+h3 {
+	font-size: 0.95rem;
+}
+
+span.info {
+	color: light-dark(darkorange, orange);
+	font-style: italic;
+	font-size: 0.85rem;
+}

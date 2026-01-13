@@ -1,6 +1,3 @@
----
-import './ic.css';
----
 <script>
 	import {
 		hideMinmax,
@@ -23,7 +20,6 @@ import './ic.css';
 			`vtbag-ic-pseudo[data-link="${pseudoName}"]`
 		);
 		if (!pseudo) {
-			console.log('raf loop stopped');
 			detailsRAF = undefined;
 			that.set('');
 			return;
@@ -51,9 +47,6 @@ import './ic.css';
 			);
 
 			detailsRAF = requestAnimationFrame(loop);
-			if (++count % 1000 === 0) {
-				console.log('raf loop still running');
-			}
 		}
 	}
 
@@ -75,7 +68,6 @@ import './ic.css';
 					(input) => {
 						if (input.checked) {
 							if (detailsRAF) {
-								console.log('cancelling raf');
 								cancelAnimationFrame(detailsRAF);
 								detailsRAF = undefined;
 								setTimeout(
@@ -206,7 +198,6 @@ import './ic.css';
 			if (!minimized?.checked) {
 				if (!detailsRAF) {
 					detailsRAF = requestAnimationFrame(loop);
-					console.log('starting raf from render');
 				}
 			}
 		}
@@ -264,6 +255,9 @@ import './ic.css';
 					color: green;
 					cursor: pointer;
 					user-select: none;
+				}
+				table {
+					table-layout: fixed;
 				}
 			}
 		}

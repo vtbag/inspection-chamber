@@ -277,6 +277,31 @@ import Window from '@/components/Window.astro';
 				height: 100%;
 				overflow: clip;
 			}
+
+			#default {
+				accent-color: auto;
+				block-size: auto !important;
+				box-sizing: initial;
+				cursor: auto;
+				font-family: initial;
+				font-size: initial;
+				font-synthesis-position: auto;
+				font-synthesis-small-caps: auto;
+				font-synthesis-style: auto;
+				font-synthesis-weight: auto;
+				height: 0;
+				hyphens: manual;
+				inline-size: auto;
+				letter-spacing: normal;
+				line-height: normal;
+				overflow-wrap: normal;
+				pointer-events: auto;
+				text-rendering: auto;
+				unicode-bidi: normal;
+				width: 0;
+				-webkit-font-smoothing: auto;
+			}
+
 			#twins {
 				contain: strict;
 				display: block;
@@ -305,6 +330,48 @@ import Window from '@/components/Window.astro';
 				}
 			}
 
+			#your-page {
+				border: none;
+				margin: 0;
+				padding: 0;
+				display: block;
+				background-color: wheat;
+			}
+			#dragBar {
+				z-index: 1;
+				cursor: move;
+				&:hover {
+					background-color: darkgreen;
+				}
+				background-color: light-dark(#ccc, #333);
+			}
+			.action #dragBar:hover {
+				background-color: orange;
+			}
+			#dock {
+				flex: 1 1 auto;
+				bottom: 0;
+				left: 0;
+				z-index: 1;
+			}
+			.dragging {
+				user-select: none;
+			}
+
+			:active-view-transition-type(longTap) {
+				.window {
+					view-transition-name: window;
+					iframe {
+						view-transition-name: chamber-controls;
+					}
+				}
+				#dock iframe {
+					view-transition-name: chamber-controls;
+				}
+				&::view-transition-group(*) {
+					overflow: clip;
+				}
+			}
 			:active-view-transition-type(minimize) {
 				.window {
 					view-transition-name: window;

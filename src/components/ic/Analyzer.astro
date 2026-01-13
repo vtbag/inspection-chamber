@@ -34,7 +34,6 @@ import './ic.css';
 				sessionStorage.setItem('ic-analyzer-mode', (e.target as HTMLInputElement).value);
 				this.dispatchEvent(new Event('ic-reload', { bubbles: true }));
 			});
-			this.dispatchEvent(new Event('ic-analyzer-ready', { bubbles: true }));
 		}
 	}
 	customElements.define('vtbag-ic-analyzer', ICAnalyzer);

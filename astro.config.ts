@@ -43,8 +43,8 @@ export default defineConfig({
 
   vite: {
     build: {
-      minify: true,
-      cssMinify: true,
+      minify: false,
+      cssMinify: false,
       assetsInlineLimit: 400000,
     },
     server: {

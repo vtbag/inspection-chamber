@@ -1,7 +1,7 @@
 <script>
 	import { moduleGroupMaps } from './capture';
 	import { deriveCSSSelector } from './element-selector';
-	import type { Group } from './group';
+	import { type Group, relocate } from './group';
 	import { highlight } from './highlight';
 	import { ICElement } from './ic-element';
 	import { minmax } from './minmax';
@@ -17,16 +17,16 @@
 
 	class ICViewTransitionCapture extends ICElement {
 		calledOn: HTMLElement | undefined;
-		allSet = false;
+		transitionRoot: HTMLElement | undefined;
 
-		init(calledOn: HTMLElement) {
+		init(calledOn: HTMLElement, transitionRoot: HTMLElement) {
 			this.calledOn = calledOn;
-			this.allSet = true;
-			this.render();
+			this.transitionRoot = transitionRoot;
+			this.requestRender();
 		}
 
 		protected render() {
-			if (!this.allSet) return;
+			if (!this.transitionRoot) return;
 			const captures: CaptureRecord = Object.create(null);
 			let current: CaptureRecord[] = [];
 
@@ -93,20 +93,22 @@
 			};
 
 			const features = parent.__vtbag.ic2?.vtMap?.get(this.calledOn!);
+			const localeTime = new Date(features?.time ?? 0).toLocaleTimeString()
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
-			const group: Group | undefined = moduleGroupMaps.get(this.calledOn!)?.get('@');
+			const group: Group | undefined = moduleGroupMaps.get(this.calledOn!)?.get('@')!;
+			if (features?.crossDocument) relocate(group, this.transitionRoot.ownerDocument);
 
 			this.insertAdjacentHTML(
 				'beforeend',
-				`<h3>${this.calledOn?.ownerDocument ? deriveCSSSelector(this.calledOn) : 'document global'}</h3><p>View transition started at ${new Date(features?.time ?? 0).toLocaleTimeString()} <span class="print" title="Make info available in Devtools console">[🖶]</span></p>
-				<p>Active view transition types during capture of old images: <strong>${
+				`<h3>${this.calledOn?.ownerDocument ? deriveCSSSelector(this.calledOn) : 'document global'}</h3><p>View transition started at ${localeTime} <span class="print" title="Make info available in Devtools console">[🖶]</span></p>
+				<p>Active view transition types during capture of <strong>old</strong> images: <strong>${
 					[...(features?.oldTypes ?? [])].join(', ') || 'none'
 				}</strong></p>				
 					${
 						oldOnly
 							? ''
-							: `<p>Active view transition types during capture of new images: <strong>${
+							: `<p>Active view transition types during capture of <strong>new</strong> images: <strong>${
 									[...(features?.newTypes ?? [])].join(', ') || 'none'
 								}</strong></p>`
 					}
@@ -126,17 +128,19 @@
 			this.querySelector('.print')?.addEventListener('click', () => {
 				if (!this.calledOn) {
 					console.log(
-						'%cInspection Chamber%c\n\nCross-document view transition captured the following elements\n%O',
+						`%cInspection Chamber%c\n\nCross-document view transition, started at %s, captured the following elements ${oldOnly? ' for old images, only' : 'for old and/or new images'}\n%O`,
 						styleOn,
 						'',
+						localeTime,
 						captures
 					);
 				} else {
 					console.log(
-						'%cInspection Chamber%c\n\nView transition on %O was started from this code location:\n%s\nand captured the following elements\n%O',
+						`%cInspection Chamber%c\n\nView transition on %O was started at %s from this code location:\n%s\nIt captured the following elements ${oldOnly? ' for old images, only' : 'for old and/or new images'}\n%O`,
 						styleOn,
 						'',
 						this.calledOn,
+						localeTime,
 						'\n' + features?.trace,
 						captures
 					);
@@ -173,8 +177,8 @@
 				summary strong {
 					cursor: pointer;
 					&.old {
-						color: darkslateblue;
-					}
+						color: light-dark( darkslateblue,slateblue);
+					}	
 					&.new {
 						color: darkolivegreen;
 					}
@@ -190,7 +194,7 @@
 					color: light-dark(#222222, #dddddd);
 					cursor: pointer;
 					&.old {
-						color: darkslateblue;
+						color: light-dark(darkslateblue, slateblue);
 					}
 					&.new {
 						color: darkolivegreen;

@@ -77,11 +77,11 @@
 						what.endsWith('::view-transition') ||
 						what.includes('::view-transition-group-children(')
 					) {
-						color = 'darkslategray';
+						color = 'light-dark(darkslategray, darkcyan)';
 					} else if (what.includes('::view-transition-new(')) {
 						color = 'darkolivegreen';
 					} else if (what.includes('::view-transition-old(')) {
-						color = 'darkslateblue';
+						color = 'light-dark(darkslateblue, slateblue)';
 					} else if (what.includes('::view-transition-image-pair(')) {
 						color = 'darkgoldenrod';
 					}

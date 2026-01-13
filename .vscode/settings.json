@@ -1,0 +1,71 @@
+{
+	// ============================================
+	// MINIMIZE DATA SENT DURING COPILOT CHAT
+	// ============================================
+
+	// === CONTEXT CONTROL ===
+	// Only send explicitly requested context
+	"github.copilot.chat.workspaceContext": false,
+	"github.copilot.chat.includeOpenEditors": false,
+	"github.copilot.chat.terminalContext": false,
+	"github.copilot.chat.fileTreeContext": false,
+	"github.copilot.chat.includeDiagnostics": false,
+	"github.copilot.chat.gitContext": false,
+	"github.copilot.chat.semanticSearch": false,
+
+	// === TOKEN & SIZE LIMITS ===
+	"github.copilot.chat.maxContextTokens": 4000,
+	"github.copilot.chat.sendSelection": "always",
+
+	// === TELEMETRY & LOGGING ===
+	"github.copilot.telemetry": false,
+	"github.copilot.advanced.debug.sendLogs": false,
+
+	// === DISABLE SCREENSHOTS & ASSETS ===
+	"github.copilot.chat.screenshots": false,
+
+	// === FILE EXCLUSIONS ===
+	// Prevent large binary files from being indexed
+	"files.exclude": {
+		"**/*.png": true,
+		"**/*.jpg": true,
+		"**/*.jpeg": true,
+		"**/*.gif": true,
+		"**/*.webp": true,
+		"**/*.svg": true,
+		"**/*.pdf": true,
+		"dist/**": true,
+		"lib/**": true,
+		"node_modules/**": true,
+		".git/**": true,
+		".astro/**": true,
+		"**/*.map": true
+	},
+
+	// === FILE WATCHER EXCLUSIONS ===
+	// Don't watch large directories
+	"files.watcherExclude": {
+		"**/.git/objects/**": true,
+		"**/.git/subtree-cache/**": true,
+		"**/node_modules/**": true,
+		"**/dist/**": true,
+		"**/lib/**": true,
+		"**/.astro/**": true,
+		"**/.next/**": true,
+		"**/coverage/**": true
+	},
+
+	// === EDITOR PREVIEW SETTINGS ===
+	// Disable asset previews that load data
+	"workbench.editor.enablePreviewFromQuickOpen": false,
+	"workbench.editor.enablePreviewFromCodeNavigation": false,
+
+	// === EXTENSION SETTINGS ===
+	"extensions.ignoreRecommendations": true,
+
+	// === GIT LENS (if installed) ===
+	"gitlens.codeLens.enabled": false,
+	"gitlens.blame.highlight.enabled": false,
+
+	"terminal.integrated.gpuAcceleration": "off"
+}

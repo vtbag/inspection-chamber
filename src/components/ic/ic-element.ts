@@ -1,25 +1,24 @@
 export abstract class ICElement extends HTMLElement {
-	#raf: number | null = null;
-	#dirty = true;
+	#initialized = false;
+
+	protected setUp() { }
+
+	protected tearDown() { }
 
 	connectedCallback() {
-		this.requestRender();
-	}
-
-	protected requestRender() {
-		if (this.#raf === null) {
-			this.#raf = requestAnimationFrame(() => {
-				this.#raf = null;
-				if (!this.isConnected || !this.#dirty) return;
-				this.#dirty = false;
-				this.render();
-			});
+		if (!this.#initialized) {
+			this.#initialized = true;
+			this.setUp();
+			this.render();
 		}
 	}
 
-	protected markDirty() {
-		this.#dirty = true;
-		this.requestRender();
+	disconnectedCallback() {
+		requestAnimationFrame(() => {
+			if (this.isConnected) return;
+			this.#initialized = false;
+			this.tearDown();
+		});
 	}
 
 	protected abstract render(): void;

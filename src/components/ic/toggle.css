@@ -27,7 +27,7 @@
 			}
 			&.frame {
 				&:has(input:checked) {
-					color: darkslategray;
+					color: light-dark(darkslategray, darkcyan);
 					font-weight: 900;
 				}
 			}
@@ -43,7 +43,7 @@
 			}
 			&.frame.old {
 				&:has(input:checked) {
-					color: darkslateblue;
+					color: light-dark(darkslateblue, slateblue);
 				}
 			}
 			&.frame.new {

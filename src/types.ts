@@ -1,4 +1,5 @@
 import type { Features } from './components/ic/features';
+import type { Group } from './components/ic/group';
 
 export type InspectionChamber = {
 	viewTransition?: ViewTransition | null | undefined;
@@ -17,7 +18,6 @@ export type InspectionChamber = {
 	pushBack?: HTMLDivElement | null;
 };
 export type IC2 = {
-	specialBackNavigation: boolean;
 	animationStart?: (event: AnimationEvent) => void;
 	animationStop?: (event: AnimationEvent) => void;
 	chamberWindow?: Window;
@@ -37,7 +37,8 @@ export type IC2 = {
 	vtMap?: Map<HTMLElement, Features>;
 	captureOldOnly?: boolean;
 	captureFreezeTypes?: boolean;
-	captureFrozen: ViewTransition[];
+	crossDocumentBackNavigation: boolean;
+	crossDocumentGroups?: Map<string, Group>;
 };
 
 declare global {

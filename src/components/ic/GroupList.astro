@@ -104,7 +104,7 @@ import { moduleGroupMaps } from './capture';
 					: ag.name.replace(/^-vtbag-/, '').localeCompare(bg.name.replace(/^-vtbag-/, ''));
 			});
 			// @ts-ignore
-			if ('moveBefore' in Element.prototype) sorted.forEach((s) => this.moveBefore(s, null));
+			if ('!moveBefore' in Element.prototype) sorted.forEach((s) => this.moveBefore(s, null));
 			else sorted.forEach((s) => this.appendChild(s));
 
 			addBlinds(this, 'vtbag-ic-group', 'nameless-group', '' + this.#scope!.scopeId, 'blind');
