@@ -1,29 +1,30 @@
+import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
 import { ledGroup } from './led-group';
 import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
-export function frameToggles(parent: HTMLElement, grandpaSelector: string) {
+export function frameToggles(parent: HTMLElement, grandpaSelector: string, id: number) {
 	parent.insertAdjacentHTML(
 		'beforeend',
 		ledGroup({
 			className: 'frame',
-			groupName: 'frame',
+			groupName: 'frame-' + id,
 			checked: '',
 			independent: true,
 			alternatives: [
 				{
 					label: 'Frame groups',
 					value: 'frame-groups',
-					id: 'frame-groups',
+					id: 'frame-groups-' + id,
 				},
 				{
 					label: 'Frame images',
 					value: 'frame-images',
-					id: 'frame-images',
+					id: 'frame-images-' + id,
 				},
 				{
 					label: 'Frame others',
 					value: 'frame-others',
-					id: 'frame-others',
+					id: 'frame-others-' + id,
 				},
 			],
 		})
@@ -40,15 +41,15 @@ export function frameToggles(parent: HTMLElement, grandpaSelector: string) {
 			led.classList.toggle('orange', checked.length > 0 && checked.length < frameToggles.length);
 		};
 		onOff(
-			leds.querySelector<HTMLInputElement>('#frame-groups')!,
+			leds.querySelector<HTMLInputElement>('#frame-groups-' + id)!,
 			'vtbag-ic-pseudo label.frame.group input'
 		);
 		onOff(
-			leds.querySelector<HTMLInputElement>('#frame-images')!,
+			leds.querySelector<HTMLInputElement>('#frame-images-' + id)!,
 			'vtbag-ic-pseudo :is(label.frame.old, label.frame.new) input'
 		);
 		onOff(
-			leds.querySelector<HTMLInputElement>('#frame-others')!,
+			leds.querySelector<HTMLInputElement>('#frame-others-' + id)!,
 			'vtbag-ic-pseudo :is(label.frame.image-pair, label.frame.group-children) input'
 		);
 	}
@@ -79,7 +80,11 @@ export function frameToggles(parent: HTMLElement, grandpaSelector: string) {
 						.forEach((el) => el.click()),
 				types: ['framing'],
 			},
-			{ collisionBehavior: 'never', useTypesPolyfill: 'always' }
+			{
+				collisionBehavior: 'never',
+				useTypesPolyfill: 'always',
+				catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
+			}
 		);
 	});
 

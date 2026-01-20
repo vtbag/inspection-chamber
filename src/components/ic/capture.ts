@@ -1,13 +1,8 @@
 import { namedElements, allRoots } from '@/css';
 import { deriveCSSSelector } from './element-selector';
-import {
-	deserializeGroupGraph,
-	nestGroups,
-	numberGroupsDFS,
-	serializeGroupGraph,
-	type Group,
-} from './group';
+import { nestGroups, numberGroupsDFS, type Group } from './group';
 import { linkToParent, sort, type SparseDOMNode } from './sparse-dom';
+import { message } from './message';
 
 const ids = new WeakMap<Element, string>();
 let idCount = 0;
@@ -37,7 +32,6 @@ function capture(
 
 	named.forEach(({ element, pseudoElement }) => {
 		const path = deriveCSSSelector(element);
-		// todo element.dataset.vtbagIcId = path;
 		const key = path + (pseudoElement ? pseudoElement : '');
 		if (seen.has(key)) return;
 		seen.add(key);
@@ -99,7 +93,12 @@ function capture(
 
 	const groupRoot = groups.get('@')!;
 	groupRoot[oldOrNew] = rootNode;
-	nestGroups(rootNode, groupRoot, groupRoot, groups, oldOrNew);
+	if (nestGroups(rootNode, groupRoot, groupRoot, groups, oldOrNew)) {
+		const capture = !!document.querySelector<HTMLInputElement>('#capture')?.checked;
+		message('error',
+			`<b>Duplicate</b> view transition <b>names</b> detected <b>during ${oldOrNew} capture</b>. ` + (capture ? `Check capture results below for details.` : `Enable <b>Analyze capturing</b> mode below to see details.`)
+		);
+	}
 	numberGroupsDFS(groupRoot);
 
 	return sheet;
@@ -121,24 +120,11 @@ function capture(
 			sheet = capture(transitionRoot, groups, 'old');
 			if (crossDocument) {
 				moduleGroupMaps.set(undefined!, groups);
-				// sessionStorage.setItem(
-				// 	'vtbag-ic-old-root-group',
-				// 	JSON.stringify(serializeGroupGraph(groups.get('@')!), null, 2)
-				// );
 				parent.__vtbag.ic2!.crossDocumentGroups = groups;
 			}
 		} else {
 			if (crossDocument) {
-				moduleGroupMaps.set(
-					undefined!,
-					/*new Map<string, Group>([
-						[
-							'@',
-							deserializeGroupGraph(JSON.parse(sessionStorage.getItem('vtbag-ic-old-root-group')!)),
-						],
-					])*/
-					parent.__vtbag.ic2!.crossDocumentGroups!
-				);
+				moduleGroupMaps.set(undefined!, parent.__vtbag.ic2!.crossDocumentGroups!);
 				moduleGroupMaps.set(transitionRoot, moduleGroupMaps.get(undefined!)!);
 			}
 			groups = moduleGroupMaps.get(transitionRoot)!;
@@ -153,7 +139,7 @@ function capture(
 	})
 );
 
-['ic-after-capture-old', 'ic-after-capture-new'].forEach((eventName) =>
+['ic-after-capture-old', 'ic-after-capture-new', 'ic-ready-error'].forEach((eventName) =>
 	self.addEventListener(eventName, (event) => {
 		const detail = (event as CustomEvent).detail;
 		const root = detail.root;

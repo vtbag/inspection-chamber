@@ -10,37 +10,35 @@ export function slider(id: string, name: string): string {
 	</div>
 </div>`;
 }
+
 export function setMaxValue(id: string, max: number, now: number, onInput: (event: Event) => void) {
 	const input = document.querySelector<HTMLInputElement>(`#${id}`);
 	input!.max = '' + max;
-	input!.value = '' + now;
-	const container = document.querySelector<HTMLElement>(`.horizontal-slider-container:has(#${id}`)!;
+	const container = input?.closest('.horizontal-slider-container') as HTMLElement;
 	container.querySelector<HTMLElement>(`.slider-value .max`)!.innerText = `${max}ms`;
-	const fill = container.querySelector<HTMLElement>(`.slider-fill`);
-	const current = container.querySelector<HTMLElement>(`.slider-value .current`)!;
-	current.innerText = `${input!.value}ms`;
 
+	set(input!, now, container);
 	input?.addEventListener('input', (e) => {
-		fill?.style.setProperty(
-			'width',
-			`calc(${(Number(input.value) / Number(input.max)) * 100}% + 3px)`
-		);
-		current.innerText = `${input.value}ms`;
+		set(input, parseInt(input.value, 10), container);
 		onInput(e);
 	});
 }
 
-export function setCurrentValue(id: string, current: number) {
+export function setCurrentValue(id: string, value: number) {
 	const input = document.querySelector<HTMLInputElement>(`#${id}`);
-	const container = document.querySelector<HTMLElement>(`.horizontal-slider-container:has(#${id}`);
+	const container = input?.closest('.horizontal-slider-container') as HTMLElement;
 	if (input && container) {
-		input.value = '' + current;
-		container.querySelector<HTMLElement>(`.slider-value .current`)!.innerText = `${input.value}ms`;
-		container
-			.querySelector<HTMLElement>(`.slider-fill`)
-			?.style.setProperty(
-				'width',
-				`calc(${(Number(input.value) / Number(input.max)) * 100}% + 3px)`
-			);
+		set(input, value, container);
 	}
+}
+
+function set(input: HTMLInputElement, value: number, container: HTMLElement) {
+	const fill = container.querySelector<HTMLElement>(`.slider-fill`);
+	const current = container.querySelector<HTMLElement>(`.slider-value .current`)!;
+	input.value = '' + value;
+	fill?.style.setProperty(
+		'width',
+		`calc(${(value / Number(input.max)) * 100}% + 3px)`
+	);
+	current.innerText = `${value}ms`;
 }

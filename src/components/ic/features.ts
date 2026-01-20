@@ -5,4 +5,5 @@ export type Features = {
 	newTypes?: Set<string>;
 	crossDocument?: boolean;
 	scoped?: boolean;
+	readyErrorOccurred?: boolean;
 };

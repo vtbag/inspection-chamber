@@ -1,5 +1,6 @@
 <script>
 	import { moduleGroupMaps } from './capture';
+	import { printToDevtools } from './devtool-bridge';
 	import { deriveCSSSelector } from './element-selector';
 	import { type Group, relocate } from './group';
 	import { highlight } from './highlight';
@@ -9,6 +10,8 @@
 	type CaptureEntry = {
 		oldNamedElement?: Element;
 		newNamedElement?: Element;
+		oldDuplicateElements?: Element[];
+		newDuplicateElements?: Element[];
 		groupProperty?: string;
 		classProperty?: string;
 		children?: CaptureRecord;
@@ -22,7 +25,7 @@
 		init(calledOn: HTMLElement, transitionRoot: HTMLElement) {
 			this.calledOn = calledOn;
 			this.transitionRoot = transitionRoot;
-			this.requestRender();
+			this.render();
 		}
 
 		protected render() {
@@ -41,13 +44,21 @@
 
 					if (group.old) entry.oldNamedElement = group.old.element;
 					if (group.new) entry.newNamedElement = group.new.element;
+					if (group.oldDuplicates)
+						entry.oldDuplicateElements = group.oldDuplicates.map((d) => d.element);
+					if (group.newDuplicates)
+						entry.newDuplicateElements = group.newDuplicates.map((d) => d.element);
 					// if there is a new element, its view-transition-class property dominates
-					if (group.old && group.old.viewTransitionClass !== 'none') entry.classProperty = group.old.viewTransitionClass;
-					if (group.new && group.new.viewTransitionClass !== 'none') entry.classProperty = group.new.viewTransitionClass;
+					if (group.old && group.old.viewTransitionClass !== 'none')
+						entry.classProperty = group.old.viewTransitionClass;
+					if (group.new && group.new.viewTransitionClass !== 'none')
+						entry.classProperty = group.new.viewTransitionClass;
 					if (entry.classProperty === undefined) delete entry.classProperty;
 					// if there is an old element, its view-transition-group property dominates
-					if (group.new && group.new.viewTransitionGroup !== 'normal') entry.groupProperty = group.new.viewTransitionGroup;
-					if (group.old && group.old.viewTransitionGroup !== 'normal') entry.groupProperty = group.old.viewTransitionGroup;
+					if (group.new && group.new.viewTransitionGroup !== 'normal')
+						entry.groupProperty = group.new.viewTransitionGroup;
+					if (group.old && group.old.viewTransitionGroup !== 'normal')
+						entry.groupProperty = group.old.viewTransitionGroup;
 					if (entry.groupProperty === undefined) delete entry.groupProperty;
 					record = current.at(-1)!;
 					record[group.name] = entry;
@@ -56,13 +67,18 @@
 						'beforeend',
 						`<details>
 							<summary>${indent}<strong>${group.name}</strong>${entry.classProperty ? ` [classes: ${entry.classProperty}]` : ''}${entry.groupProperty ? ` [grouping: ${entry.groupProperty}]` : ''}</summary> 
-						${group.old ? `<div>${indent}<span class="highlight old">${deriveCSSSelector(group.old.element)}</span> (old)</div>` : ''}
-						${group.new ? `<div>${indent}<span class="highlight new">${deriveCSSSelector(group.new.element)}</span> (new)</div>` : ''}</details>`
+							${group.old ? `<div>${indent}<span class="highlight old">${deriveCSSSelector(group.old.element)}</span> (old)</div>` : ''}
+							${group.new ? `<div>${indent}<span class="highlight new">${deriveCSSSelector(group.new.element)}</span> (new)</div>` : ''}
+							${group.oldDuplicates?.map((d) => `<div>${indent}<span class="highlight old-duplicates">${deriveCSSSelector(d.element)}</span> (old duplicate)</div>`).join('') || ''}
+							${group.newDuplicates?.map((d) => `<div>${indent}<span class="highlight new-duplicates">${deriveCSSSelector(d.element)}</span> (new duplicate)</div>`).join('') || ''}
+						</details>`
 					);
 					const classList = elem.lastElementChild!.querySelector('summary strong')?.classList;
 					classList?.toggle('with-children', group.children.length > 0);
 					classList?.toggle('new', !!group.new);
 					classList?.toggle('old', !!group.old);
+					classList?.toggle('new-duplicates', !!group.newDuplicates);
+					classList?.toggle('old-duplicates', !!group.oldDuplicates);
 					elem
 						.lastElementChild!.querySelector('summary')
 						?.addEventListener('pointerenter', () =>
@@ -80,6 +96,31 @@
 					elem
 						.lastElementChild!.querySelector('.highlight.new')
 						?.addEventListener('click', () => console.dir(group.new?.element));
+
+					elem
+						.lastElementChild!.querySelectorAll('.highlight.old-duplicates')
+						.forEach((el, idx) =>
+							el.addEventListener('pointerenter', () =>
+								highlight(group.oldDuplicates?.[idx].element)
+							)
+						);
+					elem
+						.lastElementChild!.querySelectorAll('.highlight.old-duplicates')
+						?.forEach((el, idx) =>
+							el.addEventListener('click', () => console.log(group.oldDuplicates?.[idx].element))
+						);
+					elem
+						.lastElementChild!.querySelectorAll('.highlight.new-duplicates')
+						.forEach((el, idx) =>
+							el.addEventListener('pointerenter', () =>
+								highlight(group.newDuplicates?.[idx].element)
+							)
+						);
+					elem
+						.lastElementChild!.querySelectorAll('.highlight.new-duplicates')
+						?.forEach((el, idx) =>
+							el.addEventListener('click', () => console.dir(group.newDuplicates?.[idx].element))
+						);
 				}
 				const childRecord = entry?.children || captures;
 				current.push(childRecord);
@@ -93,7 +134,7 @@
 			};
 
 			const features = parent.__vtbag.ic2?.vtMap?.get(this.calledOn!);
-			const localeTime = new Date(features?.time ?? 0).toLocaleTimeString()
+			const localeTime = new Date(features?.time ?? 0).toLocaleTimeString();
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
 			const group: Group | undefined = moduleGroupMaps.get(this.calledOn!)?.get('@')!;
@@ -122,23 +163,17 @@
 				sessionStorage,
 				`capture-root-${this.calledOn?.ownerDocument ? deriveCSSSelector(this.calledOn) : 'document global'}`
 			);
-			const styleOn =
-				'color: light-dark(black, white); background-color: light-dark(#dfd, #242); padding: 2px 4px; border-radius: 4px; font-size: 1.2em;';
 
 			this.querySelector('.print')?.addEventListener('click', () => {
 				if (!this.calledOn) {
-					console.log(
-						`%cInspection Chamber%c\n\nCross-document view transition, started at %s, captured the following elements ${oldOnly? ' for old images, only' : 'for old and/or new images'}\n%O`,
-						styleOn,
-						'',
+					printToDevtools(
+						`Cross-document view transition, started at %s, captured the following elements ${oldOnly ? ' for old images, only' : 'for old and/or new images'}\n%O`,
 						localeTime,
 						captures
 					);
 				} else {
-					console.log(
-						`%cInspection Chamber%c\n\nView transition on %O was started at %s from this code location:\n%s\nIt captured the following elements ${oldOnly? ' for old images, only' : 'for old and/or new images'}\n%O`,
-						styleOn,
-						'',
+					printToDevtools(
+						`View transition on %O was started at %s from this code location:\n%s\nIt captured the following elements ${oldOnly ? ' for old images, only' : 'for old and/or new images'}\n%O`,
 						this.calledOn,
 						localeTime,
 						'\n' + features?.trace,
@@ -153,8 +188,6 @@
 </script>
 
 <style is:global>
-	@layer defaults, components, overrides;
-
 	@layer components {
 		@scope (vtbag-ic-view-transition-capture) {
 			:scope {
@@ -177,13 +210,17 @@
 				summary strong {
 					cursor: pointer;
 					&.old {
-						color: light-dark( darkslateblue,slateblue);
-					}	
+						color: light-dark(darkslateblue, slateblue);
+					}
 					&.new {
 						color: darkolivegreen;
 					}
 					&.old.new {
 						color: darkgoldenrod;
+					}
+					&.old-duplicates,
+					&.new-duplicates {
+						color: light-dark(darkred, red) !important;
 					}
 					&.with-children::after {
 						content: ' (with children)';
@@ -198,6 +235,10 @@
 					}
 					&.new {
 						color: darkolivegreen;
+					}
+					&.old-duplicates,
+					&.new-duplicates {
+						color: light-dark(darkred, red);
 					}
 				}
 				details > :not(summary) {

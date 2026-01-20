@@ -21,33 +21,89 @@ import Identify from '@/components/ic/Identify.astro';
 	import { addBlinds } from './blinds';
 	import { frameToggles } from './multi-frame';
 	import { minmax, defaultTransitionDuration } from './minmax';
-	import { any } from 'astro:schema';
+	import { ICElement } from './ic-element';
+	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
 
 	let nextId = 0;
 	const scopeMap = new WeakMap<HTMLElement, number>();
-	class ICScope extends HTMLElement {
+	class ICScope extends ICElement {
 		#scope: HTMLElement | null = null;
 		#rootGroup: Group | undefined = undefined;
 		#animations: Animation[] = [];
 		#path: string | undefined = undefined;
 		#dirty = false;
 		#id = 0;
-		#sortLEDs: LEDs;
-		#sizeLEDs: LEDs;
-		#freezeLEDs: LEDs;
+		#sortLEDs?: LEDs;
+		#sizeLEDs?: LEDs;
+		#freezeLEDs?: LEDs;
 		#timings: Map<Animation, ComputedEffectTiming> = new Map();
 		#longestDuration?: number;
 		#clickTrack: Animation | undefined;
 		#resizeObserver?: ResizeObserver;
-		#intersectionObserver?: IntersectionObserver;
 		#resizeToggle: boolean = false;
 		#animationsElement?: VtbagIcAnimationsElement;
 		#frameToggleRefresh?: () => void;
 		#raf?: number;
 		#resynced: boolean = false;
+		lastTimeChange: number = -1;
 
-		constructor() {
-			super();
+		tearDown() {
+			this.#resizeObserver?.disconnect();
+			this.#clickTrack?.cancel();
+			this.#raf && cancelAnimationFrame(this.#raf);
+			this.#raf = undefined;
+		}
+
+		connectedMoveCallback() {}
+
+		setUp() {
+			this.#resizeObserver = new ResizeObserver(() => {
+				if (this.#resizeToggle || getCurrentViewTransition()) {
+					return;
+				}
+				this.#resizeToggle = true;
+				requestAnimationFrame(() => {
+					addBlinds(this.querySelector('.scope-head')!, 'div', 'head-blind', 'shb', 'blind');
+					this.#resizeToggle = false;
+				});
+			});
+			this.#resizeObserver.observe(this);
+
+			addEventListener('ic-time-change', async (e) => {
+				const { element, time, origin } = (e as CustomEvent).detail;
+				if (element !== this) return;
+				setCurrentValue(`slider-${this.#id}`, time);
+				if (origin === 'auto-move') return;
+				this.animations.forEach(
+					(a) =>
+						(a as Animation & { 'vtbag-stopped'?: boolean })['vtbag-stopped'] ||
+						(a.currentTime = time)
+				);
+			});
+		}
+
+		get path() {
+			return (this.#path ??= deriveCSSSelector(this.#scope!));
+		}
+
+		get scopeId() {
+			return this.#id;
+		}
+		get element() {
+			return this.#scope;
+		}
+
+		init(element: HTMLElement, root: Group, animations: Animation[]) {
+			this.#scope = element;
+			this.#rootGroup = root;
+			this.#animations = animations;
+			this.#path = undefined;
+			this.#dirty = true;
+			this.#id = scopeMap.get(element) ?? 0;
+			if (!this.#id) {
+				this.#id = ++nextId;
+				scopeMap.set(element, this.#id);
+			}
 
 			this.#sortLEDs = {
 				className: 'sort',
@@ -108,64 +164,6 @@ import Identify from '@/components/ic/Identify.astro';
 			};
 		}
 
-		disconnectedCallback() {
-			this.#resizeObserver?.disconnect();
-			this.#intersectionObserver?.disconnect();
-		}
-
-		connectedMoveCallback() {}
-		connectedCallback() {
-			this.#resizeObserver = new ResizeObserver(() => {
-				if (this.#resizeToggle || getCurrentViewTransition()) {
-					return;
-				}
-				this.#resizeToggle = true;
-				requestAnimationFrame(() => {
-					addBlinds(this.querySelector('.scope-head')!, 'div', 'head-blind', 'shb', 'blind');
-					this.#resizeToggle = false;
-				});
-			});
-			this.#resizeObserver.observe(this);
-			this.#intersectionObserver = new IntersectionObserver((entries) => {
-				entries.forEach((entry) => {
-					if (entry.isIntersecting) {
-						this.animatedRender();
-					} else {
-						if (this.#raf !== undefined) {
-							cancelAnimationFrame(this.#raf);
-							this.#raf = undefined;
-						}
-					}
-				});
-			});
-			this.#intersectionObserver.observe(this);
-			this.render();
-		}
-
-		get path() {
-			return (this.#path ??= deriveCSSSelector(this.#scope!));
-		}
-
-		get scopeId() {
-			return this.#id;
-		}
-		get element() {
-			return this.#scope;
-		}
-
-		init(element: HTMLElement, root: Group, animations: Animation[]) {
-			this.#scope = element;
-			this.#rootGroup = root;
-			this.#animations = animations;
-			this.#path = undefined;
-			this.#dirty = true;
-			this.#id = scopeMap.get(element) ?? 0;
-			if (!this.#id) {
-				this.#id = ++nextId;
-				scopeMap.set(element, this.#id);
-			}
-		}
-
 		get animations() {
 			return this.#animations;
 		}
@@ -186,7 +184,11 @@ import Identify from '@/components/ic/Identify.astro';
 					},
 					types: ['vt-entry'],
 				},
-				{ useTypesPolyfill: 'always', collisionBehavior: 'chaining' }
+				{
+					useTypesPolyfill: 'always',
+					collisionBehavior: 'chaining',
+					catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
+				}
 			);
 		}
 		render() {
@@ -200,16 +202,16 @@ import Identify from '@/components/ic/Identify.astro';
 
 				html += slider(`slider-${this.#id}`, `slider-${this.#id}`);
 				if (!isSorted(this.#rootGroup!)) {
-					html += ledGroup(this.#sortLEDs);
+					html += ledGroup(this.#sortLEDs!);
 				}
-				html += ledGroup(this.#sizeLEDs);
+				html += ledGroup(this.#sizeLEDs!);
 
-				this.#freezeLEDs.checked =
+				this.#freezeLEDs!.checked =
 					this.#animationsElement!.querySelector<HTMLInputElement>(
 						'.animations-head input[name="freeze"]:checked'
 					)?.value ?? 'none';
 
-				html += ledGroup(this.#freezeLEDs);
+				html += ledGroup(this.#freezeLEDs!);
 				html += '</div>';
 
 				this.innerHTML = html;
@@ -233,7 +235,8 @@ import Identify from '@/components/ic/Identify.astro';
 
 				this.#frameToggleRefresh = frameToggles(
 					this.querySelector<HTMLDivElement>('div.scope-head')!,
-					'vtbag-ic-scope'
+					'vtbag-ic-scope',
+					this.#id
 				);
 				this.addEventListener('frame-toggle', () => {
 					this.#frameToggleRefresh!();
@@ -291,6 +294,7 @@ import Identify from '@/components/ic/Identify.astro';
 				const pseudos = [...this.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo')].sort(
 					(a, b) => (a.icGroup?.group.preOrder ?? -1) - (b.icGroup?.group.preOrder ?? -1)
 				);
+
 				pseudos.forEach((pseudo) => pseudo.createTwin());
 				pseudos.forEach((pseudo) => parent.__vtbag.ic2?.intersectionObserver?.observe(pseudo.twin));
 
@@ -307,10 +311,14 @@ import Identify from '@/components/ic/Identify.astro';
 
 		setupSlider() {
 			this.#animations.forEach((a) => this.#timings.set(a, a.effect!.getComputedTiming()));
-			this.#longestDuration = this.#animations.reduce(
-				(max, a) => Math.max(max, this.#timings.get(a)!.endTime as number),
-				0
+			const longestAnimation = this.#animations.reduce((a, b) =>
+				this.#timings.get(a)!.endTime! > this.#timings.get(b)!.endTime! ? a : b
 			);
+			const current = this.#animations.reduce(
+				(acc, other) => Math.min(acc, other.currentTime as number),
+				Infinity
+			);
+			this.#longestDuration = this.#timings.get(longestAnimation)!.endTime! as number;
 			const slowMo = this.#animationsElement!.querySelector<HTMLInputElement>(
 				'input[name="slow-mo"]:checked'
 			)?.value;
@@ -319,28 +327,30 @@ import Identify from '@/components/ic/Identify.astro';
 				pseudoElement: '::view-transition',
 				playbackRate: slowMo === 'normal' ? 1 : slowMo === 'slow' ? 0.1 : 0.01,
 			})!;
-			(this.#clickTrack as CSSAnimation & { alias: string }).alias = 'vtbag-ic-click-track';
+			(this.#clickTrack as CSSAnimation & { 'vtbag-alias': string })['vtbag-alias'] =
+				'vtbag-ic-click-track';
 			this.#animations.push(this.#clickTrack);
 			if (this.#animations[0].playState === 'paused') this.#clickTrack.pause();
 			const details =
 				this.#animationsElement!.querySelector<VtbagIcPseudoDetailsElement>(
 					'vtbag-ic-pseudo-details'
 				);
-			const detailedPseudo = details?.querySelector('h3');
+			console.log(longestAnimation);
+			console.log(current);
+			console.log('this.#animations[0] :>> ', this.#animations[0]);
 			setMaxValue(
 				`slider-${this.#id}`,
 				this.#longestDuration,
 				this.#animations[0].currentTime as number, // todo: better minimum of all animations?
 				(e) => {
 					const time = parseInt((e.target as HTMLInputElement).value, 10);
-
-					this.animations.forEach(
-						(a) => (a as Animation & { stopped?: boolean }).stopped || (a.currentTime = time)
-					);
-					if (detailedPseudo?.innerText.startsWith(`${this.path}::view-transition`)) {
-						setCurrentValue('details-slider', time);
-					} else {
-						this.#animationsElement!.movePseudos();
+					if (time !== this.lastTimeChange) {
+						this.lastTimeChange = time;
+						dispatchEvent(
+							new CustomEvent('ic-time-change', {
+								detail: { element: this, origin: 'scope-slider', time: this.lastTimeChange },
+							})
+						);
 					}
 				}
 			);
@@ -458,7 +468,7 @@ ${styles.join('\n')}
 						},
 						types: ['resize'],
 					},
-					{ useTypesPolyfill: 'always' }
+					{ useTypesPolyfill: 'always', catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS }
 				);
 				transition.updateCallbackDone.catch(error);
 				transition.ready.catch(error);
@@ -471,7 +481,7 @@ ${styles.join('\n')}
 
 		private addSortListener(groupList: VtbagIcGroupListElement, error: (e: any) => void) {
 			this.querySelector('.input-led-group.sort')?.addEventListener('change', (e) => {
-				this.#sortLEDs.checked = (e.target as HTMLInputElement).value;
+				this.#sortLEDs!.checked = (e.target as HTMLInputElement).value;
 				const transition = mayStartViewTransition!(
 					{
 						update: () => {
@@ -496,7 +506,7 @@ ${styles.join('\n')}
 						},
 						types: ['sort'],
 					},
-					{ useTypesPolyfill: 'always' }
+					{ useTypesPolyfill: 'always', catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS }
 				);
 				transition.updateCallbackDone.catch(error);
 				transition.ready.catch(error);
@@ -515,6 +525,7 @@ ${styles.join('\n')}
 				}
 				if (this.#raf !== undefined) {
 					cancelAnimationFrame(this.#raf);
+					console.log('canceled animation frame');
 					this.#raf = undefined;
 				}
 				if (this.querySelector<HTMLInputElement>(`input[value="run"]:checked`)) {
@@ -531,7 +542,7 @@ ${styles.join('\n')}
 					this.#animations.forEach((a) => {
 						a.currentTime === this.#longestDuration && (a.currentTime = this.#longestDuration! - 1);
 						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01;
-						'stopped' in a || a.play();
+						'vtbag-stopped' in a || a.play();
 					});
 					this.autoMoveSlider();
 				}
@@ -548,21 +559,19 @@ ${styles.join('\n')}
 		}
 
 		autoMoveSlider() {
-			const now = this.#clickTrack!.currentTime! as number;
-			setCurrentValue(`slider-${this.#id}`, now);
-			this.#animationsElement!.movePseudos();
-			if (now < this.#longestDuration!) {
-				this.#raf = requestAnimationFrame(() => this.#raf && this.autoMoveSlider());
-			}
-			if (
-				this.#animationsElement!.querySelector<VtbagIcPseudoDetailsElement>(
-					'vtbag-ic-pseudo-details'
-				)
-					?.querySelector('h3')
-					?.innerText.startsWith(`${this.path}::view-transition`)
-			) {
-				setCurrentValue('details-slider', now);
-			}
+			this.#raf = requestAnimationFrame(() => {
+				const time = this.#clickTrack!.currentTime! as number;
+				if (time !== this.lastTimeChange) {
+					this.lastTimeChange = time;
+					setCurrentValue(`slider-${this.#id}`, time);
+					dispatchEvent(
+						new CustomEvent('ic-time-change', {
+							detail: { element: this, origin: 'auto-move', time: this.lastTimeChange },
+						})
+					);
+				}
+				this.#raf && this.autoMoveSlider();
+			});
 		}
 
 		allGroupButtons(rootGroup: Group, alpha = true, hide = false) {

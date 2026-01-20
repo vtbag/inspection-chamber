@@ -3,8 +3,10 @@ import './ic.css';
 ---
 
 <script>
+	import { deriveCSSSelector } from './element-selector';
 	import { ICElement } from './ic-element';
 	import { ledGroup } from './led-group';
+	import { message } from './message';
 
 	class ICAnalyzer extends ICElement {
 		protected render() {
@@ -34,14 +36,36 @@ import './ic.css';
 				sessionStorage.setItem('ic-analyzer-mode', (e.target as HTMLInputElement).value);
 				this.dispatchEvent(new Event('ic-reload', { bubbles: true }));
 			});
+			self.addEventListener('ic-update-error', (e) => {
+				const errorDetails = (e as CustomEvent).detail;
+				const where =
+					errorDetails.root.parentElement || errorDetails.features.scoped
+						? errorDetails.root
+						: errorDetails.root.ownerDocument;
+				message(
+					'error',
+					`Update callback for view transition on <b>${where.ownerDocument ? deriveCSSSelector(where) : 'document'}</b>[🖶] rejected.<br>${errorDetails.error}.`, [where]
+				);
+			});
+
+			self.addEventListener('ic-ready-error', (e) => {
+				const errorDetails = (e as CustomEvent).detail;
+				const where =
+					errorDetails.root.parentElement || errorDetails.features.scoped
+						? errorDetails.root
+						: errorDetails.root.ownerDocument;
+				message(
+					'error',
+					`${errorDetails.features.crossDocument ? 'Cross-document' : 'Same-document'} view transition on <b>${where.ownerDocument ? deriveCSSSelector(where) : 'document'}</b>[🖶] failed.<br>${errorDetails.error}.`,
+					[where]
+				);
+			});
 		}
 	}
 	customElements.define('vtbag-ic-analyzer', ICAnalyzer);
 </script>
 
 <style is:global>
-	@layer defaults, components, overrides;
-
 	@layer components {
 		@scope (vtbag-ic-analyzer) {
 			:scope {

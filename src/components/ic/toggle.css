@@ -1,5 +1,3 @@
-@layer defaults, components, overrides;
-
 @layer components {
 	@scope (.toggle) {
 		:scope {

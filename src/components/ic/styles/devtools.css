@@ -1,0 +1,7 @@
+@layer defaults {
+	.devtools {
+		color: green;
+		cursor: pointer;
+		user-select: none;
+	}
+}

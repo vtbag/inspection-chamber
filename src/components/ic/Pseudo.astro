@@ -4,6 +4,7 @@
 	import './toggle.css';
 	import { minmax } from './minmax';
 	import { ICElement } from './ic-element';
+	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
 
 	const twinProperties = {
 		position: '',
@@ -49,7 +50,6 @@
 		icScope?: VtbagIcScopeElement;
 		#twin?: HTMLDivElement;
 		static defaultStyles: CSSStyleDeclaration | undefined;
-
 
 		connectedMoveCallback() {}
 
@@ -166,7 +166,6 @@
 			this.groupChildren();
 		}
 
-
 		createTwin() {
 			const twins = parent.document.querySelector<HTMLDivElement>('#twins')!;
 			this.#twin = twins.ownerDocument.createElement('div')!;
@@ -273,7 +272,11 @@
 							},
 							types: ['visibility-toggle'],
 						},
-						{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+						{
+							collisionBehavior: 'chaining',
+							useTypesPolyfill: 'always',
+							catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
+						}
 					);
 			});
 		}

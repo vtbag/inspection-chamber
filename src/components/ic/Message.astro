@@ -1,21 +1,67 @@
-
 <script>
-import { ICElement } from './ic-element';
+	import { defaultErrorMap } from 'astro:schema';
+	import { ICElement } from './ic-element';
+	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 	class ICMessage extends ICElement {
 		protected render() {
-			this.innerHTML = '';
+			this.classList.add('panel');
+			this.style.display="none";
+			this.innerHTML = `<button class="clear-all" title="Clear all messages">Clear all</button><details open><summary>Messages</summary>
+				<div class="explainer"><i>Important messages from the Inspection Chamber will appear here.</i></div>
+				<div class="messages"></div>
+				</details>`;
 			document.addEventListener('ic-show-message', (e: Event) => {
-				this.style.paddingBlock = '8px';
-				this.style.marginBlock = '4px';
-				this.style.maxHeight = '2rem';
-				this.innerHTML = (e as CustomEvent).detail;
-        this.scrollIntoView({ behavior: 'smooth', block: 'start' });
-				setTimeout(() => {
-					this.style.paddingBlock = '0';
-					this.style.marginBlock = '0';
-					this.style.maxHeight = '0';
-				}, 4000);
+				this.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				const explainer = this.querySelector('.explainer');
+				const detail = (e as CustomEvent).detail;
+				mayStartViewTransition(
+					{
+						update: () => {
+							this.style.display="block";
+							this.querySelector('details')!.open = true;
+							explainer?.remove();
+							this.querySelector('.messages')?.insertAdjacentHTML(
+								'afterbegin',
+								`<div class="message ${detail.severity || ''}"><button class="clear">x</button><span class="timestamp">${new Date().toLocaleString(
+									undefined,
+									{
+										hour: '2-digit',
+										minute: '2-digit',
+										second: '2-digit',
+										hour12: false,
+										fractionalSecondDigits: 3,
+									}
+								)}</span><br>${detail.message.replaceAll('[🖶]', '<span class="devtools">[🖶]</span>')}</div>`
+							);
+							this.querySelectorAll<HTMLSpanElement>('.messages .devtools').forEach((span, idx) =>
+								span.addEventListener('click', () => parent.console.log(detail.references[idx]))
+							);
+						},
+						types: ['new-message'],
+					},
+					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+				);
+			});
+			this.addEventListener('click', (e) => {
+				const button = e.target as HTMLButtonElement;
+				if (
+					button.tagName !== 'BUTTON' ||
+					(!button.classList.contains('clear') && !button.classList.contains('clear-all'))
+				)
+					return;
+				mayStartViewTransition(
+					{
+						update: () => {
+							const parent = button.parentElement;
+							if (parent?.classList.contains('message')) parent.remove();
+							else this.querySelector('.messages')!.innerHTML = '';
+							if (this.querySelectorAll('.message').length === 0) this.style.display="none"
+						},
+						types: ['clear-message'],
+					},
+					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+				);
 			});
 		}
 	}
@@ -23,29 +69,78 @@ import { ICElement } from './ic-element';
 	customElements.define('vtbag-ic-message', ICMessage);
 </script>
 
-
 <style is:global>
-	@layer defaults, components, overrides;
-
+	@import './styles/details.css';
+	@import './styles/devtools.css';
 	@layer components {
 		@scope (vtbag-ic-message) {
 			:scope {
+				position: relative;
 				display: block;
-				border-radius: 6px;
-				background-color: light-dark(#a86, #543);
-				color: light-dark(#000, #fff);
-				font-size: 0.85rem;
-				margin: 4px;
-				margin-block: 0;
-				overflow: clip;
-				overflow-wrap: normal;
-				padding: 8px;
-				padding-block: 0;
-				transition: max-height 0.25s ease-in-out, padding-block 0.25s ease-in-out, margin-block 0.25s ease-in-out;
-				white-space: nowrap;
-				word-break: keep-all;
-				hyphens: manual;
-				max-height: 0;
+				padding: 0.5rem 1rem;
+				i {
+					color: #888;
+				}
+				.message {
+					border-radius: 6px;
+					border: 1px solid light-dark(#ccc, #444);
+					background: light-dark(#f9f9f9, #222);
+					font-size: 0.85rem;
+					margin: 4px;
+					padding: 8px;
+					border-left-width: 4px;
+					border-left-style: solid;
+
+					view-transition-name: match-element;
+					view-transition-class: message;
+					.timestamp {
+						font-size: 0.75rem;
+						color: #789;
+					}
+					strong,
+					b {
+						color: light-dark(#222, #ddd);
+					}
+					&.error {
+						border-left-color: light-dark(#f88, #844);
+					}
+					&.warning {
+						border-left-color: light-dark(#dd8, #664);
+					}
+					&.info {
+						border-left-color: light-dark(#8f8, #484);
+					}
+
+					&:first-child {
+						background: light-dark(#eef4, #0032);
+					}
+				}
+
+				button.clear,
+				button.clear-all {
+					font-size: 0.8rem;
+					background-color: #7894;
+					border: none;
+				}
+
+				details .message button.clear {
+					display: none;
+				}
+				details[open] .message button.clear {
+					float: right;
+					display: inline;
+				}
+
+				button.clear-all {
+					position: absolute;
+					top: 4px;
+					right: 4px;
+					z-index: 1;
+				}
+
+				button.clear-all:has(+ details .messages:empty) {
+					visibility: hidden;
+				}
 			}
 		}
 	}

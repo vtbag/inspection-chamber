@@ -1,0 +1,40 @@
+@layer defaults {
+	:root {
+		interpolate-size: allow-keywords;
+	}
+	details summary {
+		position: relative;
+		padding-left: 1.2em;
+		cursor: pointer;
+		list-style: none;
+		user-select: none;
+		&:not(.secondary) {
+			color: light-dark(black, white);
+		}
+	}
+
+	details summary::before {
+		content: '';
+		position: absolute;
+		left: 0.2em;
+		top: 0.1em;
+		border: 6px solid transparent;
+		border-left-color: currentColor;
+		transform-origin: 25% 50%;
+		transition: transform 0.25s ease;
+	}
+
+	details[open] > summary::before {
+		transform: rotate(90deg);
+	}
+	details::details-content {
+		height: 0;
+		overflow: clip;
+		transition:
+			height 0.3s ease,
+			content-visibility 0.3s ease allow-discrete;
+	}
+	details[open]::details-content {
+		height: auto;
+	}
+}

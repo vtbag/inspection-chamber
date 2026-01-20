@@ -1,18 +1,52 @@
 <script>
-	import { minmax } from './minmax';
 	import { ICElement } from './ic-element';
 
 	class ICWelcome extends ICElement {
 		render() {
-			this.innerHTML = `<div>
-<h3>Welcome</h3>
+			this.classList.add('panel');
+			const viewTransitionSupport = 'ViewTransition' in window;
+			const sameDocumentViewTransitions = 'startViewTransition' in document;
+			const crossDocumentViewTransitions = 'onpageswap' in window;
+			const scopedViewTransitions = 'startViewTransition' in document.documentElement;
+			const activeViewTransitionProperty = 'activeViewTransition' in document;
+			const viewTransitionTypes = 'ViewTransitionTypeSet' in window;
+			const waitUntil = 'waitUntil' in window.ViewTransition?.prototype;
+			const transitionRoot = 'transitionRoot' in window.ViewTransition?.prototype;
+			const nestedViewTransitionGroups = CSS.supports('view-transition-group', 'contain');
+			const viewTransitionClass = CSS.supports('view-transition-class', 'none');
+			const viewTransitionName = CSS.supports('view-transition-name', 'none');
+			const viewTransitionContainment = CSS.supports('contain', 'view-transition');
+			const navigationAPI = 'navigation' in window;
+			this.innerHTML = `<details><summary>Welcome</summary>
 <p>
-The   Inspection Chamber is a devtool for putting  your view transitions through their paces. Debug view transitions with clarity instead of guesswork.
+The Inspection Chamber is a devtool for putting  your view transitions through their paces. Debug view transitions with clarity instead of guesswork.
 </p>
 
+<h4>Support for view transitions</h4>
+<p>The Inspection Chamber checks for support of various View Transition API features. Here are the results for your current browser:
+	<ul class="feature-list">
+	<li class="${viewTransitionSupport ? 'success' : 'fail'}">View transitions</li>	
+	<li class="${sameDocumentViewTransitions ? 'success' : 'fail'}">Same-document view transitions</li>
+	<li class="${crossDocumentViewTransitions ? 'success' : 'fail'}">Cross-document view transitions</li>
+	<li class="${nestedViewTransitionGroups ? 'success' : 'fail'}">Nested view transition groups</li>
+	<li class="${scopedViewTransitions ? 'success' : 'fail'}">Scoped view transitions</li>
+	</ul>
+<details><summary class="secondary">More details</summary>
+	<ul class="feature-list">
+	<li class="${viewTransitionName ? 'success' : 'fail'}">view-transition-name CSS property</li>
+	<li class="${viewTransitionClass ? 'success' : 'fail'}">view-transition-class CSS property</li>
+	<li class="${viewTransitionTypes ? 'success' : 'fail'}">View transition types</li>
+	<li class="${activeViewTransitionProperty ? 'success' : 'fail'}">activeViewTransition property</li>
+	<li class="${viewTransitionContainment ? 'success' : 'fail'}">view-transition containment via the contain CSS property</li>
+	<li class="${transitionRoot ? 'success' : 'fail'}">ViewTransition.prototype.transitionRoot</li>
+	<li class="${waitUntil ? 'success' : 'fail'}">ViewTransition.prototype.waitUntil</li>
+	<li class="${navigationAPI ? 'success' : 'fail'}">Navigation API</li>
+	</ul>
+</details>
+</p>
 <h4>Basic Usage</h4>
 <p>
-Select "Analyze animations" and "Freeze", then start a view transition on your page, and the Inspection Chamber will reveal its details. To focus on the capture phase rather than animation, select "Analyze capturing". See the <a href="">full user manual</a> for more information. 
+Select "Analyze animations" and "Freeze", then start a view transition on your page, and the Inspection Chamber will reveal its details. To focus on the capture phase rather than animation, select "Analyze capturing". See the <a href="https://vtbag.dev/tools/inspection-chamber/" target="_blank" rel="noopener noreferrer">full user manual</a> for more information. 
 </p>
 <h4>Docking vs Window Mode</h4>
 <p>
@@ -22,26 +56,44 @@ Press and hold the Chamber's drag handle to switch between docking mode and wind
 <p>
 Be aware that the View Transition API cancels all active view transitions whenever the viewport size changes. Open DevTools and resize the Chamber before starting any view transitions to avoid unexpected resets. Green drag handles are safe to use. Orange handles signal that resizing will cancel active view transitions.
 </p>
-</div>`;
-			minmax(this, 'maximized', 'Welcome message', localStorage, 'vtbag-ic-minmax-welcome');
+</details>`;
 		}
 	}
-
 	customElements.define('vtbag-ic-welcome', ICWelcome);
 </script>
 
 <style is:global>
-	@layer defaults, components, overrides;
-
+	@import './styles/details.css';
 	@layer components {
 		@scope (vtbag-ic-welcome) {
 			:scope {
 				display: block;
 				padding: 0.5rem 1rem;
+
+				.feature-list {
+					list-style: none;
+					padding-left: 0;
+					li {
+						padding-left: 1.5em;
+						margin-bottom: 0.5em;
+						color: light-dark(#333333, #cccccc);
+					}
+					li.success::before {
+						content: '✓ ';
+						color: green;
+						font-weight: bold;
+						margin-left: -1.5em;
+						margin-right: 0.5em;
+					}
+					li.fail::before {
+						content: '✗ ';
+						color: red;
+						font-weight: bold;
+						margin-left: -1.5em;
+						margin-right: 0.5em;
+					}
+				}
 			}
-		}
-		.shrinker:has(> vtbag-ic-welcome) {
-			overflow-y: auto;
 		}
 	}
 </style>

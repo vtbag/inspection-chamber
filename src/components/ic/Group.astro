@@ -56,7 +56,6 @@ import Pseudo from './Pseudo.astro';
 					`<style id="vtbag-color-${this.#scope!.scopeId}-${gid(this.group)}">::view-transition-group(${CSS.escape(this.group.name)}) { --vtbag-ic-group-color: ${col}; }</style>`
 				);
 				this.style.setProperty('--vtbag-ic-group-color', col);
-				
 
 				const { noOld, noNew, noChildren } = components(this.#scope!.element, name);
 
@@ -88,7 +87,6 @@ import Pseudo from './Pseudo.astro';
 			}
 
 			function components(scope: HTMLElement, name: string) {
-
 				// work around for Firefox bug. Should be Pseudo.exists
 				const noOld = getComputedStyle(
 					scope,
@@ -108,3 +106,20 @@ import Pseudo from './Pseudo.astro';
 	}
 	if (!customElements.get('vtbag-ic-group')) customElements.define('vtbag-ic-group', ICGroup);
 </script>
+
+<style is:global>
+	@layer components {
+		@scope (vtbag-ic-group) {
+			:scope {
+				display: block;
+			}
+		}
+	}
+	@layer override {
+		@scope (vtbag-ic-group) {
+			:scope {
+				background-color: light-dark(#eee, #666);
+			}
+		}
+	}
+</style>

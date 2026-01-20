@@ -1,236 +1,295 @@
 <script>
-	import {
-		hideMinmax,
-		showMinmax,
-		minmax,
-		resizeMinmax,
-		defaultTransitionDuration,
-	} from './minmax';
 	import { ICElement } from './ic-element';
-	import { slider } from './slider';
+	import { setCurrentValue, slider } from './slider';
 	import { setMaxValue } from './slider';
-
-	let pseudoName = '';
-	let detailsRAF: number | undefined;
-	let count = 0;
-	let that: VtbagIcPseudoDetailsElement;
-
-	async function loop() {
-		const pseudo = document.querySelector<VtbagIcPseudoElement>(
-			`vtbag-ic-pseudo[data-link="${pseudoName}"]`
-		);
-		if (!pseudo) {
-			detailsRAF = undefined;
-			that.set('');
-			return;
-		}
-		const style = (await pseudo.computedStyleCompact(true)).sort((a, b) =>
-			a.key.localeCompare(b.key)
-		);
-		const lines: string[] = [];
-		style.forEach(({ key, value, defaultValue, priority }) => {
-			if (value !== defaultValue) {
-				lines.push(`
-								<tr class="style-line">
-									<td class="key">${key}:</td>
-									<td class="value">${value}</td>
-									<td class="priority">${priority}</td>
-								</tr>`);
-			}
-		});
-
-		if (detailsRAF) {
-			const table = that.querySelector<HTMLElement>('table')!;
-			resizeMinmax(
-				that.querySelector<HTMLElement>('label.minmax')!,
-				() => (table.innerHTML = lines.join(''))
-			);
-
-			detailsRAF = requestAnimationFrame(loop);
-		}
-	}
+	import { printToDevtools } from './devtool-bridge';
+	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 	class ICPseudoDetails extends ICElement {
-		#animationsElement: VtbagIcAnimationsElement | undefined;
-		render() {
-			this.#animationsElement = this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!;
+		pseudoName?: string;
+		pseudo?: VtbagIcPseudoElement;
+		scope?: VtbagIcScopeElement;
+		twinTO?: NodeJS.Timeout;
+		tabTO?: NodeJS.Timeout;
+		animations: Animation[] = [];
+		formerStyle?: Map<string, string> = new Map();
 
-			that = this;
-			if (!this.innerHTML) {
-				this.innerHTML = `<h3></h3><div class="content"></div>`;
-				const content = this.querySelector('.content') as HTMLElement;
-				minmax(
-					content,
-					pseudoName ? 'maximized' : 'minimized',
-					'Pseudo details',
-					undefined,
-					undefined,
-					(input) => {
-						if (input.checked) {
-							if (detailsRAF) {
-								cancelAnimationFrame(detailsRAF);
-								detailsRAF = undefined;
-								setTimeout(
-									() => (this.querySelector('.content')!.innerHTML = `<table></table>`),
-									defaultTransitionDuration
-								);
-							}
-						} else {
-							this.set(pseudoName);
-						}
-					}
-				);
-			}
-			that.querySelector<HTMLElement>('h3')!.textContent = pseudoName;
-			const content = this.querySelector('.content') as HTMLElement;
-			if (!content.innerHTML) {
-				content.innerHTML = `<table></table>`;
-			}
+		setUp() {
+			this.style.display = 'none';
 
-			while (content.firstElementChild && content.firstElementChild.tagName !== 'TABLE') {
-				content.firstElementChild.remove();
-			}
-			if (pseudoName) {
-				const pseudo = document.querySelector<VtbagIcPseudoElement>(
-					`vtbag-ic-pseudo[data-link="${pseudoName}"]`
-				);
-				if (!pseudo) return;
-				const scope = pseudo.closest<VtbagIcScopeElement>('vtbag-ic-scope')!;
-				content.insertAdjacentHTML('afterbegin', '<br>');
-				let maxDuration = 0;
-				let count = 0;
-				pseudo
-					.animations()
-					.toReversed()
-					.forEach((a) => {
-						if ('alias' in a && a.alias === 'vtbag-ic-click-track') return;
-						const duration = a.effect?.getComputedTiming().endTime;
-						maxDuration = Math.max(maxDuration, (duration as number) ?? 0);
-						content.insertAdjacentHTML(
-							'afterbegin',
-							`<div style="align-items: center; display: flex; gap: 8px;"><label><input type="checkbox" ${'stopped' in a ? '' : 'checked'}> ${(a as CSSAnimation).animationName ?? (('alias' in a && a.alias) || 'unknown')} <span>${'stopped' in a ? `(stopped at ${~~a.currentTime!}ms)` : ''}</span></label><span style="cursor: pointer;" class="devtools" title="Make animation available in Devtools console">[🖶]</span></div>`
+			addEventListener('ic-time-change', async (e) => {
+				const { time, element } = (e as CustomEvent).detail;
+
+				if (!this.pseudo || (this.scope !== element && this.pseudo !== element)) return;
+				setCurrentValue('details-slider', time);
+				if (origin !== 'auto-move') {
+					this.animations!.forEach(
+						(a) =>
+							(a as Animation & { 'vtbag-stopped'?: boolean })['vtbag-stopped'] ||
+							(a.currentTime = time)
+					);
+				}
+
+				this.tabTO ||
+					(this.tabTO = setTimeout(async () => {
+						this.tabTO = undefined!;
+						const former: Map<string, string> = new Map();
+						const style = (await this.pseudo!.computedStyleCompact(true)).sort((a, b) =>
+							a.key.localeCompare(b.key)
 						);
-						++count;
-						content
-							.firstElementChild!.querySelector('.devtools')!
-							.addEventListener('click', () => console.dir(a));
-						if ('stopped' in a && a.playState === 'running') {
-							a.pause();
-						}
-						content.firstElementChild!.addEventListener('change', (e) => {
-							const stoppable = a as Animation & { stopped?: HTMLInputElement };
-							const checkbox = e.target as HTMLInputElement;
-							if (checkbox.checked) {
-								delete stoppable.stopped;
-							} else {
-								stoppable.stopped = pseudo
-									.closest<VtbagIcScopeElement>('vtbag-ic-scope')!
-									.querySelector<HTMLInputElement>('input[name^="slider-"]')!;
+						const lines: string[] = [];
+						style.forEach(({ key, value, defaultValue, priority }) => {
+							if (value !== defaultValue || this.formerStyle?.has(key)) {
+								lines.push(`
+								<tr class="style-line">
+									<td class="key">${key}:</td>
+									<td class="value ${this.formerStyle && value !== this.formerStyle.get(key) ? 'changed' : ''}">${value}</td>
+									<td class="priority">${priority}</td>
+								</tr>`);
+								former.set(key, value);
 							}
-							checkbox.parentElement!.lastElementChild!.textContent = stoppable.stopped
-								? `(stopped at ${~~a.currentTime!}ms)`
-								: '';
-							if (stoppable.stopped) {
-								stoppable.pause();
-							} else {
-								a.currentTime = parseInt(
-									content.querySelector<HTMLInputElement>('input[type=range]')!.value,
-									10
-								);
-								this.#animationsElement!.movePseudos();
-							}
-							if (
-								[...content.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].every(
-									(i) => i.checked
-								)
-							) {
-								pseudo.removeAttribute('data-stopped');
-								pseudo.twin.removeAttribute('data-stopped');
-								[...document.querySelectorAll('#identified-pseudos div')]
-									.find((div) => div.textContent === pseudoName)
-									?.removeAttribute('data-stopped');
-							} else {
-								pseudo.setAttribute('data-stopped', '');
-								pseudo.twin.setAttribute('data-stopped', '');
-								[...document.querySelectorAll('#identified-pseudos div')]
-									.find((div) => div.textContent === pseudoName)
-									?.setAttribute('data-stopped', '');
-							}
-							this.#animationsElement!.querySelector<HTMLElement>(
-								'.stopped-animations'
-							)!.style.display = parent.document.querySelectorAll(
-								'#twins div[data-title][data-stopped]'
-							).length
-								? 'grid'
-								: 'none';
-							resizeMinmax(this.querySelector('label.minmax')!, () => this.showHideSlider(content));
 						});
-					});
-				if (count === 0) {
-					content.insertAdjacentHTML('afterbegin', `<br><span class="info">No animations</span><br>`);
+						this.formerStyle = former;
 
+						const table = this.querySelector<HTMLElement>('table')!;
+						table.innerHTML = lines.join('');
+					}, 0));
+			});
+		}
+
+		render() {
+			this.classList.add('panel');
+			const open =
+				sessionStorage.getItem('ic-pseudo-details-styles-open') === 'false' ? false : true;
+			this.innerHTML = `
+			<details open>
+				<summary>Pseudo-element details</summary>
+				<div class="content">
+					<details class="details-styles" ${open ? 'open' : ''}>
+						<summary>Computed Style</summary>
+						<div class="style">
+							<table>
+								<tr>
+									<td>Select a pseudo-element to examine its details. After you start and freeze a view transition you can select pseudo-elements form the tree view or identify them on the screen.</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+					</details>
+				</div>
+			</details>`;
+
+			this.querySelector('.details-styles')!.addEventListener('toggle', (e) => {
+				const open = (e.target as HTMLDetailsElement).open;
+				sessionStorage.setItem('ic-pseudo-details-styles-open', open ? 'true' : 'false');
+			});
+			if (!this.pseudoName) {
+				this.style.display = 'none';
+				return;
+			}
+			this.querySelector<HTMLElement>('summary')!.textContent = this.pseudoName;
+
+			const content = this.querySelector('.content') as HTMLElement;
+
+			const maxDuration = this.showAnimations(content);
+
+			content.lastElementChild!.insertAdjacentHTML(
+				'beforebegin',
+				slider('details-slider', 'detail')
+			);
+			this.showHideSlider(content);
+
+			const time = parseInt(
+				this.scope!.querySelector<HTMLInputElement>('input[name^="slider-"]')?.value ?? '0',
+				10
+			);
+			setMaxValue('details-slider', maxDuration, time, (e: Event) => {
+				const time = parseInt((e.target as HTMLInputElement).value, 10);
+				dispatchEvent(
+					new CustomEvent('ic-time-change', {
+						detail: { element: this.pseudo, origin: 'detail-slider', time },
+					})
+				);
+			});
+			dispatchEvent(
+				new CustomEvent('ic-time-change', {
+					detail: { element: this.pseudo, origin: 'detail-slider', time },
+				})
+			);
+		}
+
+		showAnimations(content: HTMLElement) {
+			const clean = (animation: Animation) => {
+				const hide = {
+					configurable: true,
+					enumerable: false,
+				};
+				if ('vtbag-stopped' in animation) Object.defineProperty(animation, 'vtbag-stopped', hide);
+				if ('vtbag-origin' in animation) Object.defineProperty(animation, 'vtbag-origin', hide);
+				if ('vtbag-alias' in animation) Object.defineProperty(animation, 'vtbag-alias', hide);
+				return animation;
+			};
+
+			const updateStopMarks = (pseudo: VtbagIcPseudoElement) => {
+				if (pseudo.animations().some((a) => 'vtbag-stopped' in a)) {
+					pseudo!.setAttribute('data-stopped', '');
+					pseudo!.twin.setAttribute('data-stopped', '');
+					[...document.querySelectorAll('#identified-pseudos div')]
+						.find((div) => div.textContent === pseudo.dataset.link)
+						?.setAttribute('data-stopped', '');
 				} else {
-					content.insertAdjacentHTML('afterbegin', '<br>');
+					pseudo!.removeAttribute('data-stopped');
+					pseudo!.twin.removeAttribute('data-stopped');
+					[...document.querySelectorAll('#identified-pseudos div')]
+						.find((div) => div.textContent === pseudo.dataset.link)
+						?.removeAttribute('data-stopped');
 				}
-				content.lastElementChild!.insertAdjacentHTML(
-					'beforebegin',
-					slider('details-slider', 'detail')
-				);
-				this.showHideSlider(content);
+				this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!.querySelector<HTMLElement>(
+					'.stopped-animations'
+				)!.style.display = parent.document.querySelectorAll('#twins div[data-title][data-stopped]')
+					.length
+					? 'grid'
+					: 'none';
+			};
 
-				setMaxValue(
-					'details-slider',
-					maxDuration,
-					parseInt(
-						scope.querySelector<HTMLInputElement>('input[name^="slider-"]')?.value ?? '0',
-						10
-					),
-					(e: Event) => {
-						const time = parseInt((e.target as HTMLInputElement).value, 10);
-						pseudo.animations().forEach((a) => 'stopped' in a || (a.currentTime = time));
-						this.#animationsElement!.movePseudos();
-					}
+			const short = (pseudoElement: string) =>
+				pseudoElement.replace(/^::view-transition-(.*)\(([^)]*)\)$/, '$1($2)');
+
+			let maxDuration = -1;
+			let count = 0;
+			const animations = document.createElement('div');
+			animations.className = 'animations';
+			content.insertAdjacentElement('afterbegin', animations);
+			this.animations.toReversed().forEach((a) => {
+				if ('vtbag-alias' in a && a['vtbag-alias'] === 'vtbag-ic-click-track') return;
+				const duration = a.effect?.getComputedTiming().endTime;
+				maxDuration = Math.max(maxDuration, (duration as number) ?? 0);
+				const name =
+					short(a.effect?.pseudoElement!) +
+					': ' +
+					((a as CSSAnimation).animationName ??
+						(('vtbag-alias' in a && a['vtbag-alias']) || 'unknown'));
+				animations.insertAdjacentHTML(
+					'afterbegin',
+					`<div style="align-items: center; display: flex; gap: 8px;">
+							<label>
+								<input type="checkbox" ${'vtbag-stopped' in a ? '' : 'checked'}>${name}
+									<span>${' vtbag-stopped' in a ? `&nbsp;(stopped at ${~~a.currentTime!}ms)` : ''}</span>
+							</label>
+							<span style="cursor: pointer;" class="devtools" title="Make animation available in Devtools console">[🖶]</span>
+						</div>`
 				);
-			} else {
-				hideMinmax(this.querySelector<HTMLElement>('label.minmax')!);
+				++count;
+				animations.querySelector('.devtools')!.addEventListener('click', () =>
+					printToDevtools('\n%s\n%o', name, {
+						animation: clean(a),
+						timing: a.effect?.getComputedTiming(),
+						...('transitionProperty' in a && { transitionProperty: a.transitionProperty }),
+						...('animationName' in a && { keyframes: a.effect?.getKeyframes() }),
+					})
+				);
+				if ('vtbag-stopped' in a && a.playState === 'running') a.pause(); // check this
+
+				animations.querySelector('input')!.addEventListener('change', (e) => {
+					const stoppable = a as Animation & { 'vtbag-stopped'?: HTMLInputElement };
+					const checkbox = e.target as HTMLInputElement;
+					if (checkbox.checked) {
+						delete stoppable['vtbag-stopped'];
+					} else {
+						stoppable['vtbag-stopped'] =
+							this.scope!.querySelector<HTMLInputElement>('input[name^="slider-"]')!;
+					}
+					checkbox.parentElement!.lastElementChild!.innerHTML = stoppable['vtbag-stopped']
+						? `&nbsp;(stopped at ${~~a.currentTime!}ms)`
+						: '';
+					if (stoppable['vtbag-stopped']) {
+						stoppable.pause(); // check this
+					} else {
+						const time = parseInt(
+							content.querySelector<HTMLInputElement>('input[type=range]')!.value,
+							10
+						);
+						dispatchEvent(
+							new CustomEvent('ic-time-change', {
+								detail: { element: this.pseudo, origin: 'detail-slider', time },
+							})
+						);
+					}
+					updateStopMarks(
+						(stoppable as Animation & { 'vtbag-origin'?: VtbagIcPseudoElement })['vtbag-origin']!
+					);
+				});
+			});
+			if (count === 0) {
+				animations.insertAdjacentHTML(
+					'afterbegin',
+					`<span class="info">No animations</span>`
+				);
 			}
-			const minimized = this.querySelector<HTMLInputElement>('.minmax input');
-			if (!minimized?.checked) {
-				if (!detailsRAF) {
-					detailsRAF = requestAnimationFrame(loop);
-				}
-			}
+			return maxDuration;
 		}
 
 		set(name: string) {
-			pseudoName = name;
-			const minimized = this.querySelector<HTMLInputElement>('.minmax input')!;
-			if (pseudoName) {
-				showMinmax(this.querySelector<HTMLElement>('label.minmax')!);
-				if (minimized.checked) {
-					minimized.click();
-					setTimeout(() => {
-						this.scrollIntoView();
-					}, defaultTransitionDuration);
-				} else {
-					this.scrollIntoView();
+			const resetFormerAnimations = () => {
+				const time = parseInt(
+					this.scope!.querySelector<HTMLInputElement>('input[name^="slider-"]')?.value ?? '0',
+					10
+				);
+				this.animations.forEach(
+					(a) =>
+						(a as Animation & { 'vtbag-stopped'?: boolean })['vtbag-stopped'] ||
+						(a.currentTime = time)
+				);
+			};
+
+			const gatherCurrentAnimations = () => {
+				this.animations = [];
+				[this.pseudo!, ...this.pseudo!.querySelectorAll('vtbag-ic-pseudo')].forEach((pseudo) =>
+					pseudo.animations().forEach((a) => {
+						(a as Animation & { 'vtbag-origin'?: VtbagIcPseudoElement })['vtbag-origin'] = pseudo;
+						this.animations.push(a);
+					})
+				);
+			};
+
+			this.pseudo =
+				document.querySelector<VtbagIcPseudoElement>(`vtbag-ic-pseudo[data-link="${name}"]`) ??
+				undefined;
+			this.pseudoName = this.pseudo ? name : undefined;
+			this.scope = this.pseudo?.closest<VtbagIcScopeElement>('vtbag-ic-scope') ?? undefined;
+			const details = this.querySelector<HTMLDetailsElement>('details')!;
+
+			mayStartViewTransition(
+				{
+					update: () => {
+						this.style.display = this.pseudoName ? 'block' : 'none';
+						details.open = !!this.pseudoName;
+						if (!this.pseudoName || !this.pseudo || !this.scope) {
+							this.style.display = 'none';
+						} else {
+							resetFormerAnimations();
+							gatherCurrentAnimations();
+
+							this.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
+							this.formerStyle = undefined;
+							this.render();
+						}
+					},
+					types: ['pseudo-detail'],
+				},
+				{
+					collisionBehavior: 'chaining',
+					useTypesPolyfill: 'always',
 				}
-			} else {
-				if (!minimized.checked) minimized.click();
-			}
-			this.render();
+			);
 		}
 
 		showHideSlider(content: HTMLElement) {
-			const slider = this.querySelector<HTMLInputElement>(
-				'.horizontal-slider-container:has(#details-slider)'
-			);
-			const display = [...content.querySelectorAll<HTMLInputElement>('input[type=checkbox]')].some(
-				(i) => i.checked
-			)
-				? 'flex'
-				: 'none';
-			slider!.style.display = display;
+			const container = this.querySelector('#details-slider')?.closest(
+				'.horizontal-slider-container'
+			) as HTMLElement;
+			const display = this.animations!.length ? 'flex' : 'none';
+			container!.style.display = display;
 		}
 	}
 
@@ -238,8 +297,8 @@
 </script>
 
 <style is:global>
-	@layer defaults, components, overrides;
-
+	@import './styles/devtools.css';
+	@import './styles/details.css';
 	@layer components {
 		@scope (vtbag-ic-pseudo-details) {
 			:scope {
@@ -251,13 +310,23 @@
 				border: 1px solid light-dark(#d6d6d6, #2a2a2a);
 				box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 
-				.devtools {
-					color: green;
-					cursor: pointer;
-					user-select: none;
+				.animations,
+				.style {
+					max-height: 300px;
+					overflow-y: auto;
+				}
+
+				.details-styles,
+				.details-styles .style, 
+				.content .animations,
+				.horizontal-slider-container {
+					margin-top: 0.5rem;
 				}
 				table {
 					table-layout: fixed;
+					.changed {
+						color: light-dark(black, white);
+					}
 				}
 			}
 		}

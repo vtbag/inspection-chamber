@@ -1,4 +1,5 @@
 import { deriveCSSSelector } from './element-selector';
+import { message } from './message';
 import { type SparseDOMNode } from './sparse-dom';
 
 export type Group = {
@@ -9,6 +10,8 @@ export type Group = {
 	children: Group[];
 	old?: SparseDOMNode;
 	new?: SparseDOMNode;
+	oldDuplicates?: SparseDOMNode[];
+	newDuplicates?: SparseDOMNode[];
 	preOrder?: number;
 	postOrder?: number;
 	bfs?: number;
@@ -34,13 +37,23 @@ export function nestGroups(
 	container: Group,
 	groups: Map<string, Group>,
 	oldOrNew: 'old' | 'new'
-) {
+): boolean {
+	let hasDuplicates = false;
 	if (node.viewTransitionName === 'none') {
-		node.children.forEach((child) => nestGroups(child, parent, container, groups, oldOrNew));
+		node.children.forEach(
+			(child) =>
+				(hasDuplicates = nestGroups(child, parent, container, groups, oldOrNew) || hasDuplicates)
+		);
 	} else {
 		let group = groups.get(node.viewTransitionName);
 		if (group) {
-			group.new = node;
+			if (group[oldOrNew] === undefined) {
+				group[oldOrNew] = node;
+			} else {
+				group[`${oldOrNew}Duplicates`] ||= [];
+				group[`${oldOrNew}Duplicates`]!.push(node);
+				hasDuplicates = true;
+			}
 		} else {
 			group = {
 				children: [],
@@ -62,24 +75,26 @@ export function nestGroups(
 				if (namedGroup?.ancestor) {
 					namedGroup.children.push(group);
 					group.parent = namedGroup;
-					return;
+				} else {
+					const root = groups.get('@')!;
+					root.children.push(group); // fallback and viewTransitionGroup = "none"
+					group.parent = root;
 				}
-				const root = groups.get('@')!;
-				root.children.push(group); // fallback and viewTransitionGroup = "none"
-				group.parent = root;
 			}
 		}
-		node.children.forEach((child) =>
-			nestGroups(
-				child,
-				group,
-				node.viewTransitionGroup !== 'normal' ? group : container,
-				groups,
-				oldOrNew
-			)
+		node.children.forEach(
+			(child) =>
+				(hasDuplicates = nestGroups(
+					child,
+					group,
+					node.viewTransitionGroup !== 'normal' ? group : container,
+					groups,
+					oldOrNew
+				)) || hasDuplicates
 		);
 		group.ancestor = false;
 	}
+	return hasDuplicates;
 }
 
 export function numberGroupsDFS(group: Group, counter = { value: 1 }) {

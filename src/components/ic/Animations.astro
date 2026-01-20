@@ -20,10 +20,10 @@ import './studio.css';
 <script>
 	import { addBlinds } from './blinds';
 	import { moduleGroupMaps } from './capture';
-	import { type Group } from './group';
 	import { highlight } from './highlight';
 	import { disableLedGroup, enableLedGroup, hideLedGroup, ledGroup } from './led-group';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
 
 	class ICAnimations extends HTMLElement {
 		#initialized = false;
@@ -35,7 +35,8 @@ import './studio.css';
 
 		constructor() {
 			super();
-			self.addEventListener('ic-about-to-finish', (e) => {
+			addEventListener('ic-time-change', () => this.movePseudos());
+			addEventListener('ic-about-to-finish', (e) => {
 				mayStartViewTransition(
 					{
 						update: () => {
@@ -56,13 +57,16 @@ import './studio.css';
 						},
 						types: ['vt-exit'],
 					},
-					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+					{
+						collisionBehavior: 'chaining',
+						useTypesPolyfill: 'always',
+						catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
+					}
 				);
 			});
 		}
 
 		disconnectedCallback() {
-			console.log('ICAnimations disconnected');
 			this.#observer?.disconnect();
 			this.querySelectorAll<VtbagIcScopeElement>('vtbag-ic-scope').forEach((s) =>
 				s.element.activeViewTransition?.skipTransition()
@@ -117,9 +121,9 @@ import './studio.css';
 				const run = this.querySelector('#run:checked');
 				reset.checked = true;
 				this.#rootDocument!.getAnimations().forEach((a) => {
-					if ('stopped' in a) {
-						a.currentTime = parseInt((a.stopped as HTMLInputElement).value, 10);
-						delete a.stopped;
+					if ('vtbag-stopped' in a) {
+						a.currentTime = parseInt((a['vtbag-stopped'] as HTMLInputElement).value, 10);
+						delete a['vtbag-stopped'];
 						run && a.play();
 					}
 				});
@@ -132,12 +136,9 @@ import './studio.css';
 				this.querySelectorAll<HTMLElement>(`vtbag-ic-pseudo[data-stopped]`).forEach((pseudo) =>
 					pseudo.removeAttribute('data-stopped')
 				);
-				const detail = this.querySelector<VtbagIcPseudoDetailsElement>('vtbag-ic-pseudo-details');
-				const minimized = detail?.querySelector<HTMLInputElement>('.minmax input')!;
-				if (!minimized.checked) {
-					const pseudo = detail?.querySelector('h3')?.textContent;
-					pseudo && detail?.set(pseudo);
-				}
+				this.querySelector<VtbagIcPseudoDetailsElement>('vtbag-ic-pseudo-details')?.set(
+					this.querySelector<HTMLElement>('vtbag-ic-pseudo-details summary')?.textContent ?? ''
+				);
 				this.querySelector<HTMLElement>('.stopped-animations')!.style.display = 'none';
 			});
 			hideLedGroup(this.querySelector<HTMLDivElement>('.input-led-group.stopped-animations')!);
@@ -239,6 +240,7 @@ import './studio.css';
 					{
 						collisionBehavior: true || this.#scopes.size ? 'never' : 'chaining',
 						useTypesPolyfill: 'always',
+						catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
 					}
 				);
 			});
@@ -264,7 +266,11 @@ import './studio.css';
 				};
 				mayStartViewTransition(
 					{ update: slowMo, types: ['slow-mo'] },
-					{ collisionBehavior: 'never', useTypesPolyfill: 'always' }
+					{
+						collisionBehavior: 'never',
+						useTypesPolyfill: 'always',
+						catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
+					}
 				);
 			});
 
@@ -312,7 +318,11 @@ import './studio.css';
 			}
 			mayStartViewTransition(
 				{ update, types: ['vt-entry'] },
-				{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+				{
+					collisionBehavior: 'chaining',
+					useTypesPolyfill: 'always',
+					catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
+				}
 			);
 		};
 
@@ -357,13 +367,13 @@ import './studio.css';
 					a.effect?.target
 				) {
 					if (a.constructor.name !== 'CSSAnimation') {
-						const aliased: Animation & { alias?: string } = a;
+						const aliased: Animation & { "vtbag-alias"?: string } = a;
 						if (a.constructor.name === 'Animation') {
-							aliased.alias = `WAAPI animation (${properties(a)})`;
+							aliased["vtbag-alias"] ||= `WAAPI animation (${properties(a)})`;
 						} else if (a.constructor.name === 'CSSTransition') {
-							aliased.alias = `CSS Transition (${(a as CSSTransition).transitionProperty})`;
+							aliased["vtbag-alias"] = `CSS Transition (${(a as CSSTransition).transitionProperty})`;
 						} else {
-							aliased.alias = `Unknown animation type: ${a.constructor.name} (${count++})`;
+							aliased["vtbag-alias"] = `Unknown animation type: ${a.constructor.name} (${count++})`;
 						}
 					}
 
@@ -443,9 +453,9 @@ import './studio.css';
 
 		movePseudos() {
 			const movePseudosCallback = () => {
-				const twins = parent.document.documentElement.classList.contains('show-twins');
+				const showTwins = parent.document.documentElement.classList.contains('show-twins');
 
-				if (true || twins) {
+				if (showTwins) {
 					if (this.#retriggerPseudosToMove && this.#pseudosToMove.length === 0) {
 						this.querySelectorAll('vtbag-ic-pseudo').forEach((p) => this.#pseudosToMove.push(p));
 						this.#retriggerPseudosToMove = false;
@@ -455,7 +465,7 @@ import './studio.css';
 						setTimeout(movePseudosCallback);
 					}
 				} else {
-					//	this.#pseudosToMove.length = 0;
+					this.#pseudosToMove.length = 0;
 				}
 			};
 			this.#retriggerPseudosToMove = true;
@@ -465,7 +475,6 @@ import './studio.css';
 
 	if (!customElements.get('vtbag-ic-animations'))
 		customElements.define('vtbag-ic-animations', ICAnimations);
-
 
 	self.addEventListener('ic-before-capture-new', (e) => {
 		const head = (e as CustomEvent).detail.root.ownerDocument.head;

@@ -14,13 +14,15 @@ import Window from '@/components/Window.astro';
 		<Main />
 	</head>
 	<body>
-		<div id="twins">
-			<div id="default"></div>
+		<div id="specimen" style="height: 100%; width: calc(100% - 405px)">
+			<iframe
+				id="test-jig"
+				style="height: 100%; width: 100%"
+				src="/vtbag_inspection_chamber_src__/"></iframe>
+			<div id="twins" style="width: 100%;height: 100%">
+				<div id="default"></div>
+			</div>
 		</div>
-		<iframe
-			id="your-page"
-			src="/vtbag_inspection_chamber_src__/"
-			style="height: 100%; width: calc(100% - 405px)"></iframe>
 		<div id="dragBar"></div>
 		<div id="dock" style="height: 100%; width: 380px;"></div>
 		<Window style="display: none; z-index:2">
@@ -30,14 +32,16 @@ import Window from '@/components/Window.astro';
 		</Window>
 
 		<script>
+			import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from '@/components/ic/debug';
 			import { setupHooks } from '@/ic2/hooks';
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
-			const iframe = document.getElementById('your-page')!;
+			const iframe = document.getElementById('test-jig')!;
 			if (iframe) {
 				const DRAG_BAR_WIDTH = 5;
 				const DRAG_BAR_WIDTH_PX = DRAG_BAR_WIDTH + 'px';
 
+				const specimen = document.getElementById('specimen')!;
 				const twins = document.getElementById('twins')!;
 				const dragBar = document.getElementById('dragBar')!;
 				const dock = document.getElementById('dock')!;
@@ -46,7 +50,7 @@ import Window from '@/components/Window.astro';
 				const srcdoc =
 					`<html lang="en" style="overflow: clip">` +
 					document.head.outerHTML +
-					`<body style="display: flex; overflow: clip;">
+					`<body style="display: block; overflow: clip;">
 			<vtbag-ic-main></vtbag-ic-main>
 	</body>
 </html>`;
@@ -68,7 +72,7 @@ import Window from '@/components/Window.astro';
 
 						mayStartViewTransition(
 							{ update: handleLongTap, types: ['longTap'] },
-							{ useTypesPolyfill: 'always' }
+							{ useTypesPolyfill: 'always', catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS }
 						);
 					}
 				});
@@ -79,11 +83,11 @@ import Window from '@/components/Window.astro';
 					document.body.classList.add('dragging');
 					dragBar.setPointerCapture(e.pointerId);
 					dragReference = side === 'e' || side === 'w' ? e.clientX : e.clientY;
-					const iframeRect = iframe.getBoundingClientRect();
+					const specimenRect = specimen.getBoundingClientRect();
 					dragOriginalSize =
 						side === 'e' || side === 'w'
-							? iframeRect.right - iframeRect.left
-							: iframeRect.bottom - iframeRect.top;
+							? specimenRect.right - specimenRect.left
+							: specimenRect.bottom - specimenRect.top;
 					longTap = setTimeout(() => {
 						longTap = undefined;
 						stopDragging();
@@ -100,19 +104,19 @@ import Window from '@/components/Window.astro';
 					}
 					switch (side) {
 						case 'n':
-							iframe.style.height =
+							specimen.style.height =
 								Math.max(100, Math.min(innerHeight - 100, delta + dragOriginalSize)) + 'px';
 							break;
 						case 's':
-							iframe.style.height =
+							specimen.style.height =
 								Math.max(100, Math.min(innerHeight - 100, dragOriginalSize - delta)) + 'px';
 							break;
 						case 'w':
-							iframe.style.width =
+							specimen.style.width =
 								Math.max(100, Math.min(innerWidth - 100, dragOriginalSize + delta)) + 'px';
 							break;
 						case 'e':
-							iframe.style.width =
+							specimen.style.width =
 								Math.max(100, Math.min(innerWidth - 100, dragOriginalSize - delta)) + 'px';
 							break;
 					}
@@ -122,12 +126,12 @@ import Window from '@/components/Window.astro';
 						case 'n':
 						case 's':
 							dock.style.height =
-								innerHeight - parseInt(iframe.style.height, 10) - DRAG_BAR_WIDTH + 'px';
+								innerHeight - parseInt(specimen.style.height, 10) - DRAG_BAR_WIDTH + 'px';
 							break;
 						case 'e':
 						case 'w':
 							dock.style.width =
-								innerWidth - parseInt(iframe.style.width, 10) - DRAG_BAR_WIDTH + 'px';
+								innerWidth - parseInt(specimen.style.width, 10) - DRAG_BAR_WIDTH + 'px';
 							break;
 					}
 					isDragging = false;
@@ -150,12 +154,13 @@ import Window from '@/components/Window.astro';
 					} = win.getBoundingClientRect();
 
 					document.body.innerHTML = '';
+					twins.replaceChildren(twins.firstElementChild!);
 
 					if (side === 'x') {
-						document.body.append(twins, iframe, win);
+						document.body.append(specimen, win);
 						document.body.style.display = 'block';
-						twins.style.width = iframe.style.width = '100%';
-						twins.style.height = iframe.style.height = '100%';
+						specimen.style.width = '100%';
+						specimen.style.height = '100%';
 						win.insertAdjacentElement('beforeend', content);
 						dragBar.style.display = 'none';
 						dock.style.display = 'none';
@@ -179,11 +184,7 @@ import Window from '@/components/Window.astro';
 							case 'n':
 							case 's':
 								document.body.style.flexDirection = 'column';
-								dragBar.style.width =
-									twins.style.width =
-									iframe.style.width =
-									dock.style.width =
-										'100%';
+								dragBar.style.width = specimen.style.width = dock.style.width = '100%';
 								dragBar.style.height = DRAG_BAR_WIDTH_PX;
 								dragBar.style.cursor = 'row-resize';
 								dock.style.height = '';
@@ -191,31 +192,27 @@ import Window from '@/components/Window.astro';
 							case 'e':
 							case 'w':
 								document.body.style.flexDirection = 'row';
-								dragBar.style.height =
-									twins.style.height =
-									iframe.style.height =
-									dock.style.height =
-										'100%';
+								dragBar.style.height = specimen.style.height = dock.style.height = '100%';
 								dragBar.style.width = DRAG_BAR_WIDTH_PX;
 								dragBar.style.cursor = 'col-resize';
 								break;
 						}
 						switch (side) {
 							case 'n':
-								document.body.append(twins, iframe, dragBar, dock);
-								twins.style.height = iframe.style.height = winTop + 'px';
+								document.body.append(specimen, dragBar, dock);
+								specimen.style.height = winTop + 'px';
 								break;
 							case 's':
-								document.body.append(dock, dragBar, twins, iframe);
-								twins.style.height = iframe.style.height = innerHeight - winBottom + 'px';
+								document.body.append(dock, dragBar, specimen);
+								specimen.style.height = innerHeight - winBottom + 'px';
 								break;
 							case 'e':
-								document.body.append(dock, dragBar, twins, iframe);
-								twins.style.width = iframe.style.width = innerWidth - winRight + 'px';
+								document.body.append(dock, dragBar, specimen);
+								specimen.style.width = innerWidth - winRight + 'px';
 								break;
 							case 'w':
-								document.body.append(twins, iframe, dragBar, dock);
-								twins.style.width = iframe.style.width = winLeft + 'px';
+								document.body.append(specimen, dragBar, dock);
+								specimen.style.width = winLeft + 'px';
 
 								break;
 						}
@@ -223,12 +220,12 @@ import Window from '@/components/Window.astro';
 							case 'n':
 							case 's':
 								dock.style.height =
-									innerHeight - parseInt(iframe.style.height, 10) - DRAG_BAR_WIDTH + 'px';
+									innerHeight - parseInt(specimen.style.height, 10) - DRAG_BAR_WIDTH + 'px';
 								break;
 							case 'e':
 							case 'w':
 								dock.style.width =
-									innerWidth - parseInt(iframe.style.width, 10) - DRAG_BAR_WIDTH + 'px';
+									innerWidth - parseInt(specimen.style.width, 10) - DRAG_BAR_WIDTH + 'px';
 								break;
 						}
 					}
@@ -253,6 +250,15 @@ import Window from '@/components/Window.astro';
 						threshold: 0,
 					}
 				);
+
+				dispatchEvent(new CustomEvent('longTap', { detail: { side: 'x' } }));
+				window.matchMedia('(max-width: 799px)').matches
+					? setTimeout(
+							() => dispatchEvent(new CustomEvent('longTap', { detail: { side: 's' } })),
+							1000
+						)
+					: (win.style.setProperty('--window-width', '650px'),
+						win.style.setProperty('--window-height', innerHeight / 2 + 'px'));
 			}
 		</script>
 		<style is:global>
@@ -270,6 +276,7 @@ import Window from '@/components/Window.astro';
 				height: 100%;
 				width: 5px;
 				cursor: col-resize;
+				touch-action: none;
 			}
 			#content {
 				border: none;
@@ -302,12 +309,15 @@ import Window from '@/components/Window.astro';
 				-webkit-font-smoothing: auto;
 			}
 
+			#specimen {
+				display: grid;
+			}
 			#twins {
+				grid-area: 1 / 1 / 2 / 2;
 				contain: strict;
 				display: block;
 				pointer-events: none;
 				z-index: 1;
-				position: absolute;
 				inset: 0;
 				right: 425px;
 				overflow: clip;
@@ -330,12 +340,14 @@ import Window from '@/components/Window.astro';
 				}
 			}
 
-			#your-page {
+			#test-jig {
+				grid-area: 1 / 1 / 2 / 2;
+
 				border: none;
 				margin: 0;
 				padding: 0;
 				display: block;
-				background-color: wheat;
+				background-color: light-dark(white, black);
 			}
 			#dragBar {
 				z-index: 1;

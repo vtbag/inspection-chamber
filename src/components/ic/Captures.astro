@@ -4,7 +4,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 
 <ViewTransitionCapture />
 <script>
-	import { ICElement } from './ic-element';
+import { ICElement } from './ic-element';
 	import { ledGroup } from './led-group';
 
 	class ICCaptures extends ICElement {
@@ -47,15 +47,16 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 				}
 			});
 
-			self.addEventListener('ic-after-capture-old', this.showCaptureResult);
-			self.addEventListener('ic-after-capture-new', this.showCaptureResult);
+
+		
+			['ic-after-capture-old', 'ic-after-capture-new', 'ic-ready-error'].forEach((eventName) =>self.addEventListener(eventName, this.showCaptureResult));
 		}
 		showCaptureResult = (event: Event) => {
 			const isOldCapture = event.type === 'ic-after-capture-old';
 			const showOnlyOldCapture = parent.__vtbag!.ic2!.captureOldOnly ?? false;
 			const transitionRoot = (event as CustomEvent).detail.root;
 
-			if (isOldCapture !== showOnlyOldCapture) return;
+			if (isOldCapture !== showOnlyOldCapture && event.type !== 'ic-ready-error') return;
 
 			this.querySelector('.explainer')?.remove();
 
@@ -75,8 +76,6 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 </script>
 
 <style is:global>
-	@layer defaults, components, overrides;
-
 	@layer components {
 		@scope (vtbag-ic-captures) {
 			:scope {

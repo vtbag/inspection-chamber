@@ -1,9 +1,9 @@
 export abstract class ICElement extends HTMLElement {
 	#initialized = false;
 
-	protected setUp() { }
+	protected setUp() {}
 
-	protected tearDown() { }
+	protected tearDown() {}
 
 	connectedCallback() {
 		if (!this.#initialized) {
