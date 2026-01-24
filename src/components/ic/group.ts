@@ -1,5 +1,4 @@
 import { deriveCSSSelector } from './element-selector';
-import { message } from './message';
 import { type SparseDOMNode } from './sparse-dom';
 
 export type Group = {

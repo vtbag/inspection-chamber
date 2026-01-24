@@ -52,7 +52,7 @@ declare global {
 		computedStyleCompact(
 			all = false
 		): Promise<{ key: string; value: string; defaultValue: string; priority: string }[]>;
-		onIntersectionChange(entry: IntersectionObserverEntry);
+		onIntersectionChange(entry: boolean);
 	}
 	interface VtbagIcPseudoDetailsElement extends HTMLElement {
 		set(pseudo: string): void;

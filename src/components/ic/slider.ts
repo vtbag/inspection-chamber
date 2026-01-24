@@ -36,9 +36,6 @@ function set(input: HTMLInputElement, value: number, container: HTMLElement) {
 	const fill = container.querySelector<HTMLElement>(`.slider-fill`);
 	const current = container.querySelector<HTMLElement>(`.slider-value .current`)!;
 	input.value = '' + value;
-	fill?.style.setProperty(
-		'width',
-		`calc(${(value / Number(input.max)) * 100}% + 3px)`
-	);
+	fill?.style.setProperty('width', `calc(${(value / Number(input.max)) * 100}% + 3px)`);
 	current.innerText = `${value}ms`;
 }

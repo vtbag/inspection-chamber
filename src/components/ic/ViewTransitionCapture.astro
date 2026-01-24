@@ -89,7 +89,7 @@
 						?.addEventListener('pointerenter', () => highlight(group.old?.element));
 					elem
 						.lastElementChild!.querySelector('.highlight.old')
-						?.addEventListener('click', () => console.log(group.old?.element));
+						?.addEventListener('click', () => console.dir(group.old?.element));
 					elem
 						.lastElementChild!.querySelector('.highlight.new')
 						?.addEventListener('pointerenter', () => highlight(group.new?.element));
@@ -142,7 +142,7 @@
 
 			this.insertAdjacentHTML(
 				'beforeend',
-				`<h3>${this.calledOn?.ownerDocument ? deriveCSSSelector(this.calledOn) : 'document global'}</h3><p>View transition started at ${localeTime} <span class="print" title="Make info available in Devtools console">[🖶]</span></p>
+				`<h3>${this.calledOn?.ownerDocument ? deriveCSSSelector(this.calledOn) : 'document global'}</h3><p>View transition started at ${localeTime} <span class="print" title="Show in browser console">[🖶]</span></p>
 				<p>Active view transition types during capture of <strong>old</strong> images: <strong>${
 					[...(features?.oldTypes ?? [])].join(', ') || 'none'
 				}</strong></p>				

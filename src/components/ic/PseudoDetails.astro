@@ -4,24 +4,35 @@
 	import { setMaxValue } from './slider';
 	import { printToDevtools } from './devtool-bridge';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	import { createTimingBar } from './bars';
+	import { shorthands } from './shorthand';
+	import { gid, type Group } from './group';
 
 	class ICPseudoDetails extends ICElement {
 		pseudoName?: string;
 		pseudo?: VtbagIcPseudoElement;
+		formerPseudo?: VtbagIcPseudoElement;
+		formerStyles?: { key: string; value: string; defaultValue: string; priority: string }[];
+		formerStyleMap?: Map<string, string> = new Map();
 		scope?: VtbagIcScopeElement;
 		twinTO?: NodeJS.Timeout;
 		tabTO?: NodeJS.Timeout;
 		animations: Animation[] = [];
-		formerStyle?: Map<string, string> = new Map();
+		maxEnd?: number;
+		lastTime?: number;
 
 		setUp() {
 			this.style.display = 'none';
+			addEventListener('ic-about-to-finish', () => {
+				this.set('');
+			});
 
 			addEventListener('ic-time-change', async (e) => {
 				const { time, element } = (e as CustomEvent).detail;
 
 				if (!this.pseudo || (this.scope !== element && this.pseudo !== element)) return;
 				setCurrentValue('details-slider', time);
+				this.style.setProperty('--range-percent', `${(time / (this.maxEnd || 1)) * 100}`);
 				if (origin !== 'auto-move') {
 					this.animations!.forEach(
 						(a) =>
@@ -29,32 +40,43 @@
 							(a.currentTime = time)
 					);
 				}
+				if (this.lastTime === time) return;
+				this.lastTime = time;
 
 				this.tabTO ||
 					(this.tabTO = setTimeout(async () => {
 						this.tabTO = undefined!;
-						const former: Map<string, string> = new Map();
-						const style = (await this.pseudo!.computedStyleCompact(true)).sort((a, b) =>
-							a.key.localeCompare(b.key)
-						);
-						const lines: string[] = [];
-						style.forEach(({ key, value, defaultValue, priority }) => {
-							if (value !== defaultValue || this.formerStyle?.has(key)) {
-								lines.push(`
-								<tr class="style-line">
-									<td class="key">${key}:</td>
-									<td class="value ${this.formerStyle && value !== this.formerStyle.get(key) ? 'changed' : ''}">${value}</td>
-									<td class="priority">${priority}</td>
-								</tr>`);
-								former.set(key, value);
-							}
-						});
-						this.formerStyle = former;
-
-						const table = this.querySelector<HTMLElement>('table')!;
-						table.innerHTML = lines.join('');
+						const style = await this.pseudo!.computedStyleCompact(true);
+						this.updateTable(style);
+						this.formerStyles = style;
 					}, 0));
 			});
+		}
+
+		private updateTable(
+			style: { key: string; value: string; defaultValue: string; priority: string }[]
+		) {
+			const former: Map<string, string> = new Map();
+
+			const lines: string[] = [];
+			shorthands(
+				style.filter(
+					({ value, defaultValue }) => value !== defaultValue //|| this.formerStyleMap?.has(key)
+				)
+			)
+				.sort((a, b) => a.key.localeCompare(b.key))
+				.forEach(({ key, value }) => {
+					lines.push(`
+								<tr class="style-line">
+									<td class="key">${key}:</td>
+									<td class="value ${this.formerStyleMap && value !== this.formerStyleMap.get(key) ? 'changed' : ''}">${value}</td>
+								</tr>`);
+					former.set(key, value);
+				});
+			this.formerStyleMap = former;
+
+			const table = this.querySelector<HTMLElement>('table')!;
+			table.innerHTML = lines.join('');
 		}
 
 		render() {
@@ -79,31 +101,33 @@
 				</div>
 			</details>`;
 
+			if (this.formerStyles) this.updateTable(this.formerStyles);
+
 			this.querySelector('.details-styles')!.addEventListener('toggle', (e) => {
 				const open = (e.target as HTMLDetailsElement).open;
 				sessionStorage.setItem('ic-pseudo-details-styles-open', open ? 'true' : 'false');
 			});
 			if (!this.pseudoName) {
-				this.style.display = 'none';
+				//			this.style.display = 'none';
 				return;
 			}
-			this.querySelector<HTMLElement>('summary')!.textContent = this.pseudoName;
+			this.querySelector<HTMLElement>('summary')!.textContent = 'Details for ' + this.pseudoName;
 
 			const content = this.querySelector('.content') as HTMLElement;
 
-			const maxDuration = this.showAnimations(content);
+			this.showAnimations(content);
 
 			content.lastElementChild!.insertAdjacentHTML(
 				'beforebegin',
 				slider('details-slider', 'detail')
 			);
-			this.showHideSlider(content);
+			this.showHideSlider();
 
 			const time = parseInt(
 				this.scope!.querySelector<HTMLInputElement>('input[name^="slider-"]')?.value ?? '0',
 				10
 			);
-			setMaxValue('details-slider', maxDuration, time, (e: Event) => {
+			setMaxValue('details-slider', this.maxEnd!, time, (e: Event) => {
 				const time = parseInt((e.target as HTMLInputElement).value, 10);
 				dispatchEvent(
 					new CustomEvent('ic-time-change', {
@@ -146,7 +170,7 @@
 				}
 				this.closest<VtbagIcAnimationsElement>('vtbag-ic-animations')!.querySelector<HTMLElement>(
 					'.stopped-animations'
-				)!.style.display = parent.document.querySelectorAll('#twins div[data-title][data-stopped]')
+				)!.style.display = parent.document.querySelectorAll('#twins div[data-twin][data-stopped]')
 					.length
 					? 'grid'
 					: 'none';
@@ -155,38 +179,53 @@
 			const short = (pseudoElement: string) =>
 				pseudoElement.replace(/^::view-transition-(.*)\(([^)]*)\)$/, '$1($2)');
 
-			let maxDuration = -1;
+			const reversed = this.animations.toReversed().filter((a) => !(a as any).dead); // chrome bug workaround
+			const timings = reversed.map((a) => a.effect?.getComputedTiming());
+			this.maxEnd = Math.max(...reversed.map((_, idx) => timings[idx]?.endTime as number));
 			let count = 0;
-			const animations = document.createElement('div');
-			animations.className = 'animations';
-			content.insertAdjacentElement('afterbegin', animations);
-			this.animations.toReversed().forEach((a) => {
+			content.insertAdjacentHTML('afterbegin', '<div class="anim-container"><div class="animations"></div></div>'); 
+			const animations = content.querySelector<HTMLElement>('.animations')!;
+			let lastOrigin: VtbagIcPseudoElement | undefined = undefined;
+			reversed.forEach((a, idx) => {
 				if ('vtbag-alias' in a && a['vtbag-alias'] === 'vtbag-ic-click-track') return;
-				const duration = a.effect?.getComputedTiming().endTime;
-				maxDuration = Math.max(maxDuration, (duration as number) ?? 0);
+
 				const name =
 					short(a.effect?.pseudoElement!) +
 					': ' +
 					((a as CSSAnimation).animationName ??
 						(('vtbag-alias' in a && a['vtbag-alias']) || 'unknown'));
+
+				const origin =
+					'vtbag-origin' in a ? (a['vtbag-origin'] as VtbagIcPseudoElement) : undefined;
+
+				if (lastOrigin && origin !== lastOrigin)
+					animations.insertAdjacentHTML('afterbegin', `<hr>`);
+
+				lastOrigin = origin;
+
 				animations.insertAdjacentHTML(
 					'afterbegin',
 					`<div style="align-items: center; display: flex; gap: 8px;">
 							<label>
-								<input type="checkbox" ${'vtbag-stopped' in a ? '' : 'checked'}>${name}
-									<span>${' vtbag-stopped' in a ? `&nbsp;(stopped at ${~~a.currentTime!}ms)` : ''}</span>
+								<span title="delay: ${~~((timings[idx]?.delay as number) || 0)}ms, duration: ${~~((timings[idx]?.duration as number) || this.maxEnd! - ((timings[idx]?.delay as number) || 0))}ms"></span><input type="checkbox" ${'vtbag-stopped' in a ? '' : 'checked'}>${name}<span>${' vtbag-stopped' in a ? `&nbsp;(stopped at ${~~a.currentTime!}ms)` : ''}</span>
 							</label>
-							<span style="cursor: pointer;" class="devtools" title="Make animation available in Devtools console">[🖶]</span>
+							<span style="cursor: pointer;" class="devtools" title="Show in browser console">[🖶]</span>
 						</div>`
 				);
-				++count;
+				animations
+					.querySelector('span[title]')!
+					.insertAdjacentElement('afterbegin', createTimingBar(timings[idx]!, this.maxEnd!));
 				animations.querySelector('.devtools')!.addEventListener('click', () =>
-					printToDevtools('\n%s\n%o', name, {
-						animation: clean(a),
-						timing: a.effect?.getComputedTiming(),
-						...('transitionProperty' in a && { transitionProperty: a.transitionProperty }),
-						...('animationName' in a && { keyframes: a.effect?.getKeyframes() }),
-					})
+					printToDevtools(
+						'\n%s\n%o',
+						name,
+						Object.assign(Object.create(null), {
+							animation: clean(a),
+							timing: a.effect?.getComputedTiming(),
+							...('transitionProperty' in a && { transitionProperty: a.transitionProperty }),
+							...('animationName' in a && { keyframes: a.effect?.getKeyframes() }),
+						})
+					)
 				);
 				if ('vtbag-stopped' in a && a.playState === 'running') a.pause(); // check this
 
@@ -197,7 +236,7 @@
 						delete stoppable['vtbag-stopped'];
 					} else {
 						stoppable['vtbag-stopped'] =
-							this.scope!.querySelector<HTMLInputElement>('input[name^="slider-"]')!;
+							this.scope?.querySelector<HTMLInputElement>('input[name^="slider-"]')!;
 					}
 					checkbox.parentElement!.lastElementChild!.innerHTML = stoppable['vtbag-stopped']
 						? `&nbsp;(stopped at ${~~a.currentTime!}ms)`
@@ -219,17 +258,32 @@
 						(stoppable as Animation & { 'vtbag-origin'?: VtbagIcPseudoElement })['vtbag-origin']!
 					);
 				});
+				++count;
 			});
 			if (count === 0) {
-				animations.insertAdjacentHTML(
-					'afterbegin',
-					`<span class="info">No animations</span>`
-				);
+				animations.insertAdjacentHTML('afterbegin', `<span class="info">No animations</span>`);
+			} else {
+				animations.parentElement!.insertAdjacentHTML('beforeend', `<div id="animation-overlay"></div>`);
 			}
-			return maxDuration;
 		}
 
 		set(name: string) {
+			const setDetailsMark = (pseudo: VtbagIcPseudoElement, attribute: string, value: boolean) => {
+				if (value) {
+					pseudo!.setAttribute(attribute, '');
+					pseudo!.twin.setAttribute(attribute, '');
+					[...document.querySelectorAll('#identified-pseudos div')]
+						.find((div) => div.textContent === pseudo.dataset.link)
+						?.setAttribute(attribute, '');
+				} else {
+					pseudo!.removeAttribute(attribute);
+					pseudo!.twin.removeAttribute(attribute);
+					[...document.querySelectorAll('#identified-pseudos div')]
+						.find((div) => div.textContent === pseudo.dataset.link)
+						?.removeAttribute(attribute);
+				}
+			};
+
 			const resetFormerAnimations = () => {
 				const time = parseInt(
 					this.scope!.querySelector<HTMLInputElement>('input[name^="slider-"]')?.value ?? '0',
@@ -244,17 +298,37 @@
 
 			const gatherCurrentAnimations = () => {
 				this.animations = [];
-				[this.pseudo!, ...this.pseudo!.querySelectorAll('vtbag-ic-pseudo')].forEach((pseudo) =>
+				const addAnimations = (pseudo: VtbagIcPseudoElement) => {
 					pseudo.animations().forEach((a) => {
 						(a as Animation & { 'vtbag-origin'?: VtbagIcPseudoElement })['vtbag-origin'] = pseudo;
 						this.animations.push(a);
-					})
-				);
+					});
+					if (
+						this.pseudo!.name() !== '::view-transition' &&
+						pseudo.getAttribute('name') === 'group-children'
+					) {
+						const group = pseudo.closest<VtbagIcGroupElement>('vtbag-ic-group')!.group as Group;
+						group.children.forEach((g) => {
+							document
+								.querySelector<VtbagIcGroupElement>(
+									`vtbag-ic-group:has(h3[data-group="${gid(g)}"]`
+								)!
+								.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo')
+								.forEach(addAnimations);
+						});
+					}
+				};
+				[this.pseudo!, ...this.pseudo!.querySelectorAll('vtbag-ic-pseudo')].forEach(addAnimations);
 			};
 
 			this.pseudo =
-				document.querySelector<VtbagIcPseudoElement>(`vtbag-ic-pseudo[data-link="${name}"]`) ??
-				undefined;
+				[...document.querySelectorAll<VtbagIcPseudoElement>(`vtbag-ic-pseudo[data-link]`)].find(
+					(p) => p.dataset.link === name
+				) || undefined;
+
+			this.formerPseudo && setDetailsMark(this.formerPseudo, 'data-current-details', false);
+			this.pseudo && setDetailsMark(this.pseudo, 'data-current-details', true);
+
 			this.pseudoName = this.pseudo ? name : undefined;
 			this.scope = this.pseudo?.closest<VtbagIcScopeElement>('vtbag-ic-scope') ?? undefined;
 			const details = this.querySelector<HTMLDetailsElement>('details')!;
@@ -262,17 +336,17 @@
 			mayStartViewTransition(
 				{
 					update: () => {
-						this.style.display = this.pseudoName ? 'block' : 'none';
 						details.open = !!this.pseudoName;
-						if (!this.pseudoName || !this.pseudo || !this.scope) {
-							this.style.display = 'none';
-						} else {
+						if (this.pseudoName && this.pseudo && this.scope) {
+							this.style.display = 'block';
 							resetFormerAnimations();
 							gatherCurrentAnimations();
 
 							this.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
-							this.formerStyle = undefined;
+							this.formerStyleMap = undefined;
 							this.render();
+						} else {
+							this.style.display = 'none';
 						}
 					},
 					types: ['pseudo-detail'],
@@ -282,9 +356,10 @@
 					useTypesPolyfill: 'always',
 				}
 			);
+			this.formerPseudo = this.pseudo;
 		}
 
-		showHideSlider(content: HTMLElement) {
+		showHideSlider() {
 			const container = this.querySelector('#details-slider')?.closest(
 				'.horizontal-slider-container'
 			) as HTMLElement;
@@ -312,15 +387,44 @@
 
 				.animations,
 				.style {
-					max-height: 300px;
+					max-height: 50vh;
 					overflow-y: auto;
 				}
 
 				.details-styles,
-				.details-styles .style, 
+				.details-styles .style,
 				.content .animations,
 				.horizontal-slider-container {
 					margin-top: 0.5rem;
+				}
+
+				.anim-container {
+					position: relative;
+					display: grid;
+				}
+				.animations {
+					grid-area: 1 / 1 / 2 / 2;
+					hr {
+					margin: 0.2rem 1rem;
+					border: none;
+					border-top: 1px solid light-dark(#d6d6d6, #2a2a2a);
+				}}
+
+				.animations svg {
+					display: inline-block;
+					vertical-align: middle;
+					margin: 0 0.5ch;
+				}
+				#animation-overlay {
+					grid-area: 1 / 1 / 2 / 2;
+					margin: 0 0.5ch;
+					position: absolute;
+					top: 8px;
+					bottom: 0px;
+					left: calc(var(--range-percent, 50) * 12ch / 100);
+					width: calc(12ch - var(--range-percent, 50) * 12ch / 100 + 1px);
+					pointer-events: none;
+					background: linear-gradient(to right, #ccfc, #0000 1px);
 				}
 				table {
 					table-layout: fixed;

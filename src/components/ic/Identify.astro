@@ -1,62 +1,56 @@
 <script>
-	import { hideMinmax, minmax, resizeMinmax, showMinmax } from './minmax';
 	import { ICElement } from './ic-element';
 
-	const initial =
-		'Select an area on the page to identify the view transition pseudo element at that position.';
+	const initial = `Click a spot on the page to identify the view transition pseudo elements at that position.<br>
+		Close this panel to remove the identify boxes from the screen.`;
 
 	class ICIdentify extends ICElement {
 		render() {
-			this.innerHTML = `<h3>Identify</h3><div id="identified-pseudos">${initial}</div>`;
-			minmax(
-				this.querySelector('#identified-pseudos')!,
-				'minimized',
-				'Pick pseudo from screen',
-				undefined,
-				undefined,
-				(input) => {
-					if (input.checked) {
-						parent.document.documentElement.classList.remove('show-twins');
-						this.querySelector<HTMLElement>('#identified-pseudos')!.innerHTML = initial;
-					} else {
-						parent.document.documentElement.classList.add('show-twins');
-						document
-							.querySelectorAll<HTMLInputElement>('vtbag-ic-scope input[type=range]')
-							.forEach((slider) => {
-								slider.dispatchEvent(new Event('input'));
-							});
-						parent.document
-							.querySelectorAll('#twins div[data-title]')
-							.forEach((div) => div.addEventListener('click', divPick));
-					}
-					function divPick(e: Event) {
-						e.stopImmediatePropagation();
-						resizeMinmax(input.parentElement as HTMLElement, () => pick(e as PointerEvent));
-					}
-				}
+			this.classList.add('panel');
+			const open = sessionStorage.getItem('ic-identify-open') === 'false' ? false : true;
+			this.innerHTML = `
+			<details ${open ? 'open' : ''}>
+				<summary>Pick pseudo element from screen</summary>
+				<div id="identified-pseudos">${initial}</div>
+			</details>`;
+			this.querySelector('details')!.addEventListener('toggle', (e) =>
+				this.init((e.target as HTMLDetailsElement).open)
 			);
-			hideMinmax(this.querySelector<HTMLLabelElement>('vtbag-ic-identify label.minmax')!);
+			this.hide();
+		}
+		init(open: boolean) {
+			sessionStorage.setItem('ic-identify-open', open ? 'true' : 'false');
+			parent.document.documentElement.classList.toggle('show-twins', open);
+			parent.document
+				.querySelectorAll('#twins div[data-twin]')
+				.forEach((div) => div[open ? 'addEventListener' : 'removeEventListener']('click', pick));
 		}
 		show() {
-			showMinmax(this.querySelector<HTMLLabelElement>('label.minmax')!);
+			this.querySelector<HTMLDetailsElement>('details')!.style.display = 'block';
+			this.init(this.querySelector<HTMLDetailsElement>('details')!.open);
 		}
 		hide() {
-			const minmax = this.querySelector<HTMLLabelElement>('label.minmax')!;
-			const checkbox = minmax.querySelector('input')!;
-			if (!checkbox.checked) checkbox.click();
-			hideMinmax(minmax);
+			this.querySelector<HTMLDetailsElement>('details')!.style.display = 'none';
+			this.querySelector('#identified-pseudos')!.innerHTML = initial;
 		}
 	}
 	function pseudo(div: HTMLElement) {
 		return div.textContent!;
 	}
 
-	function pick(e: PointerEvent) {
+	function pick(event: Event) {
+		const e = event as PointerEvent;
 		const target = e.target as HTMLElement;
 		if (target?.tagName === 'DIV') {
 			let content = (target.ownerDocument.elementsFromPoint(e.clientX, e.clientY) as HTMLElement[])
-				.filter((el) => el.dataset.title)
-				.map((el) => `<div ${el.dataset.stopped !== undefined? 'data-stopped' : ''}>${el.dataset.title}</div>`)
+				.filter((el) => el.dataset.twin)
+				.toReversed()
+				.map(
+					(el) => `<div 
+				${el.dataset.stopped !== undefined ? 'data-stopped' : ''}
+				${el.dataset.currentDetails !== undefined ? 'data-current-details' : ''}
+				>${el.dataset.twin}</div>`
+				)
 				.join('');
 
 			const identifiedPseudos = document.querySelector<HTMLElement>('#identified-pseudos')!;
@@ -69,9 +63,9 @@
 				});
 				div.addEventListener('pointerenter', () => {
 					const what = pseudo(div);
-					const it = parent.document.querySelector<HTMLDivElement>(
-						`#twins div[data-title='${what}']`
-					)!;
+					const it = [...parent.document.querySelectorAll<HTMLDivElement>(
+						`#twins div[data-twin]`
+					)].find((d) => d.dataset.twin === what)!;
 					let color = `darkred`;
 					if (
 						what.endsWith('::view-transition') ||
@@ -91,9 +85,9 @@
 				});
 				div.addEventListener('pointerleave', () => {
 					const what = pseudo(div);
-					const it = parent.document.querySelector<HTMLDivElement>(
-						`#twins div[data-title='${what}']`
-					)!;
+					const it = [...parent.document.querySelectorAll<HTMLDivElement>(
+						`#twins div[data-twin]`
+					) ].find((d) => d.dataset.twin === what)!;
 					it.style.outline = '';
 					it.style.outlineOffset = '';
 					div.style.color = '';
@@ -105,6 +99,8 @@
 </script>
 
 <style is:global>
+	@import './styles/devtools.css';
+	@import './styles/details.css';
 	@layer components {
 		@scope (vtbag-ic-identify) {
 			:scope {
@@ -119,6 +115,9 @@
 					cursor: pointer;
 					padding: 2px 4px;
 					border-top: 1px solid light-dark(#d6d6d6, #2a2a2a);
+					&[data-current-details] {
+						color: light-dark(black, white);
+					}
 					&[data-stopped] {
 						color: light-dark(red, darkred);
 					}

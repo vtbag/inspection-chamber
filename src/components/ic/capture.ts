@@ -1,6 +1,6 @@
 import { namedElements, allRoots } from '@/css';
 import { deriveCSSSelector } from './element-selector';
-import { nestGroups, numberGroupsDFS, type Group } from './group';
+import { gid, nestGroups, numberGroupsDFS, type Group } from './group';
 import { linkToParent, sort, type SparseDOMNode } from './sparse-dom';
 import { message } from './message';
 
@@ -95,8 +95,12 @@ function capture(
 	groupRoot[oldOrNew] = rootNode;
 	if (nestGroups(rootNode, groupRoot, groupRoot, groups, oldOrNew)) {
 		const capture = !!document.querySelector<HTMLInputElement>('#capture')?.checked;
-		message('error',
-			`<b>Duplicate</b> view transition <b>names</b> detected <b>during ${oldOrNew} capture</b>. ` + (capture ? `Check capture results below for details.` : `Enable <b>Analyze capturing</b> mode below to see details.`)
+		message(
+			'error',
+			`<b>Duplicate</b> view transition <b>names</b> detected <b>during ${oldOrNew} capture</b>. ` +
+				(capture
+					? `Check capture results below for details.`
+					: `Enable <b>Analyze capturing</b> mode below to see details.`)
 		);
 	}
 	numberGroupsDFS(groupRoot);
@@ -134,7 +138,7 @@ function capture(
 		const head = transitionRoot.ownerDocument.head;
 		head.insertAdjacentHTML(
 			'beforeend',
-			`<style id="vtbag-ic-temp-style-${groups.get('@')!.name}">${sheet}</style>`
+			`<style id="vtbag-ic-temp-style-${gid(groups.get('@'))}">${sheet}</style>`
 		);
 	})
 );
@@ -144,7 +148,7 @@ function capture(
 		const detail = (event as CustomEvent).detail;
 		const root = detail.root;
 		root.ownerDocument.head
-			.querySelector(`#vtbag-ic-temp-style-${moduleGroupMaps.get(root)?.get('@')?.name}`)
+			.querySelector(`#vtbag-ic-temp-style-${gid(moduleGroupMaps.get(root)?.get('@'))}`)
 			?.remove();
 	})
 );

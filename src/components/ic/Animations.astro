@@ -24,6 +24,8 @@ import './studio.css';
 	import { disableLedGroup, enableLedGroup, hideLedGroup, ledGroup } from './led-group';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
+	import { message } from './message';
+	import { deriveCSSSelector } from './element-selector';
 
 	class ICAnimations extends HTMLElement {
 		#initialized = false;
@@ -36,12 +38,26 @@ import './studio.css';
 		constructor() {
 			super();
 			addEventListener('ic-time-change', () => this.movePseudos());
+
 			addEventListener('ic-about-to-finish', (e) => {
+				const details = (e as CustomEvent).detail;
+				const root = details.root;
+				const where =
+					details.root.parentElement || details.features.scoped
+						? details.root
+						: details.root.ownerDocument;
+				const scope = this.#scopes.get(root)!;
+				if (scope?.querySelector('input[value="freeze"]:checked')) {
+					message(
+						'warning',
+						`View transition on <b>${where.ownerDocument ? deriveCSSSelector(where) : 'document'}</b> finished while frozen. This might happen for example when you switch tabs, resize the window,  or minimize the browser.`
+					);
+					scope.animations.forEach((a) => (a.cancel() //, ((a as any).dead = true))
+					));
+				}
 				mayStartViewTransition(
 					{
 						update: () => {
-							const root = (e as CustomEvent).detail.root;
-							const scope = this.#scopes.get(root)!;
 							this.#scopes.delete(root);
 							scope?.remove();
 							!this.#scopes
@@ -58,7 +74,7 @@ import './studio.css';
 						types: ['vt-exit'],
 					},
 					{
-						collisionBehavior: 'chaining',
+						collisionBehavior: document.visibilityState === 'visible' ? 'chaining' : 'never',
 						useTypesPolyfill: 'always',
 						catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
 					}
@@ -310,10 +326,10 @@ import './studio.css';
 				this.#rootDocument?.getAnimations().forEach((a) => a.pause());
 				queueMicrotask(() => this.#rootDocument?.getAnimations().forEach((a) => a.pause()));
 				update = () => {
-					this.querySelector<VtbagIcIdentifyElement>('vtbag-ic-identify')?.show();
 					this.querySelector<HTMLDivElement>('.animations-head-main')!.style.display = '';
 					this.refreshAnimations(this.#rootDocument!.getAnimations())!;
 					this.renderHead();
+					this.querySelector<VtbagIcIdentifyElement>('vtbag-ic-identify')?.show();
 				};
 			}
 			mayStartViewTransition(
@@ -367,13 +383,14 @@ import './studio.css';
 					a.effect?.target
 				) {
 					if (a.constructor.name !== 'CSSAnimation') {
-						const aliased: Animation & { "vtbag-alias"?: string } = a;
+						const aliased: Animation & { 'vtbag-alias'?: string } = a;
 						if (a.constructor.name === 'Animation') {
-							aliased["vtbag-alias"] ||= `WAAPI animation (${properties(a)})`;
+							aliased['vtbag-alias'] ||= `WAAPI animation (${properties(a)})`;
 						} else if (a.constructor.name === 'CSSTransition') {
-							aliased["vtbag-alias"] = `CSS Transition (${(a as CSSTransition).transitionProperty})`;
+							aliased['vtbag-alias'] =
+								`CSS Transition (${(a as CSSTransition).transitionProperty})`;
 						} else {
-							aliased["vtbag-alias"] = `Unknown animation type: ${a.constructor.name} (${count++})`;
+							aliased['vtbag-alias'] = `Unknown animation type: ${a.constructor.name} (${count++})`;
 						}
 					}
 

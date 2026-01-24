@@ -188,6 +188,9 @@
 	vtbag-ic-pseudo.in-view > span > span.name {
 		color: light-dark(#555, #aaa);
 	}
+	vtbag-ic-pseudo[data-current-details] > span > span.name {
+		color: light-dark(black, white);
+	}
 	vtbag-ic-pseudo[data-stopped] > span > span.name {
 		color: light-dark(darkred, red);
 	}
@@ -603,6 +606,7 @@
 	accent-color: auto;
 	block-size: auto !important;
 	box-sizing: initial;
+	bottom: 0px;
 	cursor: auto;
 	font-family: initial;
 	font-size: initial;
@@ -610,15 +614,20 @@
 	font-synthesis-small-caps: auto;
 	font-synthesis-style: auto;
 	font-synthesis-weight: auto;
-	height: 0;
+	height: 0px;
 	hyphens: manual;
 	inline-size: auto;
+	isolation: auto;
+	left: 0px;
 	letter-spacing: normal;
 	line-height: normal;
 	overflow-wrap: normal;
 	pointer-events: auto;
+	right: 0px;
 	text-rendering: auto;
+	top: 0px;
 	unicode-bidi: normal;
-	width: 0;
+	width: 0px;
 	-webkit-font-smoothing: auto;
+	interpolate-size: numeric-only;
 }

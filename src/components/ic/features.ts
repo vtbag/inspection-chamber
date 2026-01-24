@@ -6,4 +6,6 @@ export type Features = {
 	crossDocument?: boolean;
 	scoped?: boolean;
 	readyErrorOccurred?: boolean;
+	initialHeight?: number;
+	initialWidth?: number;
 };

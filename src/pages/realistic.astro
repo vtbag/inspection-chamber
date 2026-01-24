@@ -42,6 +42,7 @@
 			h1 {
 				width: fit-content;
 				margin: 0 auto;
+				transform: rotateZ(10deg);
 			}
 			header p {
 				view-transition-name: ¶;
@@ -55,7 +56,7 @@
 			}
 			body.expanded div:nth-of-type(1) {
 				border: 1px solid blue;
-				border-radius: 4px;
+				border-radius: 4px 2px;
 			}
 			aside {
 				contain: layout;
@@ -99,6 +100,7 @@
 			::view-transition-new(h1\!) {
 				height: 100%;
 				width: auto;
+				animation-delay: 20ms;
 			}
 			::view-transition-old(root),
 			::view-transition-new(root) {
@@ -328,13 +330,14 @@
 
 						transition.updateCallbackDone.catch((e) => console.error('Update callback failed:', e));
 						transition.ready.then(() => {
-							document.documentElement.animate(
+							const animation = document.documentElement.animate(
 								[
 									{ offset: 0, accentColor: 'black' },
 									{ offset: 1, accentColor: 'white' },
 								],
 								{ duration: 300, pseudoElement: '::view-transition-old(img)' }
 							);
+							transition.finished.then(() => animation.cancel());
 						});
 						transition.finished.catch((e) => console.error(e));
 					});

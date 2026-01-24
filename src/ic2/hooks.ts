@@ -73,9 +73,8 @@ async function pagereveal(event: PageRevealEvent) {
 	if (!('activeViewTransition' in doc)) doc.activeViewTransition = transition;
 	transition.ready.finally(() => {
 		afterCaptureNew(root, transition, features);
-		if (
-			parent.__vtbag.ic2!.chamberWindow?.sessionStorage.getItem('ic-analyzer-mode') === 'capture'
-		) advance(root);
+		if (parent.__vtbag.ic2!.chamberWindow?.sessionStorage.getItem('ic-analyzer-mode') === 'capture')
+			advance(root);
 	});
 	transition.finished.finally(() => animationsWillFinish(root, transition, features));
 	await Promise.resolve(true);
@@ -102,6 +101,9 @@ function monkey<
 		features.trace = trace;
 		features.time = time;
 		features.scoped = this === transitionRoot;
+		const { width, height } = transitionRoot.getBoundingClientRect();
+		features.initialHeight = height;
+		features.initialWidth = width;
 
 		const captureOldOnly = parent.__vtbag.ic2!.captureOldOnly;
 		let readyErrorOccurred = false;
@@ -114,30 +116,37 @@ function monkey<
 		if (!arg) {
 			arg = async () => {
 				afterCaptureOld(transitionRoot, transition, features);
-				captureOldOnly || readyErrorOccurred || beforeCaptureNew(transitionRoot, transition, features);
+				captureOldOnly ||
+					readyErrorOccurred ||
+					beforeCaptureNew(transitionRoot, transition, features);
 			};
 		} else if (typeof arg === 'function') {
 			const originalArg = arg;
 			arg = async () => {
 				afterCaptureOld(transitionRoot, transition, features);
 				captureOldOnly || (await (originalArg as Function)());
-				captureOldOnly || readyErrorOccurred || beforeCaptureNew(transitionRoot, transition, features);
+				captureOldOnly ||
+					readyErrorOccurred ||
+					beforeCaptureNew(transitionRoot, transition, features);
 			};
 		} else if ((arg as StartViewTransitionOptions).update) {
 			const originalUpdate = (arg as StartViewTransitionOptions).update;
 			arg.update = async () => {
 				afterCaptureOld(transitionRoot, transition, features);
 				captureOldOnly || (await originalUpdate!());
-				captureOldOnly || readyErrorOccurred || beforeCaptureNew(transitionRoot, transition, features);
+				captureOldOnly ||
+					readyErrorOccurred ||
+					beforeCaptureNew(transitionRoot, transition, features);
 			};
 		} else {
 			(arg as StartViewTransitionOptions).update = () => {
 				afterCaptureOld(transitionRoot, transition, features);
-				captureOldOnly || readyErrorOccurred || beforeCaptureNew(transitionRoot, transition, features);
+				captureOldOnly ||
+					readyErrorOccurred ||
+					beforeCaptureNew(transitionRoot, transition, features);
 			};
 		}
 		transition = original.apply(this, [arg]);
-		let originalTransition = transition;
 
 		transition.updateCallbackDone.catch((e) =>
 			updateError(transitionRoot, transition, features, e)
@@ -146,9 +155,13 @@ function monkey<
 			readyErrorOccurred = true;
 			readyError(transitionRoot, transition, features, e);
 		});
-		captureOldOnly || transition.ready.then(() => afterCaptureNew(transitionRoot, transition, features));
+		captureOldOnly ||
+			transition.ready.then(() => afterCaptureNew(transitionRoot, transition, features));
 
-		if (parent.__vtbag.ic2!.chamberWindow?.document?.querySelector<HTMLInputElement>('#capture')?.checked)
+		if (
+			parent.__vtbag.ic2!.chamberWindow?.document?.querySelector<HTMLInputElement>('#capture')
+				?.checked
+		)
 			transition = deactivate(transition, transitionRoot, this.ownerDocument ?? this);
 
 		if (this.ownerDocument) {
@@ -166,11 +179,7 @@ function monkey<
 	} as T;
 }
 
-function deactivate(
-	transition: ViewTransition,
-	transitionRoot: HTMLElement,
-	document: Document,
-) {
+function deactivate(transition: ViewTransition, transitionRoot: HTMLElement, document: Document) {
 	{
 		(transitionRoot as any).vtbagFlushUpdates?.();
 		const freeze = parent.__vtbag.ic2!.captureFreezeTypes;
@@ -189,10 +198,10 @@ function deactivate(
 		return new Proxy(transition, {
 			get(_, prop) {
 				if (prop === 'ready' || prop === 'finished' || prop === 'updateCallbackFinished') {
-					return new Promise<void>(() => { });
+					return new Promise<void>(() => {});
 				}
 				if (prop === 'waitUntil') {
-					return (_: Promise<unknown>) => { };
+					return (_: Promise<unknown>) => {};
 				}
 				return Reflect.get(transition, prop);
 			},
@@ -210,6 +219,8 @@ function crossDocumentFeatures() {
 	features.time = Date.now();
 	features.trace = undefined;
 	features.scoped = false;
+	features.initialHeight = innerHeight;
+	features.initialWidth = innerWidth;
 	return features;
 }
 
@@ -224,7 +235,11 @@ function advance(root: HTMLElement) {
 			animation.currentTime = animation.effect.getComputedTiming().endTime!;
 		}
 	});
-	paused && message('info', 'View transition types are frozen during inspection. Don\'t forget to resume them when done.');
+	paused &&
+		message(
+			'info',
+			"View transition types are frozen during inspection. Don't forget to resume them when done."
+		);
 }
 
 function animationStart(event: AnimationEvent) {

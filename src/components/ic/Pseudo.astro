@@ -24,6 +24,7 @@
 		'border-width': '0px',
 		'border-radius': '0px',
 		'z-index': 'auto',
+		'interpolate-size': 'numeric-only',
 	};
 
 	const allProperties = Array.from(
@@ -66,15 +67,17 @@
 			return this.#twin;
 		}
 
-		async computedStyleCompact(all = true) {
+		async computedStyleCompact(
+			all = true
+		): Promise<{ key: string; value: string; defaultValue: string; priority: string }[]> {
 			const result: { key: string; value: string; defaultValue: string; priority: string }[] = [];
 
 			let start = performance.now();
 
+			const colorValue = this.#computedStyle?.getPropertyValue('color');
 			for (const key of all ? allProperties : Object.keys(twinProperties!)) {
 				await (async () => {
 					let defaultValue = ICPseudo.defaultStyles!.getPropertyValue(key);
-					if (key === 'width' || key === 'height') defaultValue = 'auto';
 					const value = this.#computedStyle!.getPropertyValue(key);
 					const priority = this.#computedStyle!.getPropertyPriority(key);
 					if (performance.now() - start > 10) {
@@ -97,6 +100,15 @@
 							parseFloat(this.#computedStyle!.borderTopWidth) +
 							parseFloat(this.#computedStyle!.borderBottomWidth);
 						if (Math.abs(w - w2) < 2 && Math.abs(h - h2) < 2) defaultValue = value;
+					}
+
+					if (
+						key.endsWith('-color') &&
+						value !== defaultValue &&
+						colorValue &&
+						value === colorValue
+					) {
+						defaultValue = colorValue;
 					}
 					if (value !== defaultValue && (value === 'auto' || value === 'normal'))
 						console.error(key, defaultValue, value);
@@ -135,7 +147,7 @@
 				this.icScope = this.icGroup.scope;
 			}
 			const scope = this.icScope.element;
-			this.id = `${this.icScope.scopeId}-${gid(this.icGroup?.group)}-${kind}`;
+			this.id = `${this.icScope.scopeId}-${gid(this.icGroup?.group)}-${kind === '::view-transition' ? 'root' : kind}`;
 
 			// todo: simplify
 			this.#computedStyle = scope?.ownerDocument.defaultView?.getComputedStyle(
@@ -169,8 +181,8 @@
 		createTwin() {
 			const twins = parent.document.querySelector<HTMLDivElement>('#twins')!;
 			this.#twin = twins.ownerDocument.createElement('div')!;
-			this.#twin.dataset.title = (this.icScope?.path ?? '') + this.name();
-			this.dataset.link = this.#twin.dataset.title!;
+			this.#twin.dataset.twin = (this.icScope?.path ?? '') + this.name();
+			this.dataset.link = this.#twin.dataset.twin!;
 			this.moveTwin();
 			let parentPseudo = this.icParentPseudo || null;
 			if (!parentPseudo) {
@@ -179,9 +191,9 @@
 					if (this.icGroup?.group.parent?.parent) {
 						const parentPseudoName =
 							this.icScope!.path + '::view-transition-group-children(' + parentGroupName + ')';
-						parentPseudo = this.icScope!.querySelector<VtbagIcPseudoElement>(
-							`vtbag-ic-pseudo[data-link='${parentPseudoName}']`
-						);
+						parentPseudo = [
+							...this.icScope!.querySelectorAll<VtbagIcPseudoElement>(`vtbag-ic-pseudo[data-link]`),
+						].find((p) => p.dataset.link === parentPseudoName)!;
 					} else {
 						parentPseudo = this.parentElement!.closest<VtbagIcPseudoElement>(`vtbag-ic-pseudo`);
 					}
@@ -198,7 +210,7 @@
 			});
 			if (
 				this.icScope?.path !== ':root' &&
-				this.#twin!.dataset.title === (this.icScope?.path ?? '') + '::view-transition'
+				this.#twin!.dataset.twin === (this.icScope?.path ?? '') + '::view-transition'
 			) {
 				const rect = this.icScope!.element.getBoundingClientRect();
 				this.#twin!.style.top = rect.top + 'px';
@@ -262,7 +274,9 @@
 				if (!checked && this.querySelector<HTMLInputElement>('.solo input')?.checked) {
 					this.querySelector<HTMLInputElement>('.solo input')!.click();
 				}
-				const inner = checkbox.closest('vtbag-ic-pseudo')?.children[1] as HTMLDivElement;
+				const inner = checkbox.closest('vtbag-ic-pseudo')?.children[
+					this.name() === '::view-transition' ? 2 : 1
+				] as HTMLDivElement;
 				inner &&
 					mayStartViewTransition(
 						{
@@ -307,11 +321,11 @@
 							i.querySelector<HTMLInputElement>('.pseudo-head .visibility input')!.click();
 
 						function path(a: VtbagIcPseudoElement, b: VtbagIcPseudoElement) {
-							let pa = a as ICPseudo;
-							let pb = b as ICPseudo;
+							let pa = a as unknown as ICPseudo;
+							let pb = b as unknown as ICPseudo;
 							while (pa.icParentPseudo) {
 								if (pa === pb) return true;
-								pa = pa.icParentPseudo as ICPseudo;
+								pa = pa.icParentPseudo as unknown as ICPseudo;
 							}
 							return false;
 						}
@@ -343,8 +357,8 @@
 			}
 		}
 
-		onIntersectionChange(entry: IntersectionObserverEntry) {
-			this.classList.toggle('in-view', entry.isIntersecting);
+		onIntersectionChange(isIntersecting: boolean) {
+			this.classList.toggle('in-view', isIntersecting);
 			const group = this.closest('vtbag-ic-group');
 			if (!group) return;
 			const groupInView = [...group.querySelectorAll<HTMLElement>('vtbag-ic-pseudo')].some((p) =>

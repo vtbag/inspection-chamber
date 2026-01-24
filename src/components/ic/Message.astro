@@ -1,12 +1,11 @@
 <script>
-	import { defaultErrorMap } from 'astro:schema';
 	import { ICElement } from './ic-element';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 	class ICMessage extends ICElement {
 		protected render() {
 			this.classList.add('panel');
-			this.style.display="none";
+			this.style.display = 'none';
 			this.innerHTML = `<button class="clear-all" title="Clear all messages">Clear all</button><details open><summary>Messages</summary>
 				<div class="explainer"><i>Important messages from the Inspection Chamber will appear here.</i></div>
 				<div class="messages"></div>
@@ -18,7 +17,7 @@
 				mayStartViewTransition(
 					{
 						update: () => {
-							this.style.display="block";
+							this.style.display = 'block';
 							this.querySelector('details')!.open = true;
 							explainer?.remove();
 							this.querySelector('.messages')?.insertAdjacentHTML(
@@ -32,7 +31,7 @@
 										hour12: false,
 										fractionalSecondDigits: 3,
 									}
-								)}</span><br>${detail.message.replaceAll('[🖶]', '<span class="devtools">[🖶]</span>')}</div>`
+								)}</span><br>${detail.message.replaceAll('[🖶]', `<span class="devtools" title="Show in browser console">[🖶]</span>`)}</div>`
 							);
 							this.querySelectorAll<HTMLSpanElement>('.messages .devtools').forEach((span, idx) =>
 								span.addEventListener('click', () => parent.console.log(detail.references[idx]))
@@ -40,7 +39,10 @@
 						},
 						types: ['new-message'],
 					},
-					{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+					{
+						collisionBehavior: document.visibilityState === 'visible' ? 'chaining' : 'never',
+						useTypesPolyfill: 'always',
+					}
 				);
 			});
 			this.addEventListener('click', (e) => {
@@ -56,7 +58,7 @@
 							const parent = button.parentElement;
 							if (parent?.classList.contains('message')) parent.remove();
 							else this.querySelector('.messages')!.innerHTML = '';
-							if (this.querySelectorAll('.message').length === 0) this.style.display="none"
+							if (this.querySelectorAll('.message').length === 0) this.style.display = 'none';
 						},
 						types: ['clear-message'],
 					},

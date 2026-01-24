@@ -23,6 +23,8 @@ import Identify from '@/components/ic/Identify.astro';
 	import { minmax, defaultTransitionDuration } from './minmax';
 	import { ICElement } from './ic-element';
 	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
+import type { Features } from './features';
+import { message } from './message';
 
 	let nextId = 0;
 	const scopeMap = new WeakMap<HTMLElement, number>();
@@ -79,6 +81,47 @@ import Identify from '@/components/ic/Identify.astro';
 						(a as Animation & { 'vtbag-stopped'?: boolean })['vtbag-stopped'] ||
 						(a.currentTime = time)
 				);
+			});
+			addEventListener('ic-ready-error', (e) => {
+				const {
+					root,
+					viewTransition: _viewTransition,
+					features,
+					error,
+				} = (e as CustomEvent).detail as {
+					root: HTMLElement;
+					viewTransition: ViewTransition;
+					features: Features;
+					error: any;
+				};
+				if (root.ownerDocument.visibilityState !== 'visible')
+					message('error', 'View transition skipped for hidden document. [🖶]', [error]);
+
+				let snapshotContainingBlockSizeChange = undefined;
+				if (
+					root === root.ownerDocument.documentElement &&
+					(innerHeight != features.initialHeight || innerWidth != features.initialWidth)
+				)
+					snapshotContainingBlockSizeChange = Object.create({
+						currentHeight: innerHeight,
+						currentWidth: innerWidth,
+						initialHeight: features.initialHeight,
+						initialWidth: features.initialWidth,
+					});
+				if (root !== root.ownerDocument.documentElement) {
+					const { width, height } = root.getBoundingClientRect();
+					if (height != features.initialHeight || width != features.initialWidth)
+						snapshotContainingBlockSizeChange = Object.create({
+							currentHeight: height,
+							currentWidth: width,
+							initialHeight: features.initialHeight,
+							initialWidth: features.initialWidth,
+						});
+				}
+				if (snapshotContainingBlockSizeChange)
+					message('error', 'View transition skipped due to viewport size change. [🖶]', [
+						snapshotContainingBlockSizeChange,
+					]);
 			});
 		}
 
@@ -331,17 +374,11 @@ import Identify from '@/components/ic/Identify.astro';
 				'vtbag-ic-click-track';
 			this.#animations.push(this.#clickTrack);
 			if (this.#animations[0].playState === 'paused') this.#clickTrack.pause();
-			const details =
-				this.#animationsElement!.querySelector<VtbagIcPseudoDetailsElement>(
-					'vtbag-ic-pseudo-details'
-				);
-			console.log(longestAnimation);
-			console.log(current);
-			console.log('this.#animations[0] :>> ', this.#animations[0]);
+		
 			setMaxValue(
 				`slider-${this.#id}`,
 				this.#longestDuration,
-				this.#animations[0].currentTime as number, // todo: better minimum of all animations?
+				current, // this.#animations[0].currentTime as number, // todo: better minimum of all animations?
 				(e) => {
 					const time = parseInt((e.target as HTMLInputElement).value, 10);
 					if (time !== this.lastTimeChange) {
@@ -560,7 +597,7 @@ ${styles.join('\n')}
 
 		autoMoveSlider() {
 			this.#raf = requestAnimationFrame(() => {
-				const time = this.#clickTrack!.currentTime! as number;
+				const time = ~~this.#clickTrack!.currentTime!;
 				if (time !== this.lastTimeChange) {
 					this.lastTimeChange = time;
 					setCurrentValue(`slider-${this.#id}`, time);

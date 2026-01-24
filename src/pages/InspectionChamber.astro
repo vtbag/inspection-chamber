@@ -15,10 +15,8 @@ import Window from '@/components/Window.astro';
 	</head>
 	<body>
 		<div id="specimen" style="height: 100%; width: calc(100% - 405px)">
-			<iframe
-				id="test-jig"
-				style="height: 100%; width: 100%"
-				src="/vtbag_inspection_chamber_src__/"></iframe>
+			<iframe id="test-jig" style="height: 100%; width: 100%" src="/vtbag_inspection_chamber_src__/"
+			></iframe>
 			<div id="twins" style="width: 100%;height: 100%">
 				<div id="default"></div>
 			</div>
@@ -235,15 +233,20 @@ import Window from '@/components/Window.astro';
 				setupHooks(document.querySelector<HTMLIFrameElement>('#content')!.contentWindow!);
 				self.__vtbag.ic2!.intersectionObserver = new IntersectionObserver(
 					(entries) => {
+						const links: Map<string, IntersectionObserverEntry> = new Map();
 						entries.forEach((entry) => {
-							const link = (entry.target as HTMLElement).dataset.title;
-							if (!link) return;
-							self.__vtbag
-								.ic2!.chamberWindow?.document.querySelector<VtbagIcPseudoElement>(
-									`vtbag-ic-pseudo[data-link="${link}"]`
-								)
-								?.onIntersectionChange(entry);
+							const link = (entry.target as HTMLElement).dataset.twin;
+							link && links.set(link, entry);
 						});
+						const pseudos = new Map<string, VtbagIcPseudoElement>();
+						self.__vtbag
+							.ic2!.chamberWindow!.document.querySelectorAll<VtbagIcPseudoElement>(
+								'vtbag-ic-pseudo[data-link]'
+							)
+							.forEach((p) => pseudos.set(p.dataset.link!, p));
+						links.forEach((entry, link) =>
+							pseudos.get(link)?.onIntersectionChange(entry.isIntersecting)
+						);
 					},
 					{
 						root: document.querySelector<HTMLIFrameElement>('#twins')!,
@@ -325,7 +328,7 @@ import Window from '@/components/Window.astro';
 
 			:root.show-twins #twins {
 				cursor: help;
-				div[data-title] {
+				div[data-twin] {
 					outline: 1px dotted #8888;
 					&:hover:hover:not(:has(*:hover)) {
 						background-color: #8882;
@@ -335,7 +338,7 @@ import Window from '@/components/Window.astro';
 					outline: 2px solid light-dark(red, darkred);
 					outline-offset: -2px;
 				}
-				div[data-title$='::view-transition'] {
+				div[data-twin$='::view-transition'] {
 					pointer-events: auto;
 				}
 			}
