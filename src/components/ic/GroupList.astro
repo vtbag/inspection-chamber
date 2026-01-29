@@ -58,7 +58,6 @@ import { moduleGroupMaps } from './capture';
 				const groups = moduleGroupMaps.get(this.#scope!.element)!;
 
 				this.replaceChildren();
-
 				const newGroupAnimations = new Map<string, Animation[]>();
 				this.#animations.forEach((animation) => {
 					const groupName = (animation.effect as any as KeyframeEffect).pseudoElement?.replace(
@@ -74,10 +73,10 @@ import { moduleGroupMaps } from './capture';
 						groupAnimations.push(animation);
 					}
 				});
-
 				linear(groups.get('@')!).forEach((group) =>
 					group.parent && this.refreshGroup(group, newGroupAnimations.get(group.name) || [])
 				);
+
 				this.sort(
 					this.#scope!.querySelector<HTMLInputElement>('input[value="alpha"]')?.checked
 						? 'alpha'

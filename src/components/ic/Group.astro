@@ -5,7 +5,7 @@ import Pseudo from './Pseudo.astro';
 <Pseudo />
 <script>
 	import type { Group } from './group';
-	import { color, gid } from './group';
+	import { color, displayName, gid } from './group';
 	class ICGroup extends HTMLElement {
 		#animations: Animation[] = [];
 		#dirty = false;
@@ -62,7 +62,7 @@ import Pseudo from './Pseudo.astro';
 				this.insertAdjacentHTML(
 					'afterbegin',
 					`
-	<div class="group-content"><h3 class="heading" data-group="${gid(this.group)}">${displayName(this.group)}</h3>
+	<div class="group-content"><h3 class="heading" data-group="${gid(this.group)}">${displayName(this.group, true)}</h3>
 		<vtbag-ic-pseudo name="group">
 			<vtbag-ic-pseudo name="image-pair"><div class="old-new">
 				${noOld ? '' : '<vtbag-ic-pseudo name="old"></vtbag-ic-pseudo>'}
@@ -72,18 +72,6 @@ import Pseudo from './Pseudo.astro';
 		</vtbag-ic-pseudo></div>
 					`
 				);
-			}
-
-			function displayName(group: Group) {
-				let name = group.name;
-				if (name.startsWith('-vtbag-auto-'))
-					name = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
-				if (name.startsWith('-vtbag-match-element-'))
-					name = 'match-element' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
-				if (group.className && group.className !== 'none') {
-					name += ' <small>.' + group.className.split(' ').join('<wbr>.') + '</small>';
-				}
-				return name;
 			}
 
 			function components(scope: HTMLElement, name: string) {
@@ -109,17 +97,13 @@ import Pseudo from './Pseudo.astro';
 
 <style is:global>
 	@layer components {
-		@scope (vtbag-ic-group) {
-			:scope {
-				display: block;
-			}
+		vtbag-ic-group {
+			display: block;
 		}
 	}
 	@layer override {
-		@scope (vtbag-ic-group) {
-			:scope {
-				background-color: light-dark(#eee, #666);
-			}
+		vtbag-ic-group {
+			background-color: light-dark(#eee, #666);
 		}
 	}
 </style>

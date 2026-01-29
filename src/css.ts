@@ -29,15 +29,33 @@ export function namedElements(viewTransitionRoot: HTMLElement = document.documen
 				value: 'root',
 			})
 	);
-	root.querySelectorAll<HTMLElement>('[style*=view-transition-]').forEach((el) =>
-		elements.push({
+	root.querySelectorAll<HTMLElement>('[style*=view-transition-]').forEach((el) => {
+		const element = el as HTMLElement;
+		const viewTransitionName = element.style.viewTransitionName;
+		const viewTransitionClass = element.style.viewTransitionClass;
+		const viewTransitionGroup = element.style.viewTransitionGroup;
+		viewTransitionName !== 'none' && elements.push({
 			element: el,
 			pseudoElement: undefined!,
 			selector: 'element.style',
 			property: 'view-transition-name',
-			value: (el as HTMLElement).style.viewTransitionName,
-		})
-	);
+			value: viewTransitionName,
+		});
+		viewTransitionClass && elements.push({
+			element: el,
+			pseudoElement: undefined!,
+			selector: 'element.style',
+			property: 'view-transition-class',
+			value: viewTransitionClass,
+		});
+		viewTransitionGroup && elements.push({
+			element: el,
+			pseudoElement: undefined!,
+			selector: 'element.style',
+			property: 'view-transition-group',
+			value: viewTransitionGroup,
+		});
+	});
 	animations.clear();
 	pseudoElements.clear();
 	[...root.ownerDocument.styleSheets, ...root.ownerDocument.adoptedStyleSheets].forEach((sheet) =>
@@ -120,7 +138,7 @@ function declNamedElements(style: CSSStyleDeclaration) {
 function styledElements(parent: CSSRule | null, property: string, value: string) {
 	let selectors: string[] = ['&'];
 
-	for (;;) {
+	for (; ;) {
 		while (
 			parent &&
 			!(parent.constructor.name === 'CSSStyleRule' || parent.constructor.name === 'CSSScopeRule')
@@ -166,10 +184,10 @@ function collect(parent: CSSStyleRule | CSSScopeRule, selectors: string[]): stri
 		const scopes = scopeRuleParent.start
 			? splitSelectorList(scopeRuleParent.start)
 			: [
-					deriveCSSSelector(
-						parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
-					),
-				];
+				deriveCSSSelector(
+					parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
+				),
+			];
 
 		scopes.forEach((scope) =>
 			nested.forEach((nes) => {

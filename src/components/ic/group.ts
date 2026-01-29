@@ -132,12 +132,12 @@ export function isSorted(group: Group): boolean {
 
 /* ---------------------------------------------------------------- */
 
-export function relocate(group: Group, document: Document) {
-	group.children.forEach((child) => relocate(child, document));
-	if (group.old && group.old.element.ownerDocument !== document)
-		group.old.element = document.querySelector(deriveCSSSelector(group.old.element))!;
-	if (group.new && group.new.element.ownerDocument !== document)
-		group.new.element = document.querySelector(deriveCSSSelector(group.new.element))!;
+export function relocate(group: Group, newDocument: Document) {
+	group.children.forEach((child) => relocate(child, newDocument));
+	if (group.old && group.old.element.ownerDocument !== newDocument)
+		group.old.element = newDocument.querySelector(deriveCSSSelector(group.old.element))!;
+	if (group.new && group.new.element.ownerDocument !== newDocument)
+		group.new.element = newDocument.querySelector(deriveCSSSelector(group.new.element))!;
 }
 /* ---------------------------------------------------------------- */
 
@@ -213,4 +213,16 @@ function deserializeSparseDOMNode(node?: SerializedGroupNode): SparseDOMNode | u
 		element: document.createElement('div'),
 		children: [],
 	};
+}
+
+export function displayName(group: Group, withClasses = false): string {
+	let name = group.name;
+	if (name.startsWith('-vtbag-auto-'))
+		name = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
+	if (name.startsWith('-vtbag-match-element-'))
+		name = 'match-element' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
+	if (withClasses && group.className && group.className !== 'none') {
+		name += ' <small>.' + group.className.split(' ').join('<wbr>.') + '</small>';
+	}
+	return name;
 }

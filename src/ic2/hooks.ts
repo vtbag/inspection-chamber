@@ -1,6 +1,9 @@
 import type { Features } from '@/components/ic/features';
 import { message } from '@/components/ic/message';
 
+const ACTIVE_VT_SYM = Symbol.for('__vtbag_activeViewTransition');
+
+
 export function setupHooks(chamberWindow: Window) {
 	console.log('[inspection chamber] setupHooks');
 	self.__vtbag ??= {};
@@ -17,14 +20,27 @@ export function setupHooks(chamberWindow: Window) {
 }
 
 function pageswap(event: PageSwapEvent) {
-	console.log('[inspection chamber] pageswap', (event.target as Window).location.href);
+	const target = event.target!;
+	let doc: Document;
+	if (target.constructor.name === 'Window') {
+		doc = (target as Window).document;
+	} else if (target.constructor.name === 'HTMLDocument') {
+		doc = target as Document;
+	} else {
+		console.error('[inspection chamber] pagereveal: unknown target', target);
+		return;
+	}
+	console.log(
+		'[inspection chamber] pageswap',
+		event.viewTransition,
+		doc.defaultView?.location.href
+	);
 	const transition = event.viewTransition;
 	if (!transition) return;
 	if (parent.__vtbag.ic2!.crossDocumentBackNavigation) {
 		event.stopImmediatePropagation();
 		return;
 	}
-	const doc = (event.target as Window).document;
 	const root = doc.documentElement;
 
 	if (!('activeViewTransition' in doc)) doc.activeViewTransition = transition;
@@ -41,10 +57,23 @@ function pageswap(event: PageSwapEvent) {
 }
 
 async function pagereveal(event: PageRevealEvent) {
-	console.log('[inspection chamber] pagereveal', (event.target as Window).location.href);
+	const target = event.target!;
+	let doc: Document;
+	if (target.constructor.name === 'Window') {
+		doc = (target as Window).document;
+	} else if (target.constructor.name === 'HTMLDocument') {
+		doc = target as Document;
+	} else {
+		console.error('[inspection chamber] pagereveal: unknown target', target);
+		return;
+	}
+	console.log(
+		'[inspection chamber] pagereveal',
+		event.viewTransition,
+		doc.defaultView?.location.href
+	);
 	const transition = event.viewTransition;
 	if (!transition) return;
-	const doc = (event.target as Window).document;
 	const root = doc.documentElement;
 	const features = crossDocumentFeatures();
 
@@ -166,10 +195,10 @@ function monkey<
 
 		if (this.ownerDocument) {
 			if (!('activeViewTransition' in this) || captureOldOnly) {
-				this.activeViewTransition = transition;
+				safeSetActiveViewTransition(this, transition);
 			}
-		} else if (!('activeViewTransition' in transitionRoot.ownerDocument || captureOldOnly)) {
-			transitionRoot.ownerDocument.activeViewTransition = transition;
+		} else if (!('activeViewTransition' in transitionRoot.ownerDocument) || captureOldOnly) {
+			safeSetActiveViewTransition(transitionRoot.ownerDocument, transition);
 		}
 		requestAnimationFrame(() => beforeCaptureOld(transitionRoot, transition, features));
 		transition.finished.finally(() => {
@@ -198,10 +227,10 @@ function deactivate(transition: ViewTransition, transitionRoot: HTMLElement, doc
 		return new Proxy(transition, {
 			get(_, prop) {
 				if (prop === 'ready' || prop === 'finished' || prop === 'updateCallbackFinished') {
-					return new Promise<void>(() => {});
+					return new Promise<void>(() => { });
 				}
 				if (prop === 'waitUntil') {
-					return (_: Promise<unknown>) => {};
+					return (_: Promise<unknown>) => { };
 				}
 				return Reflect.get(transition, prop);
 			},
@@ -332,4 +361,19 @@ function animationsWillFinish(
 			detail: { root, viewTransition, features },
 		})
 	);
+}
+
+function safeSetActiveViewTransition(target: any, transition: ViewTransition) {
+	'activeViewTransition' in target && Object.defineProperty(target, 'activeViewTransition', {
+		configurable: true,
+		enumerable: false,
+		get() {
+			return (this as any)[ACTIVE_VT_SYM];
+		},
+		set(v: any) {
+			(this as any)[ACTIVE_VT_SYM] = v;
+		},
+	});
+
+	target.activeViewTransition = transition;
 }

@@ -183,7 +183,10 @@
 			const timings = reversed.map((a) => a.effect?.getComputedTiming());
 			this.maxEnd = Math.max(...reversed.map((_, idx) => timings[idx]?.endTime as number));
 			let count = 0;
-			content.insertAdjacentHTML('afterbegin', '<div class="anim-container"><div class="animations"></div></div>'); 
+			content.insertAdjacentHTML(
+				'afterbegin',
+				'<div class="anim-container"><div class="animations"></div></div>'
+			);
 			const animations = content.querySelector<HTMLElement>('.animations')!;
 			let lastOrigin: VtbagIcPseudoElement | undefined = undefined;
 			reversed.forEach((a, idx) => {
@@ -263,7 +266,10 @@
 			if (count === 0) {
 				animations.insertAdjacentHTML('afterbegin', `<span class="info">No animations</span>`);
 			} else {
-				animations.parentElement!.insertAdjacentHTML('beforeend', `<div id="animation-overlay"></div>`);
+				animations.parentElement!.insertAdjacentHTML(
+					'beforeend',
+					`<div id="animation-overlay"></div>`
+				);
 			}
 		}
 
@@ -375,62 +381,61 @@
 	@import './styles/devtools.css';
 	@import './styles/details.css';
 	@layer components {
-		@scope (vtbag-ic-pseudo-details) {
-			:scope {
-				display: block;
-				grid-column: 1 / -1;
-				padding: 0.5rem 0.75rem 0.5rem 0.75rem;
-				background: light-dark(#f6f6f6, #0a0a0a);
-				border-radius: 4px;
-				border: 1px solid light-dark(#d6d6d6, #2a2a2a);
-				box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+		vtbag-ic-pseudo-details {
+			display: block;
+			grid-column: 1 / -1;
+			padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+			background: light-dark(#f6f6f6, #0a0a0a);
+			border-radius: 4px;
+			border: 1px solid light-dark(#d6d6d6, #2a2a2a);
+			box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 
-				.animations,
-				.style {
-					max-height: 50vh;
-					overflow-y: auto;
-				}
+			.animations,
+			.style {
+				max-height: 50vh;
+				overflow-y: auto;
+			}
 
-				.details-styles,
-				.details-styles .style,
-				.content .animations,
-				.horizontal-slider-container {
-					margin-top: 0.5rem;
-				}
+			.details-styles,
+			.details-styles .style,
+			.content .animations,
+			.horizontal-slider-container {
+				margin-top: 0.5rem;
+			}
 
-				.anim-container {
-					position: relative;
-					display: grid;
-				}
-				.animations {
-					grid-area: 1 / 1 / 2 / 2;
-					hr {
+			.anim-container {
+				position: relative;
+				display: grid;
+			}
+			.animations {
+				grid-area: 1 / 1 / 2 / 2;
+				hr {
 					margin: 0.2rem 1rem;
 					border: none;
 					border-top: 1px solid light-dark(#d6d6d6, #2a2a2a);
-				}}
+				}
+			}
 
-				.animations svg {
-					display: inline-block;
-					vertical-align: middle;
-					margin: 0 0.5ch;
-				}
-				#animation-overlay {
-					grid-area: 1 / 1 / 2 / 2;
-					margin: 0 0.5ch;
-					position: absolute;
-					top: 8px;
-					bottom: 0px;
-					left: calc(var(--range-percent, 50) * 12ch / 100);
-					width: calc(12ch - var(--range-percent, 50) * 12ch / 100 + 1px);
-					pointer-events: none;
-					background: linear-gradient(to right, #ccfc, #0000 1px);
-				}
-				table {
-					table-layout: fixed;
-					.changed {
-						color: light-dark(black, white);
-					}
+			.animations svg {
+				display: inline-block;
+				vertical-align: middle;
+				margin: 0 0.5ch;
+			}
+			#animation-overlay {
+				grid-area: 1 / 1 / 2 / 2;
+				margin: 0 0.5ch;
+				position: absolute;
+				top: 8px;
+				bottom: 0px;
+				left: calc(var(--range-percent, 50) * 12ch / 100);
+				width: calc(12ch - var(--range-percent, 50) * 12ch / 100 + 1px);
+				pointer-events: none;
+				background: linear-gradient(to right, light-dark(#330c, #ccfc), #0000 1px);
+			}
+			table {
+				table-layout: fixed;
+				.changed {
+					color: light-dark(black, white);
 				}
 			}
 		}

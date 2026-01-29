@@ -14,17 +14,16 @@ import Identify from '@/components/ic/Identify.astro';
 		mayStartViewTransition,
 	} from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { deriveCSSSelector } from './element-selector';
-	import { color, gid, type Group, isSorted, linear } from './group';
+	import { color, displayName, gid, type Group, isSorted, linear } from './group';
 	import { highlight } from './highlight';
 	import { ledGroup, type LEDs, showLedGroup, hideLedGroup } from './led-group';
 	import { slider, setMaxValue, setCurrentValue } from './slider';
 	import { addBlinds } from './blinds';
 	import { frameToggles } from './multi-frame';
-	import { minmax, defaultTransitionDuration } from './minmax';
 	import { ICElement } from './ic-element';
 	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
-import type { Features } from './features';
-import { message } from './message';
+	import type { Features } from './features';
+	import { message } from './message';
 
 	let nextId = 0;
 	const scopeMap = new WeakMap<HTMLElement, number>();
@@ -236,13 +235,20 @@ import { message } from './message';
 		}
 		render() {
 			if (this.isConnected && this.#dirty) {
+				this.classList.add('panel');
+				this.setAttribute('data-scope', this.path);
+
 				this.#animationsElement = this.closest('vtbag-ic-animations')!;
 				this.#dirty = false;
-				let html = `<div class="scope-head"><div class="scope-head-main"><h3 class="heading">Scope <span class="scope-path">${this.path}</span></h3>`;
-				this.setAttribute('data-scope', this.path);
-				html += this.allGroupButtons(this.#rootGroup!, false, true);
-				html += '</div>';
-
+				let html = `
+				<details class="scope" open>
+					<summary class="secondary">Scope <span class="scope-path"><strong>${this.path}</strong></span></summary>
+					<div class="scope-head"><div class="scope-head-main">
+						<details class="groups"
+						${sessionStorage.getItem('vtbag-ic-group-name-details') === 'true' ? 'open' : ''}
+						><summary>Group names</summary>`;
+				html += this.allGroupButtons(this.#rootGroup!, false);
+				html += '</details></div>';
 				html += slider(`slider-${this.#id}`, `slider-${this.#id}`);
 				if (!isSorted(this.#rootGroup!)) {
 					html += ledGroup(this.#sortLEDs!);
@@ -255,26 +261,21 @@ import { message } from './message';
 					)?.value ?? 'none';
 
 				html += ledGroup(this.#freezeLEDs!);
-				html += '</div>';
+				html += '</div></details>';
 
 				this.innerHTML = html;
 				const sizer = this.querySelector('.input-led-group.size')! as HTMLElement;
 				const sorter = this.querySelector('.input-led-group.sort')! as HTMLElement;
-				const children = this.querySelector('.children') as HTMLElement;
-				minmax(
-					children,
-					'minimized',
-					'Group names',
-					sessionStorage,
-					'vtbag-ic-minmax-group-names',
-					(input) => {
-						input.checked &&
-						this.querySelector<HTMLInputElement>('vtbag-ic-pseudo .minmax input:checked')
-							? hideLedGroup(sorter)
-							: showLedGroup(sorter);
+
+				const groupNames = this.querySelector('details details') as HTMLDetailsElement;
+				groupNames.addEventListener('toggle', () => {
+					sessionStorage.setItem('vtbag-ic-group-name-details', groupNames.open.toString());
+					if (groupNames.open) {
+						showLedGroup(sorter);
+					} else {
+						hideLedGroup(sorter);
 					}
-				);
-				children.style.display = '';
+				});
 
 				this.#frameToggleRefresh = frameToggles(
 					this.querySelector<HTMLDivElement>('div.scope-head')!,
@@ -306,34 +307,31 @@ import { message } from './message';
 				this.#animationsElement!.updateAnimationsHead();
 				this.updateScopeHead();
 
-				this.insertAdjacentHTML(
+				this.querySelector('details')!.insertAdjacentHTML(
 					'beforeend',
-					'<vtbag-ic-pseudo name="::view-transition"></vtbag-ic-pseudo>'
+					`<details class="pseudos" 
+						${sessionStorage.getItem('vtbag-ic-pseudo-details') === 'true' ? 'open' : ''}>
+						<summary>Pseudo Elements</summary>
+						<vtbag-ic-pseudo name="::view-transition"></vtbag-ic-pseudo>
+					</details>`
 				);
 
-				const pseudoRoot = this.lastElementChild as VtbagIcPseudoElement;
+				const pseudosDetails = this.querySelector('details.pseudos') as HTMLDetailsElement;
+				const pseudoRoot = pseudosDetails.lastElementChild! as VtbagIcPseudoElement;
 				const groupList = document.createElement('vtbag-ic-group-list') as VtbagIcGroupListElement;
-				groupList.style.display = 'none';
 				groupList.animations = this.animations;
 				pseudoRoot.appendChild(groupList);
 
-				minmax(
-					groupList,
-					'minimized',
-					'Pick pseudo from tree',
-					sessionStorage,
-					'vtbag-ic-minmax-pseudo-elements',
-					(input) => {
-						input.checked ? hideLedGroup(sizer) : showLedGroup(sizer);
-						input.checked &&
-						this.querySelector<HTMLInputElement>('.scope-head-main .minmax input:checked')
-							? hideLedGroup(sorter)
-							: showLedGroup(sorter);
+				pseudosDetails.addEventListener('toggle', () => {
+					sessionStorage.setItem('vtbag-ic-pseudo-details', pseudosDetails.open.toString());
+					if (pseudosDetails.open) {
+						showLedGroup(sizer);
+						showLedGroup(sorter);
+					} else {
+						hideLedGroup(sizer);
+						hideLedGroup(sorter);
 					}
-				);
-
-				groupList.style.display = '';
-
+				});
 				const pseudos = [...this.querySelectorAll<VtbagIcPseudoElement>('vtbag-ic-pseudo')].sort(
 					(a, b) => (a.icGroup?.group.preOrder ?? -1) - (b.icGroup?.group.preOrder ?? -1)
 				);
@@ -374,7 +372,7 @@ import { message } from './message';
 				'vtbag-ic-click-track';
 			this.#animations.push(this.#clickTrack);
 			if (this.#animations[0].playState === 'paused') this.#clickTrack.pause();
-		
+
 			setMaxValue(
 				`slider-${this.#id}`,
 				this.#longestDuration,
@@ -433,12 +431,10 @@ import { message } from './message';
 							) ?? (this.querySelector('.scope-head-main') as HTMLDivElement))
 						: this.querySelector<VtbagIcGroupElement>(`vtbag-ic-group:has(h3[data-group="${id}"])`);
 				if (button.tagName === 'BUTTON') {
-					const minimized = this.querySelector<HTMLInputElement>(
-						'vtbag-ic-pseudo[name="::view-transition"] .minmax input:checked'
-					);
-					if (minimized) {
-						minimized.click();
-						await new Promise((r) => setTimeout(r, defaultTransitionDuration));
+					const details = this.querySelector<HTMLDetailsElement>('details.pseudos')!;
+					if (!details.open) {
+						details.open = true;
+						await new Promise((r) => setTimeout(r, 250));
 					}
 				}
 				highlight(group);
@@ -562,7 +558,6 @@ ${styles.join('\n')}
 				}
 				if (this.#raf !== undefined) {
 					cancelAnimationFrame(this.#raf);
-					console.log('canceled animation frame');
 					this.#raf = undefined;
 				}
 				if (this.querySelector<HTMLInputElement>(`input[value="run"]:checked`)) {
@@ -612,7 +607,7 @@ ${styles.join('\n')}
 		}
 
 		allGroupButtons(rootGroup: Group, alpha = true, hide = false) {
-			let html = `<div class="children" style="display:${hide ? 'none' : 'block'}">Groups: `;
+			let html = `<div class="children" style="display:${hide ? 'none' : 'block'}">`;
 			const buttons = linear(rootGroup); //[...rootGroup.children];
 
 			if (alpha) {
@@ -623,15 +618,52 @@ ${styles.join('\n')}
 
 			buttons.forEach((g) => {
 				if (g.parent === undefined) return;
-				const name = g.name.replace(
-					/-vtbag-match-element-([0-9]+)/,
-					(_, num) => `match-element<sup>(${num})</sup>`
-				);
+				const name = displayName(g);
 				html += `<button data-group="${gid(g)}" style="--vtn: b-${this.#id}-${gid(g)}; border: 2px solid ${color(g)}">${name}</button>`;
 			});
 			html += '</div>';
 			return html;
 		}
 	}
+
+
 	if (!customElements.get('vtbag-ic-scope')) customElements.define('vtbag-ic-scope', ICScope);
 </script>
+
+<style is:global>
+	@import './styles/details.css';
+	@layer components {
+		vtbag-ic-scope {
+			display: block;
+			padding-top: 0.5rem;
+			border-top: 1px solid light-dark(#d0d080, #202080);
+			border-right: 1px solid light-dark(#d0d080, #202080);
+			details.scope {
+				> summary {
+					padding-left: 1.5rem;
+					padding-bottom: 0.5rem;
+					&::before {
+						left: 0.5rem;
+					}
+				}
+			}
+			details.pseudos {
+				> summary {
+					padding-top: 1rem;
+					padding-left: 2rem;
+					&::before {
+						top: 1rem;
+						left: 1rem;
+					}
+				}
+			}
+		}
+		.children {
+			padding: 0.5rem 0;
+		}
+
+		vtbag-ic-pseudo[name="::view-transition"] > .pseudo-head {
+			padding: 0 0.5rem 0.5rem 1rem;
+		}
+	}
+</style>

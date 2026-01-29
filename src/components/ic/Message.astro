@@ -75,75 +75,73 @@
 	@import './styles/details.css';
 	@import './styles/devtools.css';
 	@layer components {
-		@scope (vtbag-ic-message) {
-			:scope {
-				position: relative;
-				display: block;
-				padding: 0.5rem 1rem;
-				i {
-					color: #888;
+		vtbag-ic-message {
+			position: relative;
+			display: block;
+			padding: 0.5rem 1rem;
+			i {
+				color: #888;
+			}
+			.message {
+				border-radius: 6px;
+				border: 1px solid light-dark(#ccc, #444);
+				background: light-dark(#f9f9f9, #222);
+				font-size: 0.85rem;
+				margin: 4px;
+				padding: 8px;
+				border-left-width: 4px;
+				border-left-style: solid;
+
+				view-transition-name: match-element;
+				view-transition-class: message;
+				.timestamp {
+					font-size: 0.75rem;
+					color: #789;
 				}
-				.message {
-					border-radius: 6px;
-					border: 1px solid light-dark(#ccc, #444);
-					background: light-dark(#f9f9f9, #222);
-					font-size: 0.85rem;
-					margin: 4px;
-					padding: 8px;
-					border-left-width: 4px;
-					border-left-style: solid;
-
-					view-transition-name: match-element;
-					view-transition-class: message;
-					.timestamp {
-						font-size: 0.75rem;
-						color: #789;
-					}
-					strong,
-					b {
-						color: light-dark(#222, #ddd);
-					}
-					&.error {
-						border-left-color: light-dark(#f88, #844);
-					}
-					&.warning {
-						border-left-color: light-dark(#dd8, #664);
-					}
-					&.info {
-						border-left-color: light-dark(#8f8, #484);
-					}
-
-					&:first-child {
-						background: light-dark(#eef4, #0032);
-					}
+				strong,
+				b {
+					color: light-dark(#222, #ddd);
+				}
+				&.error {
+					border-left-color: light-dark(#f88, #844);
+				}
+				&.warning {
+					border-left-color: light-dark(#dd8, #664);
+				}
+				&.info {
+					border-left-color: light-dark(#8f8, #484);
 				}
 
-				button.clear,
-				button.clear-all {
-					font-size: 0.8rem;
-					background-color: #7894;
-					border: none;
+				&:first-child {
+					background: light-dark(#eef4, #0032);
 				}
+			}
 
-				details .message button.clear {
-					display: none;
-				}
-				details[open] .message button.clear {
-					float: right;
-					display: inline;
-				}
+			button.clear,
+			button.clear-all {
+				font-size: 0.8rem;
+				background-color: #7894;
+				border: none;
+			}
 
-				button.clear-all {
-					position: absolute;
-					top: 4px;
-					right: 4px;
-					z-index: 1;
-				}
+			details .message button.clear {
+				display: none;
+			}
+			details[open] .message button.clear {
+				float: right;
+				display: inline;
+			}
 
-				button.clear-all:has(+ details .messages:empty) {
-					visibility: hidden;
-				}
+			button.clear-all {
+				position: absolute;
+				top: 4px;
+				right: 4px;
+				z-index: 1;
+			}
+
+			button.clear-all:has(+ details .messages:empty) {
+				visibility: hidden;
 			}
 		}
 	}
-</style>
+</style> 

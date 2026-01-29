@@ -11,6 +11,9 @@
 		&:not(.secondary) {
 			color: light-dark(black, white);
 		}
+		strong {
+			color: light-dark(black, white);
+		}
 	}
 
 	details summary::before {

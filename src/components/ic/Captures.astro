@@ -4,11 +4,36 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 
 <ViewTransitionCapture />
 <script>
-import { ICElement } from './ic-element';
+	import { getCurrentViewTransition, mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	import { addBlinds } from './blinds';
+	import { setVectors } from '@vtbag/utensil-drawer/vectors';
+	import { ICElement } from './ic-element';
 	import { ledGroup } from './led-group';
 
 	class ICCaptures extends ICElement {
-		captureMap = new Map<Element | null, VtbagIcViewTransitionCaptureElement>();
+		#observer?: ResizeObserver;
+		#resizeToggle: any;
+
+			connectedCallback() {
+			this.#observer = new ResizeObserver(() => {
+				if (this.#resizeToggle || getCurrentViewTransition()) {
+					return;
+				}
+				this.#resizeToggle = true;
+				requestAnimationFrame(() => {
+					addBlinds(this, 'div', 'head-blind', 'capture-head', 'blind');
+					this.#resizeToggle = false;
+				});
+			});
+			this.#observer.observe(this);
+			this.render();
+		}
+
+		disconnectedCallback() {
+			this.#observer?.disconnect();
+		}
+
+
 		protected render() {
 			this.classList.add('panel');
 			this.innerHTML =
@@ -22,8 +47,25 @@ import { ICElement } from './ic-element';
 						{ id: 'freeze-types', value: 'freeze-types', label: 'Freeze types' },
 					],
 				}) +
+				ledGroup({
+					className: 'sort',
+					groupName: `capture-sort`,
+					checked: 'paint-order',
+					alternatives: [
+						{
+							label: 'Alphabetical',
+							value: 'alpha',
+							id: `capture-sort-alpha`,
+						},
+						{
+							label: 'Paint Order',
+							value: 'paint-order',
+							id: `capture-sort-paint-order`,
+						},
+					],
+				}) +
 				`<p class="explainer"><i>Captures will be listed here when your page starts a view transition.</i></p>`;
-
+			addBlinds(this, 'div', 'head-blind', 'capture-head', 'blind');
 			this.querySelector('.capture-options #old-only')!.addEventListener('change', (event) => {
 				parent.__vtbag!.ic2!.captureOldOnly = (event.target as HTMLInputElement).checked;
 			});
@@ -46,30 +88,64 @@ import { ICElement } from './ic-element';
 					});
 				}
 			});
+			this.querySelector('.input-led-group.sort')?.addEventListener('change', (event) => {
+				const alpha = (event.target as HTMLInputElement).value === 'alpha';
+				this.querySelectorAll(
+					'vtbag-ic-view-transition-capture > details *:has(> details)'
+				).forEach((list) => {
+					const items = Array.from(list.children);
+					if (alpha)
+						items.sort((a, b) => {
+							const aLabel = a.querySelector('summary')?.textContent!.trim() ?? '';
+							const bLabel = b.querySelector('summary')?.textContent!.trim() ?? '';
+							return aLabel.localeCompare(bLabel);
+						});
+					else
+						items.sort((a, b) => {
+							const aIndex = parseInt(a.getAttribute('data-paint-order') || '0', 10);
+							const bIndex = parseInt(b.getAttribute('data-paint-order') || '0', 10);
+							return aIndex - bIndex;
+						});
+					const transition = mayStartViewTransition(
+						{
+							update: () => {
+								if ('moveBefore' in Element.prototype)
+									items.forEach((s) => list.moveBefore(s, null));
+								else items.forEach((s) => list.appendChild(s));
+							},
+							types: ['sort-captures'],
+						},
+						{ collisionBehavior: 'chaining', useTypesPolyfill: 'always' }
+					);
+					transition.ready.then(() => {
+						setVectors();
+						transition.types.add('with-vectors');
+					});
+				});
+			});
 
-
-		
-			['ic-after-capture-old', 'ic-after-capture-new', 'ic-ready-error'].forEach((eventName) =>self.addEventListener(eventName, this.showCaptureResult));
+			['ic-after-capture-old', 'ic-after-capture-new', 'ic-ready-error'].forEach((eventName) =>
+				self.addEventListener(eventName, this.showCaptureResult)
+			);
 		}
 		showCaptureResult = (event: Event) => {
 			const isOldCapture = event.type === 'ic-after-capture-old';
 			const showOnlyOldCapture = parent.__vtbag!.ic2!.captureOldOnly ?? false;
-			const transitionRoot = (event as CustomEvent).detail.root;
 
 			if (isOldCapture !== showOnlyOldCapture && event.type !== 'ic-ready-error') return;
 
 			this.querySelector('.explainer')?.remove();
 
+			this.querySelectorAll('vtbag-ic-view-transition-capture').forEach((el) => el.remove());
 			parent.__vtbag!.ic2!.vtMap?.keys().forEach((key) => {
-				this.captureMap.get(key)?.remove();
 				this.insertAdjacentHTML(
 					'beforeend',
 					`<vtbag-ic-view-transition-capture></vtbag-ic-view-transition-capture>`
 				);
 				const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
-				this.captureMap.set(key, captureElement);
-				captureElement.init(key, key ?? transitionRoot);
+				captureElement.init(key);
 			});
+			parent.__vtbag!.ic2!.vtMap?.clear();
 		};
 	}
 	customElements.define('vtbag-ic-captures', ICCaptures);
@@ -77,32 +153,47 @@ import { ICElement } from './ic-element';
 
 <style is:global>
 	@layer components {
-		@scope (vtbag-ic-captures) {
-			:scope {
-				display: block;
-				margin: 0 4px;
+		vtbag-ic-captures {
+			display: grid;
+			margin: 0 4px;
+			border-radius: 4px;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			grid-auto-flow: row dense;
+			padding: 2px;
+			> * {
+				margin: 2px;
+			}
 
-				view-transition-name: hold;
-				.input-led-group.capture-options div {
-					display: flex;
-					justify-content: space-around;
-				}
-				p {
-					margin: 4px;
-					padding: 4px;
-					font-size: 0.9rem;
-				}
-				.print {
-					cursor: pointer;
-					user-select: none;
-				}
-				strong {
-					color: light-dark(#222, #ddd);
-				}
-				.highlight {
-					color: light-dark(#222222, #dddddd);
-					cursor: pointer;
-				}
+			& > p {
+				grid-column: 1 / -1;
+			}
+			p {
+				margin: 4px;
+				padding: 4px;
+				font-size: 0.9rem;
+			}
+			.print {
+				cursor: pointer;
+				user-select: none;
+			}
+			strong {
+				color: light-dark(#222, #ddd);
+			}
+			.highlight {
+				color: light-dark(#222222, #dddddd);
+				cursor: pointer;
+			}
+		}
+
+		:active-view-transition-type(with-vectors)::view-transition-image-pair(.sorted-item) {
+			animation-name: arc;
+			animation-timing-function: ease-in-out;
+		}
+		@keyframes arc {
+			50% {
+				transform: translateX(
+					calc(var(--vtbag-vector-from-y) / 20 - var(--vtbag-vector-to-y) / 20)
+				);
 			}
 		}
 	}

@@ -44,7 +44,8 @@ import './ic.css';
 						: errorDetails.root.ownerDocument;
 				message(
 					'error',
-					`Update callback for view transition on <b>${where.ownerDocument ? deriveCSSSelector(where) : 'document'}</b>[🖶] rejected.<br>${errorDetails.error}.`, [where]
+					`Update callback for view transition on <b>${where.ownerDocument ? deriveCSSSelector(where) : 'document'}</b>[🖶] rejected.<br>${errorDetails.error}.`,
+					[where]
 				);
 			});
 
@@ -67,13 +68,11 @@ import './ic.css';
 
 <style is:global>
 	@layer components {
-		@scope (vtbag-ic-analyzer) {
-			:scope {
-				display: block;
-				.input-led-group.analyze div {
-					display: flex;
-					justify-content: space-around;
-				}
+		vtbag-ic-analyzer {
+			display: block;
+			.input-led-group.analyze div {
+				display: flex;
+				justify-content: space-around;
 			}
 		}
 	}

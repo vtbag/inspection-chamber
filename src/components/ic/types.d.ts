@@ -59,7 +59,7 @@ declare global {
 	}
 	interface VtbagIcViewTransitionCaptureElement extends HTMLElement {
 		calledOn: HTMLElement | Document;
-		init(calledOn: HTMLElement, transitionRoot: HTMLElement): void;
+		init(featuresKey: HTMLElement): void;
 	}
 	interface HTMLElementTagNameMap {
 		'vtbag-ic-animations': VtbagIcAnimationsElement;

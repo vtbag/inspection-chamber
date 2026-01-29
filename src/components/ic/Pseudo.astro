@@ -1,8 +1,7 @@
 <script>
-	import { color, gid, type Group } from './group';
+	import { color, gid, displayName, type Group } from './group';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import './toggle.css';
-	import { minmax } from './minmax';
 	import { ICElement } from './ic-element';
 	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
 
@@ -336,24 +335,19 @@
 		groupChildren() {
 			if (this.getAttribute('name') === 'group-children') {
 				const group = this.closest<VtbagIcGroupElement>('vtbag-ic-group')!.group as Group;
-				let html = '<div name="children">';
+				let html = `<details ${sessionStorage.getItem('vtbag-ic-group-children-detail-' + this.name()) === 'true' ? 'open' : ''} class="children"><summary>children</summary>`;
 
 				group.children.forEach(
 					(g) =>
-						(html += `<button data-group="${gid(g)}" style="border: 2px solid ${color(group)}">${g.name.replace(
-							/-vtbag-match-element-([0-9]+)/,
-							(_, num) => `match-element<sup>(${num})</sup>`
-						)}</button>`)
+						(html += `<button data-group="${gid(g)}" style="border: 2px solid ${color(group)}">${displayName(g)}</button>`)
 				);
-				html += '</div>';
+				html += '</details>';
 				this.insertAdjacentHTML('beforeend', html);
-				minmax(
-					this.lastElementChild as HTMLElement,
-					'maximized',
-					'Group names',
-					sessionStorage,
-					'vtbag-ic-group-children-' + this.name()
-				);
+
+				const details = this.lastElementChild as HTMLDetailsElement;
+				details?.addEventListener('toggle', () => {
+					sessionStorage.setItem('vtbag-ic-group-children-detail-' + this.name(), details.open.toString());
+				});
 			}
 		}
 

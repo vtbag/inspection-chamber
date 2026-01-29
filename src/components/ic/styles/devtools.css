@@ -1,6 +1,6 @@
 @layer defaults {
 	.devtools {
-		color: green;
+		color: light-dark(green, lightgreen);
 		cursor: pointer;
 		user-select: none;
 	}

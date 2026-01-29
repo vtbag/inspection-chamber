@@ -83,7 +83,7 @@ export function sort(node: SparseDOMNode) {
 		sort(child);
 		const pseudo = node.children[i].pseudoElement;
 		if (pseudo) {
-			if (pseudo === '::after') node.children.push(node.children.splice(i, 1)[0]);
+			if (pseudo === 'after') node.children.push(node.children.splice(i, 1)[0]);
 			else node.children.unshift(node.children.splice(i, 1)[0]);
 		}
 		if (!child.context) {

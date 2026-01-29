@@ -84,7 +84,7 @@
 				}
 			}
 
-			#empty {
+			#\!empty {
 				view-transition-name: empty;
 			}
 			::view-transition-group(empty),
@@ -153,9 +153,15 @@
 			::view-transition-old(div) {
 				animation-name: none;
 			}
+			h1::before,
+			h1::after {
+				content: '!';
+				view-transition-name: match-element;
+			}
+
 		</style>
 		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
-		<script is:inline src="/attach.js"></script>
+		<script is:inline src="/attach.js?5"></script>
 	</head>
 	<body id="body">
 		<main
@@ -179,7 +185,8 @@
 				>
 					Discover amazing features and unlock your potential with our innovative solutions.
 				</p>
-				<kbd id="empty">?</kbd>
+				<p style="view-transition-name: other;">This is another paragraph.</p>
+				<kbd id="!empty">?</kbd>
 			</header>
 			<div
 				style="text-align: center; margin-bottom: 2rem; view-transition-name: div; view-transition-group: contain"
@@ -270,7 +277,7 @@
 					style="view-transition-name: lima-element">l</span
 				><span style="view-transition-name: mike">m</span><span
 					style="view-transition-name: november-item">n</span
-				><span style="view-transition-name: oscar">o</span><span
+				><span style="view-transition-name: !oscar">o</span><span
 					style="view-transition-name: papa-symbol">p</span
 				><span style="view-transition-name: quebec">q</span><span
 					style="view-transition-name: romeo-char">r</span
