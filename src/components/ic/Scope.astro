@@ -1,7 +1,7 @@
 ---
 import Pseudo from './Pseudo.astro';
 import GroupList from './GroupList.astro';
-import Identify from '@/components/ic/Identify.astro';
+import Identify from '@/components/ic/IdentifyPseudos.astro';
 ---
 
 <Pseudo />
@@ -311,7 +311,7 @@ import Identify from '@/components/ic/Identify.astro';
 					'beforeend',
 					`<details class="pseudos" 
 						${sessionStorage.getItem('vtbag-ic-pseudo-details') === 'true' ? 'open' : ''}>
-						<summary>Pseudo Elements</summary>
+						<summary>Pick pseudo-elements from tree</summary>
 						<vtbag-ic-pseudo name="::view-transition"></vtbag-ic-pseudo>
 					</details>`
 				);

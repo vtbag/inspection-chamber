@@ -34,6 +34,7 @@ export function namedElements(viewTransitionRoot: HTMLElement = document.documen
 		const viewTransitionName = element.style.viewTransitionName;
 		const viewTransitionClass = element.style.viewTransitionClass;
 		const viewTransitionGroup = element.style.viewTransitionGroup;
+		const viewTransitionScope = element.style.viewTransitionScope;
 		viewTransitionName !== 'none' && elements.push({
 			element: el,
 			pseudoElement: undefined!,
@@ -54,6 +55,13 @@ export function namedElements(viewTransitionRoot: HTMLElement = document.documen
 			selector: 'element.style',
 			property: 'view-transition-group',
 			value: viewTransitionGroup,
+		});
+		viewTransitionScope && elements.push({
+			element: el,
+			pseudoElement: undefined!,
+			selector: 'element.style',
+			property: 'view-transition-scope',
+			value: viewTransitionScope,
 		});
 	});
 	animations.clear();

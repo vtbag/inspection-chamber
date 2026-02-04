@@ -44,12 +44,21 @@
 				margin: 0 auto;
 				transform: rotateZ(10deg);
 			}
-			header p {
-				view-transition-name: ¶;
+			#scope {
+				view-transition-scope: auto;
+				view-transition-name: scope-element;	
+			}
+			header {
+				view-transition-group: contain;
+				view-transition-name: header;
 			}
 			:root header p {
+				view-transition-name: ¶;
+			}
+			header p {
 				view-transition-name: paragraph;
 			}
+
 			div:nth-of-type(1) {
 				border: 2px solid darkgreen;
 				border-radius: 1px;
@@ -58,6 +67,7 @@
 				border: 1px solid blue;
 				border-radius: 4px 2px;
 			}
+			main {view-transition-name: main;}
 			aside {
 				contain: layout;
 				height: fit-content;
@@ -68,6 +78,8 @@
 				outline: 2px solid #444;
 				border-radius: 12px;
 				box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+				view-transition-group: contain;
+				view-transition-name: aside;
 				span::before,
 				span::after {
 					content: ' ';
@@ -118,6 +130,15 @@
 					scale: 1;
 				}
 			}
+			section:nth-of-type(1) {
+				view-transition-group: header;
+			}
+			i {
+				view-transition-group: first-section;
+			}
+			u {
+				view-transition-name: strike;
+			}
 			:active-view-transition-type(capture-old) {
 				i {
 					view-transition-name: coi;
@@ -157,8 +178,34 @@
 			h1::after {
 				content: '!';
 				view-transition-name: match-element;
+				view-transition-class: before-or-after;
+				view-transition-group: nearest;
+			}
+			section {
+				view-transition-name: section;
+			}
+			[style*='--vtn:'] {
+				view-transition-name: var(--vtn);
 			}
 
+			section:nth-of-type(2) {
+				view-transition-name: none;
+				* {
+					view-transition-name: none;
+				}
+			}
+			section:nth-of-type(3) {
+				view-transition-name: section3;
+				view-transition-group: contain;
+				span {
+					view-transition-name: match-element;
+					view-transition-group: contain;
+					> * {
+						view-transition-name: cob;
+						view-transition-scope: auto;
+					}
+				}
+			}
 		</style>
 		<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
 		<script is:inline src="/attach.js?5"></script>
@@ -173,12 +220,13 @@
 				>
 					Welcome to Our Platform
 				</h1>
-				<section>
-					<a href="/realistic/">Click me</a>
-					 Holla, Lorem <i>ipsum</i>
-					<b>dolor</b>dolor sit amet consectetur adipisicing elit. Suscipit magni ex vero commodi
-					neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat laudantium
-					provident tenetur consectetur adipisci cumque!
+				<section style="--vtn: first-section;">
+					<a href="/realistic/">Click me</a><span id="scope">
+						Holla, Lorem <i>ipsum</i>
+						<b>dolor</b> sit <u>amet</u> consectetur adipisicing elit. Suscipit magni ex vero
+						commodi neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat
+						laudantium provident tenetur consectetur adipisci cumque!</span
+					>
 				</section>
 				<p
 					style="font-size: 1.25rem; color: light-dark(#5f513f, #a0aec0); max-width: 600px; margin: 0 auto;"
@@ -188,18 +236,16 @@
 				<p style="view-transition-name: other;">This is another paragraph.</p>
 				<kbd id="!empty">?</kbd>
 			</header>
-			<div
-				style="text-align: center; margin-bottom: 2rem; view-transition-name: div; view-transition-group: contain"
-			>
+			<div style="text-align: center; margin-bottom: 2rem; view-transition-name: div; border: 2px solid darkgreen; border-radius: 4px;">
 				<img
 					id="bot"
 					src="/bot1.png"
 					alt="Featured"
-					style="view-transition-name: img; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; height: auto;"
+					style="view-transition-name: img; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; height: auto;view-transition-group: div"
 				/><img
 					src="/heroine.png"
 					id="heroine"
-					style="display:none; view-transition-name: img; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; height: auto;"
+					style="display:none; view-transition-name: img; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 100%; height: auto;view-transition-group: div"
 				/>
 			</div>
 
@@ -212,7 +258,7 @@
 				</button>
 			</div>
 
-			<section style="view-transition-name: section; margin-bottom: 3rem;">
+			<section style="margin-bottom: 3rem;">
 				<h2 style="font-size: 2rem; margin-bottom: 1rem; color: light-dark(#1d170f,#e2e8f0);">
 					Why Choose Us?
 				</h2>
@@ -275,17 +321,19 @@
 					style="view-transition-name: juliett-char">j</span
 				><span style="view-transition-name: kilo">k</span><span
 					style="view-transition-name: lima-element">l</span
-				><span style="view-transition-name: mike">m</span><span
-					style="view-transition-name: november-item">n</span
-				><span style="view-transition-name: !oscar">o</span><span
-					style="view-transition-name: papa-symbol">p</span
-				><span style="view-transition-name: quebec">q</span><span
-					style="view-transition-name: romeo-char">r</span
-				><span style="view-transition-name: some-extra-ordinary-long-view-transition-name">s</span
+				><span
+					style="view-transition-name: mike; display: inline-block; position: relative; z-index: 14; transform: translateX(-90px);"
+					>m</span
+				><span style="view-transition-name: november-item">n</span><span
+					style="view-transition-name: !oscar">o</span
+				><span style="view-transition-name: papa-symbol">p</span><span
+					style="view-transition-name: quebec">q</span
+				><span style="view-transition-name: romeo-char">r</span><span
+					style="view-transition-name: some-extra-ordinary-long-view-transition-name">s</span
 				><span style="view-transition-name: tango-element">t</span><span
 					style="view-transition-name: uniform">u</span
 				><span style="view-transition-name: victor-item">v</span><span
-					style="view-transition-name: whiskey">w</span
+					style="view-transition-name: whiskey; view-transition-group: main">w</span
 				><span style="view-transition-name: xray-symbol">x</span><span
 					style="view-transition-name: yankee">y</span
 				><span style="view-transition-name: zulu-char">z</span>
@@ -297,6 +345,18 @@
 			>
 				Shuffle
 			</button>
+			<section>
+				<p>
+					<span><b>Lots</b> of <u>DOM</u> <i>nodes</i></span>
+					<span>that</span> are <span>removed</span> from <span>the sparse tree</span>
+				</p>
+			</section>
+			<section>
+				<p>
+					<span></span><span><b>Lots</b> of <u>DOM</u> <i>nodes</i></span>
+					<span>that</span> are <span>removed</span> from <span>the sparse tree</span>
+				</p>
+			</section>
 
 			<script>
 				import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';

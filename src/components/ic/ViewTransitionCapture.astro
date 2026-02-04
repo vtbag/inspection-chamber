@@ -5,7 +5,6 @@
 	import { displayName, type Group, relocate } from './group';
 	import { highlight } from './highlight';
 	import { ICElement } from './ic-element';
-	import { showBadge, hideBadge } from './hover-badge';
 
 	type ElementInfo = {
 		element: Element;
@@ -41,15 +40,13 @@
 
 			const dump = (elem: HTMLElement, group?: Group, level = 0) => {
 				if (!group) return;
-				const indent = '&nbsp;'.repeat(level * 2);
 				let record: CaptureRecord;
 				let entry: CaptureEntry = undefined!;
 				if (group.parent) {
 					entry = entryForDevtools(group);
 					record = current.at(-1)!;
 					record[group.name] = entry;
-
-					groupDetails(elem, indent, group, entry.classProperty, entry.groupProperty);
+					groupDetails(elem, group, entry.classProperty, entry.groupProperty);
 				}
 				const childRecord = entry?.children || captures;
 				current.push(childRecord);
@@ -138,26 +135,25 @@
 			}
 
 			function groupDetails(
-				elem: HTMLElement,
-				indent: string,
+				container: HTMLElement,
 				group: Group,
 				classP?: string,
 				groupP?: string
 			) {
-				function label(element: Element, type: string, pseudoElement?: string) {
-					return `<div>${indent}<span class="highlight ${type}">${deriveCSSSelector(element) + (pseudoElement ? pseudoElement : '')}</span> (${type})</div>`;
+				function label(element: Element, oldNew: string, pseudoElement?: string) {
+					return `<div>${oldNew} image element: <span class="highlight ${oldNew}">${deriveCSSSelector(element) + (pseudoElement ? pseudoElement : '')}</span></div>`;
 				}
-				elem.insertAdjacentHTML(
+				container.insertAdjacentHTML(
 					'beforeend',
 					`<details data-paint-order="${group.preOrder}" style="view-transition-name: G${group.preOrder}; view-transition-class: sorted-item">
-							<summary>${indent}<strong>${displayName(group)}</strong>${classP ? ` [classes: ${classP}]` : ''}${groupP ? ` [grouping: ${groupP}]` : ''}</summary> 
+							<summary>Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <b>${groupP}</b>]` : ''}</summary> 
 							${group.old ? label(group.old.element, 'old', group.old.pseudoElement) : ''}
 							${group.new ? label(group.new.element, 'new', group.new.pseudoElement) : ''}
 							${group.oldDuplicates?.map((d) => label(d.element, 'old-duplicates', d.pseudoElement)).join('') || ''}
 							${group.newDuplicates?.map((d) => label(d.element, 'new-duplicates', d.pseudoElement)).join('') || ''}
 						</details>`
 				);
-				const classList = elem.lastElementChild!.querySelector('summary strong')?.classList;
+				const classList = container.lastElementChild!.querySelector('summary strong')?.classList;
 				classList?.toggle('with-children', group.children.length > 0);
 				classList?.toggle('new', !!group.new);
 				classList?.toggle('old', !!group.old);
@@ -165,7 +161,7 @@
 				classList?.toggle('old-duplicates', !!group.oldDuplicates);
 
 				// todo: combine listeners
-				elem
+				container
 					.lastElementChild!.querySelector('summary')
 					?.addEventListener('pointerenter', () =>
 						highlight(
@@ -173,24 +169,24 @@
 							group[group.new ? 'new' : 'old']?.pseudoElement
 						)
 					);
-				elem
+				container
 					.lastElementChild!.querySelector('.highlight.old')
 					?.addEventListener('pointerenter', () =>
 						highlight(group.old?.element, group.old?.pseudoElement)
 					);
-				elem
+				container
 					.lastElementChild!.querySelector('.highlight.old')
 					?.addEventListener('click', () => console.dir(group.old?.element));
-				elem
+				container
 					.lastElementChild!.querySelector('.highlight.new')
 					?.addEventListener('pointerenter', () =>
 						highlight(group.new?.element, group.new?.pseudoElement)
 					);
-				elem
+				container
 					.lastElementChild!.querySelector('.highlight.new')
 					?.addEventListener('click', () => console.dir(group.new?.element));
 
-				elem
+				container
 					.lastElementChild!.querySelectorAll('.highlight.old-duplicates')
 					.forEach((el, idx) =>
 						el.addEventListener('pointerenter', () =>
@@ -200,12 +196,12 @@
 							)
 						)
 					);
-				elem
+				container
 					.lastElementChild!.querySelectorAll('.highlight.old-duplicates')
 					?.forEach((el, idx) =>
 						el.addEventListener('click', () => console.dir(group.oldDuplicates?.[idx].element))
 					);
-				elem
+				container
 					.lastElementChild!.querySelectorAll('.highlight.new-duplicates')
 					.forEach((el, idx) =>
 						el.addEventListener('pointerenter', () =>
@@ -215,38 +211,11 @@
 							)
 						)
 					);
-				elem
+				container
 					.lastElementChild!.querySelectorAll('.highlight.new-duplicates')
 					?.forEach((el, idx) =>
 						el.addEventListener('click', () => console.dir(group.newDuplicates?.[idx].element))
 					);
-
-				group.new?.element?.addEventListener('pointerenter', (e) => {
-					const element = e.target as Element;
-					const id = deriveCSSSelector(element) + (group.new?.pseudoElement ?? '');
-					element.ownerDocument.head
-						.querySelector(
-							`#vtbag-${group.preOrder + (group.new?.pseudoElement?.substring(2) ?? '')}`
-						)
-						?.remove();
-					element.ownerDocument.head.insertAdjacentHTML(
-						'beforeend',
-						`<style id="vtbag-${group.preOrder + (group.new?.pseudoElement?.substring(2) ?? '')}">
-							${id} { outline: 2px solid darkolivegreen; cursor: pointer}
-						</style>`
-					);
-					showBadge(element as HTMLElement, group);
-				});
-
-				group.new?.element?.addEventListener('pointerleave', (e) => {
-					const element = e.target as Element;
-					element.ownerDocument.head
-						.querySelector(
-							`#vtbag-${group.preOrder + (group.new?.pseudoElement?.substring(2) ?? '')}`
-						)
-						?.remove();
-					hideBadge();
-				});
 			}
 
 			function entryForDevtools(group: Group) {
@@ -312,26 +281,33 @@
 				user-select: none;
 				color: light-dark(darkgreen, yellowgreen);
 			}
-			summary strong {
-				cursor: pointer;
-				&.old {
-					color: light-dark(darkslateblue, slateblue);
+			summary {
+				color: #888;
+				b {
+					color: light-dark(black, white);
 				}
-				&.new {
-					color: darkolivegreen;
-				}
-				&.old.new {
-					color: darkgoldenrod;
-				}
-				&.old-duplicates,
-				&.new-duplicates {
-					color: light-dark(darkred, red) !important;
-				}
-				&.with-children::after {
-					content: ' (with children)';
-					color: #888;
+				strong {
+					cursor: pointer;
+					&.old {
+						color: light-dark(darkslateblue, slateblue);
+					}
+					&.new {
+						color: darkolivegreen;
+					}
+					&.old.new {
+						color: darkgoldenrod;
+					}
+					&.old-duplicates,
+					&.new-duplicates {
+						color: light-dark(darkred, red) !important;
+					}
+					&.with-children::after {
+						content: ' (with children)';
+						color: #888;
+					}
 				}
 			}
+
 			.highlight {
 				color: light-dark(#222222, #dddddd);
 				cursor: pointer;
@@ -347,7 +323,10 @@
 				}
 			}
 			details > :not(summary) {
-				margin-left: 1rem;
+				margin-left: 1.34rem;
+			}
+			details:has(*.old-duplicates, *.new-duplicates) > summary strong {
+				color: light-dark(darkorange, orange);
 			}
 		}
 	}

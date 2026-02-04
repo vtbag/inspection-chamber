@@ -43,6 +43,7 @@ import Pseudo from './Pseudo.astro';
 			if (this.isConnected && this.#dirty && this.group) {
 				this.#dirty = false;
 				const name = this.group?.name || '';
+				console.log('render group', displayName(this.group ?? ''));
 
 				this.style.setProperty('--vtn', 'g-' + this.#scope!.scopeId + '-' + gid(this.group));
 
@@ -76,18 +77,33 @@ import Pseudo from './Pseudo.astro';
 
 			function components(scope: HTMLElement, name: string) {
 				// work around for Firefox bug. Should be Pseudo.exists
-				const noOld = getComputedStyle(
-					scope,
-					`::view-transition-new(${CSS.escape(name)})`
-				).getPropertyValue('--vtbag-ic-only-child');
-				const noNew = getComputedStyle(
-					scope,
-					`::view-transition-old(${CSS.escape(name)})`
-				).getPropertyValue('--vtbag-ic-only-child');
-				const noChildren = getComputedStyle(
-					scope,
-					`::view-transition-image-pair(${CSS.escape(name)})`
-				).getPropertyValue('--vtbag-ic-only-child');
+				let noOld = true;
+				try {
+					noOld = !!getComputedStyle(
+						scope,
+						`::view-transition-new(${CSS.escape(name)})`
+					).getPropertyValue('--vtbag-ic-only-child');
+				} catch (e) {
+					console.error(e);
+				}
+				let noNew = true;
+				try {
+					noNew = !!getComputedStyle(
+						scope,
+						`::view-transition-old(${CSS.escape(name)})`
+					).getPropertyValue('--vtbag-ic-only-child');
+				} catch (e) {
+					console.error(e);
+				}
+				let noChildren = true;
+				try {
+					noChildren = !!getComputedStyle(
+						scope,
+						`::view-transition-image-pair(${CSS.escape(name)})`
+					).getPropertyValue('--vtbag-ic-only-child');
+				} catch (e) {
+					console.error(e);
+				}
 				return { noOld, noNew, noChildren };
 			}
 		}

@@ -67,7 +67,7 @@ import './studio.css';
 							this.renderHead();
 							this.updateAnimationsHead();
 							if (this.#scopes.size === 0) {
-								this.querySelector<VtbagIcIdentifyElement>('vtbag-ic-identify')?.hide();
+								this.querySelector<VtbagIcIdentifyPseudosElement>('vtbag-ic-identify-pseudos')?.hide();
 								this.querySelector<HTMLInputElement>('#reset-stopped-animations')?.click();
 							}
 						},
@@ -146,7 +146,7 @@ import './studio.css';
 				parent.document
 					.querySelectorAll<HTMLElement>('#twins div[data-stopped]')
 					.forEach((div) => div.removeAttribute('data-stopped'));
-				this.querySelectorAll<HTMLElement>('vtbag-ic-identify div[data-stopped]').forEach((div) =>
+				this.querySelectorAll<HTMLElement>('vtbag-ic-identify-pseudos div[data-stopped]').forEach((div) =>
 					div.removeAttribute('data-stopped')
 				);
 				this.querySelectorAll<HTMLElement>(`vtbag-ic-pseudo[data-stopped]`).forEach((pseudo) =>
@@ -219,7 +219,7 @@ import './studio.css';
 				'beforeend',
 				'<vtbag-ic-pseudo-details></vtbag-ic-pseudo-details>'
 			);
-			animationHead.insertAdjacentHTML('beforeend', '<vtbag-ic-identify></vtbag-ic-identify>');
+			animationHead.insertAdjacentHTML('beforeend', '<vtbag-ic-identify-pseudos></vtbag-ic-identify-pseudos>');
 
 			this.querySelector('.freeze')!.addEventListener('click', (e) => {
 				this.#pseudosToMove.length = 0;
@@ -329,7 +329,7 @@ import './studio.css';
 					this.querySelector<HTMLDivElement>('.animations-head-main')!.style.display = '';
 					this.refreshAnimations(this.#rootDocument!.getAnimations())!;
 					this.renderHead();
-					this.querySelector<VtbagIcIdentifyElement>('vtbag-ic-identify')?.show();
+					this.querySelector<VtbagIcIdentifyPseudosElement>('vtbag-ic-identify-pseudos')?.show();
 				};
 			}
 			mayStartViewTransition(
@@ -470,9 +470,9 @@ import './studio.css';
 
 		movePseudos() {
 			const movePseudosCallback = () => {
-				const showTwins = parent.document.documentElement.classList.contains('show-twins');
+				const showPseudos = parent.document.documentElement.classList.contains('show-pseudos');
 
-				if (showTwins) {
+				if (showPseudos) {
 					if (this.#retriggerPseudosToMove && this.#pseudosToMove.length === 0) {
 						this.querySelectorAll('vtbag-ic-pseudo').forEach((p) => this.#pseudosToMove.push(p));
 						this.#retriggerPseudosToMove = false;

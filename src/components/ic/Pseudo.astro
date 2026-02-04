@@ -131,6 +131,7 @@
 		}
 
 		render() {
+
 			const kind = this.getAttribute('name');
 			this.icGroup = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
 			if (kind === '::view-transition') {
@@ -154,9 +155,11 @@
 				this.name(true)
 			);
 
+
+
 			const twins = parent.document.querySelector('#twins')!;
 			const defaultDiv = twins.querySelector<HTMLDivElement>('#default')!;
-			ICPseudo.defaultStyles = twins.ownerDocument.defaultView?.getComputedStyle(defaultDiv)!;
+			ICPseudo.defaultStyles ??= twins.ownerDocument.defaultView?.getComputedStyle(defaultDiv)!;
 
 			// potentially "slotted" elements
 
@@ -339,7 +342,7 @@
 
 				group.children.forEach(
 					(g) =>
-						(html += `<button data-group="${gid(g)}" style="border: 2px solid ${color(group)}">${displayName(g)}</button>`)
+						(html += `<button data-group="${gid(g)}" style="border: 2px solid ${color(g)}">${displayName(g)}</button>`)
 				);
 				html += '</details>';
 				this.insertAdjacentHTML('beforeend', html);

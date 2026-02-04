@@ -5,9 +5,9 @@ import Group from './Group.astro';
 <Group />
 <script>
 	import { getCurrentViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
-	import { type Group, linear } from './group';
+	import { type Group, linear, print } from './group';
 	import { addBlinds } from './blinds';
-import { moduleGroupMaps } from './capture';
+	import { moduleGroupMaps } from './capture';
 
 	class ICGroupList extends HTMLElement {
 		#animations: Animation[] = [];
@@ -73,8 +73,9 @@ import { moduleGroupMaps } from './capture';
 						groupAnimations.push(animation);
 					}
 				});
-				linear(groups.get('@')!).forEach((group) =>
-					group.parent && this.refreshGroup(group, newGroupAnimations.get(group.name) || [])
+				linear(groups.get('@')!).forEach(
+					(group) =>
+						group.parent && this.refreshGroup(group, newGroupAnimations.get(group.name) || [])
 				);
 
 				this.sort(

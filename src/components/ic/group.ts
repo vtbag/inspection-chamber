@@ -16,8 +16,10 @@ export type Group = {
 	bfs?: number;
 };
 
+let scopeCount = 0;
+
 export function gid(group?: Group): number {
-	return ~~(((group?.preOrder ?? 0) + 1) / 2);
+	return group?.preOrder ?? 0;
 }
 
 export function size(group?: Group): number {
@@ -40,8 +42,7 @@ export function nestGroups(
 	let hasDuplicates = false;
 	if (node.viewTransitionName === 'none') {
 		node.children.forEach(
-			(child) =>
-				(hasDuplicates = nestGroups(child, parent, container, groups, oldOrNew) || hasDuplicates)
+			(child) => (hasDuplicates = child.style.viewTransitionScope !== "auto" && child.style.contain !== "view-transition" && nestGroups(child, parent, container, groups, oldOrNew) || hasDuplicates)
 		);
 	} else {
 		let group = groups.get(node.viewTransitionName);
@@ -83,13 +84,13 @@ export function nestGroups(
 		}
 		node.children.forEach(
 			(child) =>
-				(hasDuplicates = nestGroups(
+				(hasDuplicates = child.style.viewTransitionScope !== "auto" && child.style.contain !== "view-transition" && nestGroups(
 					child,
 					group,
 					node.viewTransitionGroup !== 'normal' ? group : container,
 					groups,
 					oldOrNew
-				)) || hasDuplicates
+				) || hasDuplicates)
 		);
 		group.ancestor = false;
 	}
@@ -112,7 +113,7 @@ export function numberGroupsBFS(root: Group) {
 }
 
 export function print(group: Group, depth = 0) {
-	console.log(`${' '.repeat(depth * 2)}- ${group.name}`);
+	console.log(`${' '.repeat(depth * 2)}- ${displayName(group)} ${group.preOrder} ${group.postOrder}`);
 	group.children.forEach((child) => print(child, depth + 1));
 }
 
@@ -215,14 +216,25 @@ function deserializeSparseDOMNode(node?: SerializedGroupNode): SparseDOMNode | u
 	};
 }
 
-export function displayName(group: Group, withClasses = false): string {
-	let name = group.name;
+export function displayName(group: Group | string, verbose = false): string {
+	let name, prefix;
+	if (typeof group === 'string') {
+		const match = group.match(/^(.*::view-transition-(group|old|new|image-pair|group-children))\((.*)\)$/);
+		if (!match) return group;
+		name = match[3]!;
+		prefix = match[1];
+	} else {
+		name = group.name;
+	}
+
 	if (name.startsWith('-vtbag-auto-'))
 		name = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
 	if (name.startsWith('-vtbag-match-element-'))
 		name = 'match-element' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
-	if (withClasses && group.className && group.className !== 'none') {
-		name += ' <small>.' + group.className.split(' ').join('<wbr>.') + '</small>';
+	if (typeof group !== 'string' && verbose) {
+		if (group.className && group.className !== 'none') {
+			name += ' <small>.' + group.className.split(' ').join('<wbr>.') + '</small>';
+		}
 	}
-	return name;
+	return prefix ? prefix + '(' + name + ')' : name;
 }

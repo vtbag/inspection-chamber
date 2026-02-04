@@ -210,7 +210,7 @@
 					'afterbegin',
 					`<div style="align-items: center; display: flex; gap: 8px;">
 							<label>
-								<span title="delay: ${~~((timings[idx]?.delay as number) || 0)}ms, duration: ${~~((timings[idx]?.duration as number) || this.maxEnd! - ((timings[idx]?.delay as number) || 0))}ms"></span><input type="checkbox" ${'vtbag-stopped' in a ? '' : 'checked'}>${name}<span>${' vtbag-stopped' in a ? `&nbsp;(stopped at ${~~a.currentTime!}ms)` : ''}</span>
+								<span title="delay: ${~~((timings[idx]?.delay as number) || 0)}ms, duration: ${~~((timings[idx]?.duration as number) || this.maxEnd! - ((timings[idx]?.delay as number) || 0))}ms"></span><input type="checkbox" ${'vtbag-stopped' in a ? '' : 'checked'}>${name}<span>${' vtbag-stopped' in a ? ` (stopped at ${~~a.currentTime!}ms)` : ''}</span>
 							</label>
 							<span style="cursor: pointer;" class="devtools" title="Show in browser console">[🖶]</span>
 						</div>`
@@ -242,7 +242,7 @@
 							this.scope?.querySelector<HTMLInputElement>('input[name^="slider-"]')!;
 					}
 					checkbox.parentElement!.lastElementChild!.innerHTML = stoppable['vtbag-stopped']
-						? `&nbsp;(stopped at ${~~a.currentTime!}ms)`
+						? ` (stopped at ${~~a.currentTime!}ms)`
 						: '';
 					if (stoppable['vtbag-stopped']) {
 						stoppable.pause(); // check this

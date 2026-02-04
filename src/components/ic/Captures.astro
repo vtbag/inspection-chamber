@@ -4,7 +4,10 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 
 <ViewTransitionCapture />
 <script>
-	import { getCurrentViewTransition, mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	import {
+		getCurrentViewTransition,
+		mayStartViewTransition,
+	} from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { addBlinds } from './blinds';
 	import { setVectors } from '@vtbag/utensil-drawer/vectors';
 	import { ICElement } from './ic-element';
@@ -14,7 +17,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 		#observer?: ResizeObserver;
 		#resizeToggle: any;
 
-			connectedCallback() {
+		connectedCallback() {
 			this.#observer = new ResizeObserver(() => {
 				if (this.#resizeToggle || getCurrentViewTransition()) {
 					return;
@@ -33,14 +36,15 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 			this.#observer?.disconnect();
 		}
 
-
 		protected render() {
 			this.classList.add('panel');
+			const oldOnly = sessionStorage.getItem('vtbag-ic-capture-old-only') || 'none';
+			parent.__vtbag!.ic2!.captureOldOnly = oldOnly === 'old-only';
 			this.innerHTML =
 				ledGroup({
 					independent: true,
 					groupName: 'capture-mode',
-					checked: 'none',
+					checked: oldOnly,
 					className: 'capture-options',
 					alternatives: [
 						{ id: 'old-only', value: 'old-only', label: 'Capture old images, only' },
@@ -50,7 +54,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 				ledGroup({
 					className: 'sort',
 					groupName: `capture-sort`,
-					checked: 'paint-order',
+					checked: sessionStorage.getItem('vtbag-ic-capture-sort') || 'paint-order',
 					alternatives: [
 						{
 							label: 'Alphabetical',
@@ -68,6 +72,10 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 			addBlinds(this, 'div', 'head-blind', 'capture-head', 'blind');
 			this.querySelector('.capture-options #old-only')!.addEventListener('change', (event) => {
 				parent.__vtbag!.ic2!.captureOldOnly = (event.target as HTMLInputElement).checked;
+				sessionStorage.setItem(
+					'vtbag-ic-capture-old-only',
+					parent.__vtbag!.ic2!.captureOldOnly ? 'old-only' : 'none'
+				);
 			});
 			this.querySelector('.capture-options #freeze-types')!.addEventListener('change', (event) => {
 				const target = event.target as HTMLInputElement;
@@ -90,6 +98,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 			});
 			this.querySelector('.input-led-group.sort')?.addEventListener('change', (event) => {
 				const alpha = (event.target as HTMLInputElement).value === 'alpha';
+				sessionStorage.setItem('vtbag-ic-capture-sort', alpha ? 'alpha' : 'paint-order');
 				this.querySelectorAll(
 					'vtbag-ic-view-transition-capture > details *:has(> details)'
 				).forEach((list) => {
@@ -137,14 +146,13 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 			this.querySelector('.explainer')?.remove();
 
 			this.querySelectorAll('vtbag-ic-view-transition-capture').forEach((el) => el.remove());
-			parent.__vtbag!.ic2!.vtMap?.keys().forEach((key) => {
-				this.insertAdjacentHTML(
-					'beforeend',
-					`<vtbag-ic-view-transition-capture></vtbag-ic-view-transition-capture>`
-				);
-				const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
-				captureElement.init(key);
-			});
+			const key = [...parent.__vtbag!.ic2!.vtMap?.keys()!][0];
+			this.insertAdjacentHTML(
+				'beforeend',
+				`<vtbag-ic-view-transition-capture></vtbag-ic-view-transition-capture>`
+			);
+			const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
+			captureElement.init(key);
 			parent.__vtbag!.ic2!.vtMap?.clear();
 		};
 	}

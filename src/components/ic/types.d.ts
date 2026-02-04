@@ -16,7 +16,7 @@ declare global {
 		updateAnimationsHead(): unknown;
 		movePseudos(): void;
 	}
-	interface VtbagIcIdentifyElement extends HTMLElement {
+	interface VtbagIcIdentifyPseudosElement extends HTMLElement {
 		show(): void;
 		hide(): void;
 	}
