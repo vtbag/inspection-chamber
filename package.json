@@ -41,7 +41,6 @@
     "url": "https://github.com/sponsors/martrapp"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.6",
     "@changesets/cli": "^2.29.8",
     "@eslint/js": "^9.39.2",
     "@types/css-tree": "^2.3.11",

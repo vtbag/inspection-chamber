@@ -14,9 +14,9 @@ export type Group = {
 	preOrder?: number;
 	postOrder?: number;
 	bfs?: number;
+	oldHidden?: boolean;
+	newHidden?: boolean;
 };
-
-let scopeCount = 0;
 
 export function gid(group?: Group): number {
 	return group?.preOrder ?? 0;
@@ -37,64 +37,87 @@ export function nestGroups(
 	parent: Group,
 	container: Group,
 	groups: Map<string, Group>,
-	oldOrNew: 'old' | 'new'
+	oldOrNew: 'old' | 'new',
+	capture: boolean,
+	hidden: boolean
 ): boolean {
 	let hasDuplicates = false;
 	if (node.viewTransitionName === 'none') {
-		node.children.forEach(
-			(child) => (hasDuplicates = child.style.viewTransitionScope !== "auto" && child.style.contain !== "view-transition" && nestGroups(child, parent, container, groups, oldOrNew) || hasDuplicates)
-		);
+		node.children.forEach((child) => {
+			hidden ||=
+				child.viewTransitionScope === 'auto' &&
+				child.context! /* https://issues.chromium.org/issues/481934462*/;
+			hasDuplicates =
+				((!hidden || capture) &&
+					nestGroups(child, parent, container, groups, oldOrNew, capture, hidden)) ||
+				hasDuplicates;
+		});
 	} else {
 		let group = groups.get(node.viewTransitionName);
 		if (group) {
-			if (group[oldOrNew] === undefined) {
+			if (group[oldOrNew] === undefined && !hidden) {
 				group[oldOrNew] = node;
-			} else {
+			} else if (!hidden) {
 				group[`${oldOrNew}Duplicates`] ||= [];
 				group[`${oldOrNew}Duplicates`]!.push(node);
 				hasDuplicates = true;
+			} else {
+				if (!group.oldHidden || oldOrNew === 'old') group = newGroup();
 			}
 		} else {
-			group = {
-				children: [],
-				name: node.viewTransitionName,
-				className: node.viewTransitionClass!,
-				ancestor: true,
-			};
-			group[oldOrNew] = node;
-
+			group = newGroup();
 			groups.set(node.viewTransitionName, group);
-			if (node.viewTransitionGroup === 'nearest') {
-				parent.children.push(group);
-				group.parent = parent;
-			} else if (node.viewTransitionGroup === 'normal' || node.viewTransitionGroup === 'contain') {
-				container.children.push(group);
-				group.parent = container;
-			} else {
-				const namedGroup = groups.get(node.viewTransitionGroup!);
-				if (namedGroup?.ancestor) {
-					namedGroup.children.push(group);
-					group.parent = namedGroup;
-				} else {
-					const root = groups.get('@')!;
-					root.children.push(group); // fallback and viewTransitionGroup = "none"
-					group.parent = root;
-				}
-			}
 		}
-		node.children.forEach(
-			(child) =>
-				(hasDuplicates = child.style.viewTransitionScope !== "auto" && child.style.contain !== "view-transition" && nestGroups(
-					child,
-					group,
-					node.viewTransitionGroup !== 'normal' ? group : container,
-					groups,
-					oldOrNew
-				) || hasDuplicates)
-		);
+		node.children.forEach((child) => {
+			hidden ||=
+				child.viewTransitionScope === 'auto' &&
+				child.context! /* https://issues.chromium.org/issues/481934462 */;
+			hasDuplicates =
+				((!hidden || capture) &&
+					nestGroups(
+						child,
+						group,
+						node.viewTransitionGroup !== 'normal' ? group : container,
+						groups,
+						oldOrNew,
+						capture,
+						hidden
+					)) ||
+				hasDuplicates;
+		});
 		group.ancestor = false;
 	}
 	return hasDuplicates;
+
+	function newGroup() {
+		const group: Group = {
+			children: [],
+			name: node.viewTransitionName,
+			className: node.viewTransitionClass!,
+			ancestor: true,
+		};
+		group[oldOrNew] = node;
+		group[oldOrNew === 'old' ? 'oldHidden' : 'newHidden'] = hidden;
+
+		if (node.viewTransitionGroup === 'nearest' || hidden) {
+			parent.children.push(group);
+			group.parent = parent;
+		} else if (node.viewTransitionGroup === 'normal' || node.viewTransitionGroup === 'contain') {
+			container.children.push(group);
+			group.parent = container;
+		} else {
+			const namedGroup = groups.get(node.viewTransitionGroup!);
+			if (namedGroup?.ancestor) {
+				namedGroup.children.push(group);
+				group.parent = namedGroup;
+			} else {
+				const root = groups.get('@')!;
+				root.children.push(group); // fallback and viewTransitionGroup = "none"
+				group.parent = root;
+			}
+		}
+		return group;
+	}
 }
 
 export function numberGroupsDFS(group: Group, counter = { value: 1 }) {
@@ -113,7 +136,9 @@ export function numberGroupsBFS(root: Group) {
 }
 
 export function print(group: Group, depth = 0) {
-	console.log(`${' '.repeat(depth * 2)}- ${displayName(group)} ${group.preOrder} ${group.postOrder}`);
+	console.log(
+		`${' '.repeat(depth * 2)}- ${displayName(group)} ${group.preOrder} ${group.postOrder}`
+	);
 	group.children.forEach((child) => print(child, depth + 1));
 }
 
@@ -219,7 +244,9 @@ function deserializeSparseDOMNode(node?: SerializedGroupNode): SparseDOMNode | u
 export function displayName(group: Group | string, verbose = false): string {
 	let name, prefix;
 	if (typeof group === 'string') {
-		const match = group.match(/^(.*::view-transition-(group|old|new|image-pair|group-children))\((.*)\)$/);
+		const match = group.match(
+			/^(.*::view-transition-(group|old|new|image-pair|group-children))\((.*)\)$/
+		);
 		if (!match) return group;
 		name = match[3]!;
 		prefix = match[1];

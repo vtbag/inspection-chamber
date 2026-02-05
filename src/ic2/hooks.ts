@@ -3,7 +3,6 @@ import { message } from '@/components/ic/message';
 
 const ACTIVE_VT_SYM = Symbol.for('__vtbag_activeViewTransition');
 
-
 export function setupHooks(chamberWindow: Window) {
 	console.log('[inspection chamber] setupHooks');
 	self.__vtbag ??= {};
@@ -227,10 +226,10 @@ function deactivate(transition: ViewTransition, transitionRoot: HTMLElement, doc
 		return new Proxy(transition, {
 			get(_, prop) {
 				if (prop === 'ready' || prop === 'finished' || prop === 'updateCallbackFinished') {
-					return new Promise<void>(() => { });
+					return new Promise<void>(() => {});
 				}
 				if (prop === 'waitUntil') {
-					return (_: Promise<unknown>) => { };
+					return (_: Promise<unknown>) => {};
 				}
 				return Reflect.get(transition, prop);
 			},
@@ -364,16 +363,17 @@ function animationsWillFinish(
 }
 
 function safeSetActiveViewTransition(target: any, transition: ViewTransition) {
-	'activeViewTransition' in target && Object.defineProperty(target, 'activeViewTransition', {
-		configurable: true,
-		enumerable: false,
-		get() {
-			return (this as any)[ACTIVE_VT_SYM];
-		},
-		set(v: any) {
-			(this as any)[ACTIVE_VT_SYM] = v;
-		},
-	});
+	'activeViewTransition' in target &&
+		Object.defineProperty(target, 'activeViewTransition', {
+			configurable: true,
+			enumerable: false,
+			get() {
+				return (this as any)[ACTIVE_VT_SYM];
+			},
+			set(v: any) {
+				(this as any)[ACTIVE_VT_SYM] = v;
+			},
+		});
 
 	target.activeViewTransition = transition;
 }

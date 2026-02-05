@@ -43,7 +43,6 @@ import Pseudo from './Pseudo.astro';
 			if (this.isConnected && this.#dirty && this.group) {
 				this.#dirty = false;
 				const name = this.group?.name || '';
-				console.log('render group', displayName(this.group ?? ''));
 
 				this.style.setProperty('--vtn', 'g-' + this.#scope!.scopeId + '-' + gid(this.group));
 

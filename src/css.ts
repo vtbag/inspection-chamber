@@ -35,34 +35,38 @@ export function namedElements(viewTransitionRoot: HTMLElement = document.documen
 		const viewTransitionClass = element.style.viewTransitionClass;
 		const viewTransitionGroup = element.style.viewTransitionGroup;
 		const viewTransitionScope = element.style.viewTransitionScope;
-		viewTransitionName !== 'none' && elements.push({
-			element: el,
-			pseudoElement: undefined!,
-			selector: 'element.style',
-			property: 'view-transition-name',
-			value: viewTransitionName,
-		});
-		viewTransitionClass && elements.push({
-			element: el,
-			pseudoElement: undefined!,
-			selector: 'element.style',
-			property: 'view-transition-class',
-			value: viewTransitionClass,
-		});
-		viewTransitionGroup && elements.push({
-			element: el,
-			pseudoElement: undefined!,
-			selector: 'element.style',
-			property: 'view-transition-group',
-			value: viewTransitionGroup,
-		});
-		viewTransitionScope && elements.push({
-			element: el,
-			pseudoElement: undefined!,
-			selector: 'element.style',
-			property: 'view-transition-scope',
-			value: viewTransitionScope,
-		});
+		viewTransitionName !== 'none' &&
+			elements.push({
+				element: el,
+				pseudoElement: undefined!,
+				selector: 'element.style',
+				property: 'view-transition-name',
+				value: viewTransitionName,
+			});
+		viewTransitionClass &&
+			elements.push({
+				element: el,
+				pseudoElement: undefined!,
+				selector: 'element.style',
+				property: 'view-transition-class',
+				value: viewTransitionClass,
+			});
+		viewTransitionGroup &&
+			elements.push({
+				element: el,
+				pseudoElement: undefined!,
+				selector: 'element.style',
+				property: 'view-transition-group',
+				value: viewTransitionGroup,
+			});
+		viewTransitionScope &&
+			elements.push({
+				element: el,
+				pseudoElement: undefined!,
+				selector: 'element.style',
+				property: 'view-transition-scope',
+				value: viewTransitionScope,
+			});
 	});
 	animations.clear();
 	pseudoElements.clear();
@@ -146,7 +150,7 @@ function declNamedElements(style: CSSStyleDeclaration) {
 function styledElements(parent: CSSRule | null, property: string, value: string) {
 	let selectors: string[] = ['&'];
 
-	for (; ;) {
+	for (;;) {
 		while (
 			parent &&
 			!(parent.constructor.name === 'CSSStyleRule' || parent.constructor.name === 'CSSScopeRule')
@@ -192,10 +196,10 @@ function collect(parent: CSSStyleRule | CSSScopeRule, selectors: string[]): stri
 		const scopes = scopeRuleParent.start
 			? splitSelectorList(scopeRuleParent.start)
 			: [
-				deriveCSSSelector(
-					parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
-				),
-			];
+					deriveCSSSelector(
+						parent.parentStyleSheet?.ownerNode?.parentElement ?? root.ownerDocument.documentElement
+					),
+				];
 
 		scopes.forEach((scope) =>
 			nested.forEach((nes) => {

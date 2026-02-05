@@ -1,9 +1,10 @@
-import { deriveCSSSelector } from "./element-selector";
+import { deriveCSSSelector } from './element-selector';
 
 export type SparseDOMNode = {
 	viewTransitionName: string;
 	viewTransitionGroup?: string;
 	viewTransitionClass?: string;
+	viewTransitionScope?: string;
 	style: CSSStyleDeclaration;
 	element: Element;
 	pseudoElement?: string;
@@ -14,10 +15,14 @@ export type SparseDOMNode = {
 	children: SparseDOMNode[];
 };
 
-export function addParentLinks(sparseDOM: SparseDOMNode[], elementMap: Map<Element, SparseDOMNode>, transitionRoot: HTMLElement) {
+export function addParentLinks(
+	sparseDOM: SparseDOMNode[],
+	elementMap: Map<Element, SparseDOMNode>,
+	transitionRoot: HTMLElement
+) {
 	const root = elementMap.get(transitionRoot)!;
-	root.paintGroup = paintGroup(root, "");
-	sparseDOM.forEach(n => linkToParent(elementMap, transitionRoot, n));
+	root.paintGroup = paintGroup(root, '');
+	sparseDOM.forEach((n) => linkToParent(elementMap, transitionRoot, n));
 }
 function linkToParent(
 	elementMap: Map<Element, SparseDOMNode>,
@@ -86,7 +91,7 @@ export function sort(node: SparseDOMNode) {
 	for (let i = 0; i < node.children.length; ++i) {
 		const child = node.children[i];
 		sort(child);
-		if (!child.context && child.style.viewTransitionScope !== 'auto') {
+		if (!child.context && child.viewTransitionScope !== 'auto') {
 			node.children.splice(i, 0, ...child.children);
 			i += child.children.length;
 			child.children.length = 0;
@@ -103,7 +108,11 @@ export function sort(node: SparseDOMNode) {
 				: a.order !== b.order
 					? a.order! - b.order!
 					: a.element === b.element
-						? (aPseudo > bPseudo ? 1 : aPseudo < bPseudo ? -1 : 0)
+						? aPseudo > bPseudo
+							? 1
+							: aPseudo < bPseudo
+								? -1
+								: 0
 						: a.element.compareDocumentPosition(b.element) & Node.DOCUMENT_POSITION_PRECEDING
 							? 1
 							: -1;
@@ -111,13 +120,14 @@ export function sort(node: SparseDOMNode) {
 }
 
 export function print(group: SparseDOMNode, depth = 0) {
-
 	let what = deriveCSSSelector(group.element);
 	let pruned = '';
-	if (what.startsWith('#')) what = what + " (" + (group.element.tagName || '') + ")";
-	if(group.style.viewTransitionScope !== "none") pruned = 'color: light-dark(orange, darkorange); font-weight: bold;';
+	if (what.startsWith('#')) what = what + ' (' + (group.element.tagName || '') + ')';
+	if (group.viewTransitionScope === 'auto')
+		pruned = 'color: light-dark(orange, darkorange); font-weight: bold;';
 	console.log(
-		`%c${' '.repeat(depth * 2)} - ${what}${group.pseudoElement || ''}, name: ${group.viewTransitionName}, paint order modifier: ${group.paintGroup}.${group.zIndex}.${group.order}${pruned?", defines a new view transition scope that prunes this DOM subtree":""}`, pruned
+		`%c${' '.repeat(depth * 2)} - ${what}${group.pseudoElement || ''}, name: ${group.viewTransitionName}, paint order modifier: ${group.paintGroup}.${group.zIndex}.${group.order}${pruned ? ', defines a new view transition scope that prunes this DOM subtree' : ''}`,
+		pruned
 	);
 	group.children.forEach((child) => print(child, depth + 1));
 }
