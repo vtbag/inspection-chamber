@@ -1,5 +1,11 @@
 # @vtbag/inspection-chamber
 
+## 1.0.24 - 2026-02-05
+
+### Patch Changes
+
+- d41d95a: Reduced dependency graph and indirect vulnerabilities.
+
 ## 1.0.23 - 2026-01-08
 
 ### Patch Changes
