@@ -287,15 +287,12 @@
 	.animations-head {
 		height: fit-content;
 	}
-	.scope-head-main:has(button:nth-child(2)),
-	.horizontal-slider-container {
+	.scope-head-main:has(button:nth-child(2)) {
 		grid-column: 1 / -1;
 	}
 	.head-blind,
 	.animations-head-main,
-	.scope-head-main,
-	.input-led-group,
-	.horizontal-slider-container {
+	.scope-head-main {
 		display: flex;
 		flex-direction: column;
 		padding: 0.5rem 0.75rem 0.5rem 0.75rem;

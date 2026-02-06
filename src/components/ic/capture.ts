@@ -88,7 +88,6 @@ function capture(
 
 	addParentLinks(sparseDOM, elementMap, transitionRoot);
 	sort(rootNode);
-	print(rootNode);
 
 	const groupRoot = groups.get('@')!;
 	groupRoot[oldOrNew] = rootNode;

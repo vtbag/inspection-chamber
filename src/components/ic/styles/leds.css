@@ -1,0 +1,73 @@
+@layer defaults {
+	.input-led-group {
+		display: flex;
+		flex-direction: column;
+		padding: 0.5rem 0.75rem 0.5rem 0.75rem;
+		background: light-dark(#f6f6f6, #0a0a0a);
+		border-radius: 4px;
+		border: 1px solid light-dark(#d6d6d6, #2a2a2a);
+		box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+	}
+
+	.input-led-item {
+		position: relative;
+	}
+
+	.input-led-item input {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.input-led-item label {
+		display: flex;
+		align-items: center;
+		gap: 0 0.5rem;
+		cursor: pointer;
+	}
+
+	.input-led-item .led {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: light-dark(#e6e6e6, #1a1a1a);
+		border: 1px solid light-dark(#f6f6f6, #0a0a0a);
+		box-shadow:
+			inset 0 2px 3px rgba(0, 0, 0, 0.5),
+			0 1px 0 rgba(255, 255, 255, 0.05);
+	}
+
+	.input-led-item input:checked + label .led {
+		background: radial-gradient(circle, light-dark(#0c0, #6bff3588) 0%, #44cc2088 100%);
+		box-shadow:
+			0 0 8px rgba(107, 255, 53, 0.6),
+			0 0 12px rgba(107, 255, 53, 0.4),
+			inset 0 1px 2px rgba(200, 255, 100, 0.8);
+	}
+	.input-led-item input:checked.red + label .led {
+		background: radial-gradient(circle, #ff3b35dd 0%, #cc442088 100%);
+		box-shadow:
+			0 0 8px rgba(255, 107, 53, 0.6),
+			0 0 12px rgba(255, 107, 53, 0.4),
+			inset 0 1px 2px rgba(255, 200, 100, 0.8);
+	}
+	.input-led-item input:checked.orange + label .led {
+		background: radial-gradient(circle, #fffd00cc 0%, #ccaa2088 100%);
+		box-shadow:
+			0 0 8px rgba(255, 180, 53, 0.6),
+			0 0 12px rgba(255, 180, 53, 0.4),
+			inset 0 1px 2px rgba(255, 227, 100, 0.8);
+	}
+
+	.input-led-item .radio-text {
+		font-size: 0.85rem;
+	}
+
+	.input-led-item input:checked + label .radio-text {
+		color: var(--vtbag-ic-content-color);
+	}
+
+	.input-led-item :not(input:checked) + label .radio-text:hover {
+		color: color-mix(in srgb, var(--vtbag-ic-content-color), var(--vtbag-ic-label-color));
+	}
+}
