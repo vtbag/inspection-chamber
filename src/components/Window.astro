@@ -43,14 +43,12 @@ const { style } = Astro.props;
 		left: var(--window-left, 50px);
 		top: var(--window-top, 50px);
 		background-color: light-dark(#e0e0e0, #101010);
+		box-shadow: 0 0 8px #7978;
 		border-radius: 12px;
 		display: flex;
 		flex-direction: column;
 		overflow: clip;
 		padding: 8px;
-		/* backdrop-filter: blur(8px); */
-		/* transition-property: width, height, display; */
-		/* transition-duration: 100ms; */
 	}
 
 	.window.minimized {
@@ -265,6 +263,8 @@ const { style } = Astro.props;
 
 		header.addEventListener('pointerdown', (e: PointerEvent) => {
 			if ((e.target as HTMLElement).closest('.window-controls')) return;
+			const dragger = e.target as HTMLElement;
+			dragger.setPointerCapture(e.pointerId);
 
 			e.preventDefault();
 
@@ -276,9 +276,8 @@ const { style } = Astro.props;
 			dragState.startLeft = rect.left;
 			dragState.startTop = rect.top;
 
-			document.addEventListener('pointermove', handleDrag);
-			document.addEventListener('pointerup', stopDrag);
-			header.setPointerCapture(e.pointerId);
+			dragger.addEventListener('pointermove', handleDrag);
+			dragger.addEventListener('pointerup', stopDrag);
 		});
 
 		function handleDrag(e: PointerEvent) {
@@ -303,12 +302,30 @@ const { style } = Astro.props;
 			theWindow.classList.add('window-changing');
 		}
 
-		function stopDrag() {
+		function stopDrag(e: PointerEvent) {
+			const dragger = e.target as HTMLElement;
+			dragger.releasePointerCapture(e.pointerId);
 			dragState.isDragging = false;
 			theWindow.classList.remove('window-changing');
-			document.removeEventListener('pointermove', handleDrag);
-			document.removeEventListener('pointerup', stopDrag);
+			dragger.removeEventListener('pointermove', handleDrag);
+			dragger.removeEventListener('pointerup', stopDrag);
+			saveLastPosition();
 		}
+
+		function saveLastPosition() {
+			sessionStorage.setItem(
+				'vtbag-ic-window-last-drag',
+				JSON.stringify({
+					x: parseInt(theWindow.style.getPropertyValue('--window-left')) || 50,
+					y: parseInt(theWindow.style.getPropertyValue('--window-top')) || 50,
+					w: parseInt(theWindow.style.getPropertyValue('--window-width')) || 300,
+					h: parseInt(theWindow.style.getPropertyValue('--window-height')) || 300,
+				})
+			);
+		}
+		
+		
+
 
 		const resizeHandles = theWindow.querySelectorAll<HTMLDivElement>('.resize-handle');
 		let iframe: HTMLIFrameElement | null = null;
@@ -328,17 +345,18 @@ const { style } = Astro.props;
 				iframe = theWindow.querySelector('iframe');
 				iframe && initAnimation(iframe);
 
-				document.addEventListener('pointermove', handleResize);
-				document.addEventListener('pointerup', stopResize);
+				const sizer = e.target as HTMLElement;
+				sizer.addEventListener('pointermove', handleResize);
+				sizer.addEventListener('pointerup', stopResize);
 				resizeState.longTap = setTimeout(() => {
 					resizeState.longTap = undefined;
-					stopResize();
+					stopResize(e);
 					dispatchEvent(new CustomEvent('longTap', { detail: { side: resizeState.direction } }));
 				}, 500);
 				e.preventDefault();
 				e.stopImmediatePropagation();
 
-				handle.setPointerCapture(e.pointerId);
+				sizer.setPointerCapture(e.pointerId);
 			});
 		});
 
@@ -453,15 +471,18 @@ const { style } = Astro.props;
 			theWindow.style.setProperty('--window-height', newHeight + 'px');
 			theWindow.style.setProperty('--window-left', newLeft + 'px');
 			theWindow.style.setProperty('--window-top', newTop + 'px');
+			saveLastPosition();
 
 			theWindow.classList.add('window-changing');
 		}
 
-		function stopResize() {
+		function stopResize(e: PointerEvent) {
+			const sizer = e.target as HTMLElement;
 			resizeState.isResizing = false;
 			theWindow.classList.remove('window-changing');
-			document.removeEventListener('pointermove', handleResize);
-			document.removeEventListener('pointerup', stopResize);
+			sizer.removeEventListener('pointermove', handleResize);
+			sizer.removeEventListener('pointerup', stopResize);
+			sizer.releasePointerCapture(e.pointerId);
 			resizeState.longTap && clearTimeout(resizeState.longTap);
 			resizeState.longTap = undefined;
 			resizeState.snapshot && clearTimeout(resizeState.snapshot);

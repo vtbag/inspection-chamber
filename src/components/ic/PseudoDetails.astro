@@ -64,7 +64,11 @@
 					({ value, defaultValue }) => value !== defaultValue //|| this.formerStyleMap?.has(key)
 				)
 			)
-				.sort((a, b) => a.key.localeCompare(b.key))
+				.sort((a, b) =>
+					(a.key.startsWith('--') ? 'zzzz' + a.key : (a.key.startsWith('-') ? 'zzz' + a.key : a.key)).localeCompare(
+						b.key.startsWith('--') ? 'zzzz' + b.key : (b.key.startsWith('-') ? 'zzz' + b.key : b.key)
+					)
+				)
 				.forEach(({ key, value }) => {
 					lines.push(`
 								<tr class="style-line">

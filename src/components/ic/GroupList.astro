@@ -5,7 +5,7 @@ import Group from './Group.astro';
 <Group />
 <script>
 	import { getCurrentViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
-	import { type Group, linear, print } from './group';
+	import { displayName, type Group, linear, print } from './group';
 	import { addBlinds } from './blinds';
 	import { moduleGroupMaps } from './capture';
 
@@ -73,11 +73,11 @@ import Group from './Group.astro';
 						groupAnimations.push(animation);
 					}
 				});
-				linear(groups.get('@')!).forEach(
-					(group) =>
-						group.parent && this.refreshGroup(group, newGroupAnimations.get(group.name) || [])
+				const root = groups.get('@')!;
+				linear(root).forEach(
+					(group) => {
+						group.parent && this.refreshGroup(group, newGroupAnimations.get(group.name) || [])}
 				);
-
 				this.sort(
 					this.#scope!.querySelector<HTMLInputElement>('input[value="alpha"]')?.checked
 						? 'alpha'

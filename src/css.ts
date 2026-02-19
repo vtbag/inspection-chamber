@@ -101,22 +101,17 @@ function namedElementsOfRule(rule: CSSRule, keyframeName?: string) {
 	)
 		return;
 
-	if (name === 'CSSStyleRule') {
-		if (!rule.cssText.includes('view-transition-')) return;
+	if (name === 'CSSKeyframeRule')
+		return frameNamedElements((rule as CSSKeyframeRule).style, keyframeName!);
+
+	if ('style' in rule) {
 		declNamedElements((rule as CSSStyleRule).style);
 		// fall through to grouping rule to check nested rules
 	}
-	if (
-		name === 'CSSMediaRule' ||
-		name === 'CSSupportsRule' ||
-		name === 'CSScontainerRule' ||
-		name === 'CSSStyleRule'
-	) {
+	if ('cssRules' in rule) {
 		[...(rule as CSSGroupingRule).cssRules].forEach((rule) => namedElementsOfRule(rule));
 		return;
 	}
-
-	if (name === 'CSSNestedDeclarations') return declNamedElements((rule as any).style);
 
 	if (name === 'CSSKeyframesRule') {
 		[...(rule as CSSKeyframesRule).cssRules].forEach((frame) =>
@@ -125,8 +120,7 @@ function namedElementsOfRule(rule: CSSRule, keyframeName?: string) {
 		return;
 	}
 
-	if (name === 'CSSKeyframeRule')
-		return frameNamedElements((rule as CSSKeyframeRule).style, keyframeName!);
+	return;
 
 	console.error('[inspection-chamber] Unknown CSSRule', rule);
 }

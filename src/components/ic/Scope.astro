@@ -45,7 +45,7 @@ import Identify from '@/components/ic/IdentifyPseudos.astro';
 		#animationsElement?: VtbagIcAnimationsElement;
 		#frameToggleRefresh?: () => void;
 		#raf?: number;
-		#resynced: boolean = false;
+		#resynced: boolean = true;
 		lastTimeChange: number = -1;
 
 		tearDown() {
@@ -366,7 +366,7 @@ import Identify from '@/components/ic/IdentifyPseudos.astro';
 			this.#clickTrack = this.#scope?.animate([{ top: 0 }, { top: 0 }], {
 				duration: this.#longestDuration,
 				pseudoElement: '::view-transition',
-				playbackRate: slowMo === 'normal' ? 1 : slowMo === 'slow' ? 0.1 : 0.01,
+				playbackRate: slowMo === 'normal' ? 1 : slowMo === 'slow' ? 0.16 : 0.025,
 			})!;
 			(this.#clickTrack as CSSAnimation & { 'vtbag-alias': string })['vtbag-alias'] =
 				'vtbag-ic-click-track';
@@ -573,7 +573,7 @@ ${styles.join('\n')}
 					)?.value;
 					this.#animations.forEach((a) => {
 						a.currentTime === this.#longestDuration && (a.currentTime = this.#longestDuration! - 1);
-						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01;
+						a.playbackRate = speed === 'normal' ? 1 : speed === 'slow' ? 0.16 : 0.025;
 						'vtbag-stopped' in a || a.play();
 					});
 					this.autoMoveSlider();

@@ -78,28 +78,28 @@ import Pseudo from './Pseudo.astro';
 				// work around for Firefox bug. Should be Pseudo.exists
 				let noOld = true;
 				try {
-					noOld = !!getComputedStyle(
-						scope,
-						`::view-transition-new(${CSS.escape(name)})`
-					).getPropertyValue('--vtbag-ic-only-child');
+					noOld = !!scope.ownerDocument
+						.defaultView!.getComputedStyle(scope, `::view-transition-new(${CSS.escape(name)})`)
+						.getPropertyValue('--vtbag-ic-only-child');
 				} catch (e) {
 					console.error(e);
 				}
 				let noNew = true;
 				try {
-					noNew = !!getComputedStyle(
-						scope,
-						`::view-transition-old(${CSS.escape(name)})`
-					).getPropertyValue('--vtbag-ic-only-child');
+					noNew = !!scope.ownerDocument
+						.defaultView!.getComputedStyle(scope, `::view-transition-old(${CSS.escape(name)})`)
+						.getPropertyValue('--vtbag-ic-only-child');
 				} catch (e) {
 					console.error(e);
 				}
 				let noChildren = true;
 				try {
-					noChildren = !!getComputedStyle(
-						scope,
-						`::view-transition-image-pair(${CSS.escape(name)})`
-					).getPropertyValue('--vtbag-ic-only-child');
+					noChildren = !!scope.ownerDocument
+						.defaultView!.getComputedStyle(
+							scope,
+							`::view-transition-image-pair(${CSS.escape(name)})`
+						)
+						.getPropertyValue('--vtbag-ic-only-child');
 				} catch (e) {
 					console.error(e);
 				}

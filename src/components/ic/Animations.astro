@@ -48,10 +48,11 @@ import Scope from './Scope.astro';
 				if (scope?.querySelector('input[value="freeze"]:checked')) {
 					message(
 						'warning',
-						`View transition on <b>${where.ownerDocument ? deriveCSSSelector(where) : 'document'}</b> finished while frozen. This might happen for example when you switch tabs, resize the window,  or minimize the browser.`
+						`View transition on <b>${where.ownerDocument ? deriveCSSSelector(where) : 'document'}</b> finished while frozen. This might happen for example when you open DevTools, switch tabs, resize the window, or minimize the browser.`
 					);
-					scope.animations.forEach((a) => (a.cancel() //, ((a as any).dead = true))
-					));
+					scope.animations.forEach(
+						(a) => a.cancel() //, ((a as any).dead = true))
+					);
 				}
 				mayStartViewTransition(
 					{
@@ -65,7 +66,9 @@ import Scope from './Scope.astro';
 							this.renderHead();
 							this.updateAnimationsHead();
 							if (this.#scopes.size === 0) {
-								this.querySelector<VtbagIcIdentifyPseudosElement>('vtbag-ic-identify-pseudos')?.hide();
+								this.querySelector<VtbagIcIdentifyPseudosElement>(
+									'vtbag-ic-identify-pseudos'
+								)?.hide();
 								this.querySelector<HTMLInputElement>('#reset-stopped-animations')?.click();
 							}
 						},
@@ -144,8 +147,8 @@ import Scope from './Scope.astro';
 				parent.document
 					.querySelectorAll<HTMLElement>('#twins div[data-stopped]')
 					.forEach((div) => div.removeAttribute('data-stopped'));
-				this.querySelectorAll<HTMLElement>('vtbag-ic-identify-pseudos div[data-stopped]').forEach((div) =>
-					div.removeAttribute('data-stopped')
+				this.querySelectorAll<HTMLElement>('vtbag-ic-identify-pseudos div[data-stopped]').forEach(
+					(div) => div.removeAttribute('data-stopped')
 				);
 				this.querySelectorAll<HTMLElement>(`vtbag-ic-pseudo[data-stopped]`).forEach((pseudo) =>
 					pseudo.removeAttribute('data-stopped')
@@ -162,7 +165,7 @@ import Scope from './Scope.astro';
 				ledGroup({
 					className: 'freeze',
 					groupName: 'freeze',
-					checked: 'freeze',
+					checked: sessionStorage.getItem('vtbag-freeze') || 'run',
 					alternatives: [
 						{
 							label: 'Freeze',
@@ -217,12 +220,17 @@ import Scope from './Scope.astro';
 				'beforeend',
 				'<vtbag-ic-pseudo-details></vtbag-ic-pseudo-details>'
 			);
-			animationHead.insertAdjacentHTML('beforeend', '<vtbag-ic-identify-pseudos></vtbag-ic-identify-pseudos>');
+			animationHead.insertAdjacentHTML(
+				'beforeend',
+				'<vtbag-ic-identify-pseudos></vtbag-ic-identify-pseudos>'
+			);
 
 			this.querySelector('.freeze')!.addEventListener('click', (e) => {
 				this.#pseudosToMove.length = 0;
 				const clicked = e.target as HTMLInputElement;
 				if (clicked.tagName !== 'INPUT') return;
+
+				sessionStorage.setItem('vtbag-freeze', clicked.value);
 
 				const freeze = () => {
 					this.updateAnimationsHead();
@@ -267,12 +275,12 @@ import Scope from './Scope.astro';
 
 					if (this.#scopes.size === 0) {
 						this.#rootDocument?.getAnimations().forEach((a) => {
-							a.updatePlaybackRate(speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01);
+							a.updatePlaybackRate(speed === 'normal' ? 1 : speed === 'slow' ? 0.16 : 0.025);
 						});
 					} else {
 						this.querySelectorAll<VtbagIcScopeElement>('vtbag-ic-scope').forEach((scope) => {
 							scope.animations.forEach((a) => {
-								a.updatePlaybackRate(speed === 'normal' ? 1 : speed === 'slow' ? 0.1 : 0.01);
+								a.updatePlaybackRate(speed === 'normal' ? 1 : speed === 'slow' ? 0.16 : 0.025);
 							});
 						});
 					}
@@ -312,11 +320,15 @@ import Scope from './Scope.astro';
 
 			let update = () => {};
 
-			if (this.querySelector<HTMLInputElement>('#run')?.checked) {
+			const run = this.querySelector<HTMLInputElement>('#run');
+			if (run?.checked) {
+				run.classList.toggle('orange', true);
 				const speed = this.querySelector<HTMLInputElement>('input[name="slow-mo"]:checked')?.value;
 				if (speed !== 'normal') {
-					this.#rootDocument!.getAnimations().forEach((a) => {
-						a.updatePlaybackRate(speed === 'slow' ? 0.1 : 0.01);
+					requestAnimationFrame(() => {
+						this.#rootDocument!.getAnimations().forEach((a) => {
+							a.updatePlaybackRate(speed === 'slow' ? 0.16 : 0.025);
+						});
 					});
 				}
 				return;
@@ -470,7 +482,7 @@ import Scope from './Scope.astro';
 			const movePseudosCallback = () => {
 				const showPseudos = parent.document.documentElement.classList.contains('show-pseudos');
 
-				if (showPseudos) {
+				if (true || showPseudos) {
 					if (this.#retriggerPseudosToMove && this.#pseudosToMove.length === 0) {
 						this.querySelectorAll('vtbag-ic-pseudo').forEach((p) => this.#pseudosToMove.push(p));
 						this.#retriggerPseudosToMove = false;

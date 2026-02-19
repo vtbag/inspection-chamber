@@ -31,7 +31,7 @@ import Window from '@/components/Window.astro';
 
 		<script>
 			import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from '@/components/ic/debug';
-			import { setupHooks } from '@/ic2/hooks';
+			import { setupHooks } from '@/components/ic/hooks';
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
 			const iframe = document.getElementById('test-jig')!;
@@ -69,7 +69,7 @@ import Window from '@/components/Window.astro';
 						if (!side) return;
 
 						mayStartViewTransition(
-							{ update: handleLongTap, types: ['longTap'] },
+							{ update: () => handleLongTap(side), types: ['longTap'] },
 							{ useTypesPolyfill: 'always', catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS }
 						);
 					}
@@ -77,9 +77,10 @@ import Window from '@/components/Window.astro';
 
 				dragBar.addEventListener('pointerdown', (e) => {
 					e.preventDefault();
+					const dragger = e.target as HTMLElement;
 					isDragging = true;
 					document.body.classList.add('dragging');
-					dragBar.setPointerCapture(e.pointerId);
+					dragger.setPointerCapture(e.pointerId);
 					dragReference = side === 'e' || side === 'w' ? e.clientX : e.clientY;
 					const specimenRect = specimen.getBoundingClientRect();
 					dragOriginalSize =
@@ -88,7 +89,7 @@ import Window from '@/components/Window.astro';
 							: specimenRect.bottom - specimenRect.top;
 					longTap = setTimeout(() => {
 						longTap = undefined;
-						stopDragging();
+						stopDragging(e);
 						dispatchEvent(new CustomEvent('longTap', { detail: { side: 'x' } }));
 					}, 500);
 				});
@@ -119,7 +120,9 @@ import Window from '@/components/Window.astro';
 							break;
 					}
 				});
-				function stopDragging() {
+				function stopDragging(e: PointerEvent) {
+					const dragger = e.target as HTMLElement;
+					dragger.releasePointerCapture(e.pointerId);
 					switch (side) {
 						case 'n':
 						case 's':
@@ -133,6 +136,15 @@ import Window from '@/components/Window.astro';
 							break;
 					}
 					isDragging = false;
+					sessionStorage.setItem(
+						'vtbag-ic-dock-last-drag',
+						JSON.stringify({
+							w: parseInt(specimen.style.width, 10),
+							h: parseInt(specimen.style.height, 10),
+							side,
+						})
+					);
+
 					document.body.classList.remove('dragging');
 					if (longTap) {
 						clearTimeout(longTap);
@@ -142,7 +154,8 @@ import Window from '@/components/Window.astro';
 				dragBar.addEventListener('pointerup', stopDragging);
 				dragBar.addEventListener('pointercancel', stopDragging);
 
-				async function handleLongTap() {
+				async function handleLongTap(toSide: string) {
+					side = toSide;
 					const content = document.querySelector<HTMLElement>('#content')!;
 					const {
 						top: winTop,
@@ -229,7 +242,16 @@ import Window from '@/components/Window.astro';
 					}
 					let iframeWindow = document.querySelector<HTMLIFrameElement>('#content')!.contentWindow!;
 					self.__vtbag.ic2!.chamberWindow = iframeWindow;
+					sessionStorage.setItem(
+						'vtbag-ic-dock-last-drag',
+						JSON.stringify({
+							w: parseInt(specimen.style.width, 10),
+							h: parseInt(specimen.style.height, 10),
+							side,
+						})
+					);
 				}
+
 				setupHooks(document.querySelector<HTMLIFrameElement>('#content')!.contentWindow!);
 				self.__vtbag.ic2!.intersectionObserver = new IntersectionObserver(
 					(entries) => {
@@ -254,14 +276,47 @@ import Window from '@/components/Window.astro';
 					}
 				);
 
-				dispatchEvent(new CustomEvent('longTap', { detail: { side: 'x' } }));
-				window.matchMedia('(max-width: 799px)').matches
-					? setTimeout(
-							() => dispatchEvent(new CustomEvent('longTap', { detail: { side: 's' } })),
-							1000
-						)
-					: (win.style.setProperty('--window-width', '650px'),
-						win.style.setProperty('--window-height', innerHeight / 2 + 'px'));
+				loadLastPosition(win);
+
+				function loadLastPosition(win: HTMLElement) {
+					let x = 50,
+						y = 50,
+						w,
+						h,
+						side;
+
+					const windowDrag = sessionStorage.getItem('vtbag-ic-window-last-drag');
+					const dockDrag = sessionStorage.getItem('vtbag-ic-dock-last-drag');
+					if (windowDrag) {
+						try {
+							({ x, y, w, h } = JSON.parse(windowDrag));
+						} finally {
+						}
+					}
+					x ??= 50;
+					y ??= 50;
+					w ??= innerWidth / 2;
+					h ??= innerHeight / 2 - y;
+					win.style.setProperty('--window-left', x + 'px');
+					win.style.setProperty('--window-top', y + 'px');
+					win.style.setProperty('--window-width', w + 'px');
+					win.style.setProperty('--window-height', h + 'px');
+
+					handleLongTap('x');
+					if (dockDrag) {
+						try {
+							({ w, h, side } = JSON.parse(dockDrag));
+							if (side !== 'x') {
+								specimen.style.width = w + 'px';
+								specimen.style.height = h + 'px';
+								handleLongTap(side);
+							}
+						} finally {
+						}
+					}
+
+					if (matchMedia('(max-width: 799px)').matches) handleLongTap('s');
+				}
 			}
 		</script>
 		<style is:global>

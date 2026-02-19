@@ -1,7 +1,6 @@
 <script>
 	import { color, gid, displayName, type Group } from './group';
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
-	import './toggle.css';
 	import { ICElement } from './ic-element';
 	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
 
@@ -74,7 +73,14 @@
 			let start = performance.now();
 
 			const colorValue = this.#computedStyle?.getPropertyValue('color');
-			for (const key of all ? allProperties : Object.keys(twinProperties!)) {
+			for (const key of all
+				? [
+						...allProperties,
+						...Array.from(this.#computedStyle!).filter(
+							(p) => p.startsWith('--') && !p.startsWith('--vtbag-ic-')
+						),
+					]
+				: Object.keys(twinProperties!)) {
 				await (async () => {
 					let defaultValue = ICPseudo.defaultStyles!.getPropertyValue(key);
 					const value = this.#computedStyle!.getPropertyValue(key);
@@ -109,8 +115,9 @@
 					) {
 						defaultValue = colorValue;
 					}
-					if (value !== defaultValue && (value === 'auto' || value === 'normal'))
-						console.error(key, defaultValue, value);
+					if (value !== defaultValue && (value === 'auto' || value === 'normal') && (key !== 'width' && key !== 'height' && key !== 'left' && key !== 'top' && key !== 'right' && key !== 'bottom')) {
+						console.error(this.name(), key, defaultValue, value);
+					}
 					result.push({ key, value, defaultValue, priority });
 				})();
 			}
@@ -131,7 +138,6 @@
 		}
 
 		render() {
-
 			const kind = this.getAttribute('name');
 			this.icGroup = this.closest('vtbag-ic-group') as VtbagIcGroupElement;
 			if (kind === '::view-transition') {
@@ -154,8 +160,6 @@
 				scope,
 				this.name(true)
 			);
-
-
 
 			const twins = parent.document.querySelector('#twins')!;
 			const defaultDiv = twins.querySelector<HTMLDivElement>('#default')!;
@@ -349,7 +353,10 @@
 
 				const details = this.lastElementChild as HTMLDetailsElement;
 				details?.addEventListener('toggle', () => {
-					sessionStorage.setItem('vtbag-ic-group-children-detail-' + this.name(), details.open.toString());
+					sessionStorage.setItem(
+						'vtbag-ic-group-children-detail-' + this.name(),
+						details.open.toString()
+					);
 				});
 			}
 		}

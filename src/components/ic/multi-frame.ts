@@ -36,7 +36,7 @@ export function frameToggles(parent: HTMLElement, grandpaSelector: string, id: n
 		const grandpa = parent.closest(grandpaSelector)!;
 		const onOff = (led: HTMLInputElement, selector: string) => {
 			const frameToggles = grandpa.querySelectorAll<HTMLInputElement>(selector);
-			const checked = [...frameToggles].filter((input) => input.checked && input.checkVisibility());
+			const checked = [...frameToggles].filter((input) => input.checked);
 			led.checked = checked.length > 0;
 			led.classList.toggle('orange', checked.length > 0 && checked.length < frameToggles.length);
 		};

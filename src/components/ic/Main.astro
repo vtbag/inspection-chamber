@@ -5,6 +5,7 @@ import Analyzer from './Analyzer.astro';
 import Animations from './Animations.astro';
 import Captures from './Captures.astro';
 import './ic.css';
+import './styles/toggle.css';
 import './styles/leds.css';
 import './styles/slider.css';
 ---
@@ -35,9 +36,8 @@ import './styles/slider.css';
 					: '<vtbag-ic-captures></vtbag-ic-captures>'
 			);
 
-			this.querySelector('vtbag-ic-analyzer')?.addEventListener(
-				'change',
-				parent.location.reload.bind(parent.location)
+			this.querySelector('vtbag-ic-analyzer')?.addEventListener('change', () =>
+				parent.location.reload()
 			);
 		}
 	}
@@ -51,7 +51,6 @@ import './styles/slider.css';
 			height: 100vh;
 			overflow-y: auto;
 			overflow-x: clip;
-			scrollbar-gutter: stable;
 			.main-head,
 			.main-body {
 				display: grid;

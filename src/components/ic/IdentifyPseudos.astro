@@ -8,7 +8,7 @@ import { ICElement } from './ic-element';
 	class ICIdentifyPseudos extends ICElement {
 		render() {
 			this.classList.add('panel');
-			const open = !(sessionStorage.getItem('ic-identify-pseudos-open') === 'false');
+			const open = (sessionStorage.getItem('ic-identify-pseudos-open') === 'true');
 			this.innerHTML = `
 			<details ${open ? 'open' : ''}>
 				<summary>Pick pseudo element from screen</summary>

@@ -83,17 +83,6 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 				parent.__vtbag!.ic2!.captureFreezeTypes = target.checked;
 				if (!target.checked) {
 					parent.location.reload();
-				} else {
-					self.addEventListener('ic-after-capture-old', (e) => {
-						const detail = (e as CustomEvent).detail;
-						const root = detail.root;
-						if (root.ownerDocument.documentElement === root) {
-							parent.document.documentElement.classList.add('action');
-							detail.viewTransition.finished.finally(() => {
-								parent.document.documentElement.classList.remove('action');
-							});
-						}
-					});
 				}
 			});
 			this.querySelector('.input-led-group.sort')?.addEventListener('change', (event) => {

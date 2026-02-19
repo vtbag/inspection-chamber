@@ -15,22 +15,22 @@
 					groupName: 'analyze',
 					checked: sessionStorage.getItem('ic-analyzer-mode') || 'animation',
 					alternatives: [
-						{
-							label: 'Analyze animations',
-							value: 'animation',
-							id: 'animation',
-						},
+						
 						{
 							label: 'Analyze capturing',
 							value: 'capture',
 							id: 'capture',
+						},
+						{
+							label: 'Analyze animations',
+							value: 'animation',
+							id: 'animation',
 						},
 					],
 				})
 			);
 			this.addEventListener('change', (e) => {
 				sessionStorage.setItem('ic-analyzer-mode', (e.target as HTMLInputElement).value);
-				this.dispatchEvent(new Event('ic-reload', { bubbles: true }));
 			});
 			self.addEventListener('ic-update-error', (e) => {
 				const errorDetails = (e as CustomEvent).detail;

@@ -15,9 +15,9 @@
 			const nestedViewTransitionGroups = CSS.supports('view-transition-group', 'contain');
 			const viewTransitionClass = CSS.supports('view-transition-class', 'none');
 			const viewTransitionName = CSS.supports('view-transition-name', 'none');
-			const viewTransitionContainment = CSS.supports('contain', 'view-transition');
+			const viewTransitionScope = CSS.supports('view-transition-scope', 'none');
 			const navigationAPI = 'navigation' in window;
-			this.innerHTML = `<details><summary>Welcome</summary>
+			this.innerHTML = `<details ${localStorage.getItem('vtbag-ic-welcome-closed') !== 'yes' ? 'open' : ''}><summary>Welcome</summary>
 <p>
 The Inspection Chamber is a developer tool for putting your view transitions through their paces. Debug view transitions with clarity instead of guesswork.
 </p>
@@ -35,9 +35,9 @@ The Inspection Chamber is a developer tool for putting your view transitions thr
 	<ul class="feature-list">
 	<li class="${viewTransitionName ? 'success' : 'fail'}"><span>view-transition-name CSS property</span></li>
 	<li class="${viewTransitionClass ? 'success' : 'fail'}"><span>view-transition-class CSS property</span></li>
+	<li class="${viewTransitionScope ? 'success' : 'fail'}"><span>view-transition-scope CSS property</span></li>
 	<li class="${viewTransitionTypes ? 'success' : 'fail'}"><span>View transition types</span></li>
 	<li class="${activeViewTransitionProperty ? 'success' : 'fail'}"><span>activeViewTransition property</span></li>
-	<li class="${viewTransitionContainment ? 'success' : 'fail'}"><span>view-transition containment via the contain CSS property</span></li>
 	<li class="${transitionRoot ? 'success' : 'fail'}"><span>ViewTransition.prototype.transitionRoot</span></li>
 	<li class="${waitUntil ? 'success' : 'fail'}"><span>ViewTransition.prototype.waitUntil</span></li>
 	<li class="${navigationAPI ? 'success' : 'fail'}"><span>Navigation API</span></li>
@@ -57,6 +57,10 @@ Press and hold the Chamber's drag handle to switch between docking mode and wind
 Be aware that the View Transition API cancels all active view transitions whenever the viewport size changes. Open DevTools/Inspector and resize the Chamber before starting any view transitions to avoid unexpected resets. Green drag handles are safe to use. Orange handles signal that resizing will cancel active view transitions. 
 </p>
 </details>`;
+			this.firstElementChild!.addEventListener('toggle', (e) => {
+				const details = e.target as HTMLDetailsElement;
+				localStorage.setItem('vtbag-ic-welcome-closed', details.open ? 'no' : 'yes');
+			});
 		}
 	}
 	customElements.define('vtbag-ic-welcome', ICWelcome);
@@ -66,41 +70,40 @@ Be aware that the View Transition API cancels all active view transitions whenev
 	@import './styles/details.css';
 	@layer components {
 		vtbag-ic-welcome {
-				display: block;
-				padding: 0.5rem 1rem;
+			display: block;
+			padding: 0.5rem 1rem;
 
-				.feature-list {
-					font-weight: 800;
-					font-family: system-ui, sans-serif;
-					list-style: none;
-					padding-left: 0;
-					li {
-						padding-left: 1.5em;
-						margin-bottom: 0.5em;
-						color: light-dark(#333333, #cccccc);
-					}
-					li.success::before {
-						content: '✔ ';
-						color: green;
+			.feature-list {
+				font-weight: 800;
+				font-family: system-ui, sans-serif;
+				list-style: none;
+				padding-left: 0;
+				li {
+					padding-left: 1.5em;
+					margin-bottom: 0.5em;
+					color: light-dark(#333333, #cccccc);
+				}
+				li.success::before {
+					content: '✔ ';
+					color: green;
+					font-weight: bold;
+					margin-left: -1.5em;
+					margin-right: 0.5em;
+				}
+				li.fail {
+					&::before {
+						text-decoration: none;
+						content: '✖ ';
+						color: red;
 						font-weight: bold;
 						margin-left: -1.5em;
 						margin-right: 0.5em;
 					}
-					li.fail {
-						&::before {
-							text-decoration: none;
-							content: '✖ ';
-							color: red;
-							font-weight: bold;
-							margin-left: -1.5em;
-							margin-right: 0.5em;
-						}
-						span {
-							text-decoration: line-through;
-						}
+					span {
+						text-decoration: line-through;
 					}
 				}
 			}
 		}
-	
+	}
 </style>

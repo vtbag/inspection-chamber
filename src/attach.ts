@@ -12,6 +12,7 @@ if (parent !== self) {
 }
 
 async function replaceDocument(href: string, title: string) {
+	const icon = document.querySelector('head link[rel*=icon]');
 	// reset the document state
 	document.open();
 	// @ts-ignore
@@ -20,7 +21,7 @@ async function replaceDocument(href: string, title: string) {
 
 	// @ts-ignore
 	document.documentElement.innerHTML = htmlString(href, '🔬 ' + title);
-
+	icon && document.head.insertAdjacentElement('afterbegin', icon);
 	document.documentElement.querySelectorAll('script').forEach((oldScript) => {
 		const newScript = document.createElement('script');
 		Array.from(oldScript.attributes).forEach((attr) =>
