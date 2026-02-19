@@ -1,8 +1,5 @@
 import type { Features } from '@/components/ic/features';
 import { message } from '@/components/ic/message';
-import { late } from 'astro:schema';
-
-const ACTIVE_VT_SYM = Symbol.for('__vtbag_activeViewTransition');
 
 export function setupHooks(chamberWindow: Window) {
 	console.log('[inspection chamber] setupHooks');
@@ -329,20 +326,4 @@ function animationsWillFinish(
 			detail: { root, viewTransition, features },
 		})
 	);
-}
-
-function safeSetActiveViewTransition(target: any, transition: ViewTransition) {
-	'activeViewTransition' in target &&
-		Object.defineProperty(target, 'activeViewTransition', {
-			configurable: true,
-			enumerable: false,
-			get() {
-				return (this as any)[ACTIVE_VT_SYM];
-			},
-			set(v: any) {
-				(this as any)[ACTIVE_VT_SYM] = v;
-			},
-		});
-
-	target.activeViewTransition = transition;
 }
