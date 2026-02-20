@@ -1,0 +1,155 @@
+---
+interface Props {
+	title: string;
+	pageId: string;
+	cardText: string;
+	linkId: string;
+	linkHref: string;
+	linkLabel: string;
+}
+
+const { title, pageId, cardText, linkId, linkHref, linkLabel } = Astro.props;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{title}</title>
+		<script is:inline src="/attach.js"></script>
+		<style is:inline>
+			@view-transition {
+				navigation: auto;
+			}
+
+			:root {
+				color-scheme: light dark;
+				font-family: Inter, system-ui, sans-serif;
+				--bg: light-dark(#f8fafc, #0d1117);
+				--fg: light-dark(#111827, #f0f6fc);
+				--panel: light-dark(#ffffff, #161b22);
+			}
+
+			body {
+				margin: 0;
+				min-height: 100vh;
+				display: grid;
+				place-items: center;
+				background: var(--bg);
+				color: var(--fg);
+			}
+
+			main {
+				width: min(680px, calc(100vw - 2rem));
+				padding: 1rem;
+				background: var(--panel);
+				border-radius: 12px;
+				border: 1px solid #8884;
+				display: grid;
+				gap: 0.75rem;
+			}
+
+			h1 {
+				margin: 0;
+				view-transition-name: page-title;
+			}
+
+			#card {
+				padding: 0.8rem;
+				border-radius: 10px;
+				border: 1px solid #8885;
+				view-transition-name: page-card;
+			}
+
+			.actions {
+				display: flex;
+				gap: 0.5rem;
+			}
+
+			a {
+				padding: 0.45rem 0.7rem;
+				border-radius: 8px;
+				border: 1px solid #8888;
+				text-decoration: none;
+				color: inherit;
+			}
+
+			html:active-view-transition-type(forwards) ::view-transition-group(page-card) {
+				animation-duration: 360ms;
+			}
+
+			html:active-view-transition-type(backwards) ::view-transition-group(page-card) {
+				animation-duration: 240ms;
+			}
+		</style>
+		<script is:inline>
+			(() => {
+				const getDirection = (fromPath, toPath) => {
+					if (fromPath.endsWith('/cross-a/') && toPath.endsWith('/cross-b/')) return 'forwards';
+					if (fromPath.endsWith('/cross-b/') && toPath.endsWith('/cross-a/')) return 'backwards';
+					return 'unknown';
+				};
+
+				window.addEventListener('pageswap', (event) => {
+					if (!event.viewTransition || !event.activation?.entry?.url) return;
+					const from = new URL(location.href).pathname;
+					const to = new URL(event.activation.entry.url).pathname;
+					const direction = getDirection(from, to);
+					event.viewTransition.types.clear();
+					event.viewTransition.types.add('cross-doc');
+					if (direction !== 'unknown') event.viewTransition.types.add(direction);
+					sessionStorage.setItem('e2e-cross-last-direction', direction);
+				});
+
+				window.addEventListener('pagereveal', (event) => {
+					const from = navigation.activation?.from?.url
+						? new URL(navigation.activation.from.url).pathname
+						: '';
+					const to = navigation.activation?.entry?.url
+						? new URL(navigation.activation.entry.url).pathname
+						: new URL(location.href).pathname;
+					const direction =
+						getDirection(from, to) === 'unknown'
+							? sessionStorage.getItem('e2e-cross-last-direction') || 'unknown'
+							: getDirection(from, to);
+
+					if (event.viewTransition) {
+						event.viewTransition.types.clear();
+						event.viewTransition.types.add('cross-doc');
+						if (direction !== 'unknown') event.viewTransition.types.add(direction);
+					}
+
+					document.documentElement.dataset.vtDirection = direction;
+					document.documentElement.dataset.vtSupported = event.viewTransition ? 'true' : 'false';
+				});
+			})();
+		</script>
+	</head>
+	<body>
+		<main>
+			<h1 id="page-id">{pageId}</h1>
+			<div id="card">{cardText}</div>
+			<div class="actions">
+				<a id={linkId} href={linkHref}>{linkLabel}</a>
+			</div>
+			<div id="status">Direction: <span id="direction">unknown</span></div>
+		</main>
+		<script is:inline>
+			const fromPath = document.referrer ? new URL(document.referrer).pathname : '';
+			const toPath = location.pathname;
+			const inferredDirection =
+				fromPath.endsWith('/cross-a/') && toPath.endsWith('/cross-b/')
+					? 'forwards'
+					: fromPath.endsWith('/cross-b/') && toPath.endsWith('/cross-a/')
+						? 'backwards'
+						: 'unknown';
+			const direction =
+				document.documentElement.dataset.vtDirection &&
+				document.documentElement.dataset.vtDirection !== 'unknown'
+					? document.documentElement.dataset.vtDirection
+					: inferredDirection;
+			document.documentElement.dataset.vtDirection = direction;
+			document.getElementById('direction').textContent = direction;
+		</script>
+	</body>
+</html>

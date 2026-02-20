@@ -1,0 +1,227 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Same-page View Transition Demo</title>
+		<script is:inline src="/attach.js"></script>
+		<style is:inline>
+			:root {
+				color-scheme: light dark;
+				font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+				--bg: light-dark(#f5f7fb, #0d1117);
+				--fg: light-dark(#1f2328, #f0f6fc);
+				--panel: light-dark(#ffffff, #161b22);
+				--accent: light-dark(#2563eb, #58a6ff);
+				--muted: light-dark(#6b7280, #8b949e);
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				min-height: 100vh;
+				background: var(--bg);
+				color: var(--fg);
+			}
+
+			main {
+				max-width: 980px;
+				margin: 0 auto;
+				padding: 1.25rem;
+				display: grid;
+				gap: 1rem;
+			}
+
+			header {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.5rem;
+				align-items: center;
+				justify-content: space-between;
+				view-transition-name: app-header;
+			}
+
+			h1 {
+				margin: 0;
+				font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+			}
+
+			.controls {
+				display: flex;
+				gap: 0.5rem;
+				flex-wrap: wrap;
+			}
+
+			button {
+				border: 1px solid color-mix(in oklab, var(--accent), transparent 55%);
+				background: var(--panel);
+				color: var(--fg);
+				padding: 0.45rem 0.75rem;
+				border-radius: 0.6rem;
+				cursor: pointer;
+				font: inherit;
+			}
+
+			button:hover {
+				border-color: var(--accent);
+			}
+
+			#board {
+				display: grid;
+				gap: 0.8rem;
+				grid-template-columns: repeat(2, minmax(180px, 1fr));
+				align-items: stretch;
+			}
+
+			:root[data-layout='stack'] #board {
+				grid-template-columns: 1fr;
+			}
+
+			.card {
+				border-radius: 0.9rem;
+				padding: 0.8rem;
+				background: var(--panel);
+				border: 1px solid color-mix(in oklab, var(--muted), transparent 70%);
+				display: grid;
+				gap: 0.45rem;
+				min-height: 92px;
+			}
+
+			.card h2 {
+				margin: 0;
+				font-size: 1rem;
+			}
+
+			.card p {
+				margin: 0;
+				color: var(--muted);
+				font-size: 0.92rem;
+			}
+
+			footer {
+				display: flex;
+				justify-content: space-between;
+				gap: 1rem;
+				align-items: center;
+				padding-top: 0.4rem;
+			}
+
+			#status {
+				color: var(--muted);
+				font-size: 0.9rem;
+				view-transition-name: status;
+			}
+
+			::view-transition-old(*) {
+				animation-duration: 280ms;
+			}
+
+			::view-transition-new(*) {
+				animation-duration: 280ms;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<header>
+				<h1 id="title" style="view-transition-name: title">Same-page VT Playground</h1>
+				<div class="controls">
+					<button id="toggle-layout" type="button">Toggle layout</button>
+					<button id="shuffle-cards" type="button">Shuffle cards</button>
+					<button id="toggle-theme" type="button">Toggle theme</button>
+				</div>
+			</header>
+
+			<section id="board" aria-label="demo cards">
+				<article class="card" data-card="alpha" style="view-transition-name: card-alpha">
+					<h2>Alpha</h2>
+					<p>User profile summary</p>
+				</article>
+				<article class="card" data-card="beta" style="view-transition-name: card-beta">
+					<h2>Beta</h2>
+					<p>Activity stream widget</p>
+				</article>
+				<article class="card" data-card="gamma" style="view-transition-name: card-gamma">
+					<h2>Gamma</h2>
+					<p>Notifications panel</p>
+				</article>
+				<article class="card" data-card="delta" style="view-transition-name: card-delta">
+					<h2>Delta</h2>
+					<p>Checkout summary</p>
+				</article>
+			</section>
+
+			<footer>
+				<span id="status">Ready</span>
+				<small>Use this route for same-document transition tests.</small>
+			</footer>
+		</main>
+
+		<script is:inline>
+			const root = document.documentElement;
+			const board = document.getElementById('board');
+			const status = document.getElementById('status');
+			const toggleLayout = document.getElementById('toggle-layout');
+			const shuffleCards = document.getElementById('shuffle-cards');
+			const toggleTheme = document.getElementById('toggle-theme');
+
+			const updateStatus = (label) => {
+				status.textContent = `${label} @ ${new Date().toLocaleTimeString()}`;
+			};
+
+			const runTransition = (type, update) => {
+				if (!document.startViewTransition) {
+					update();
+					updateStatus(`${type} (no native VT support)`);
+					return;
+				}
+
+				let transition;
+				try {
+					transition = document.startViewTransition({ types: [type], update });
+				} catch {
+					try {
+						transition = document.startViewTransition(update);
+					} catch {
+						update();
+						updateStatus(`${type} (VT invocation fallback)`);
+						return;
+					}
+				}
+
+				transition.ready?.catch(() => {});
+				transition.finished?.finally(() => updateStatus(type));
+			};
+
+			toggleLayout?.addEventListener('click', () => {
+				runTransition('same-page-layout', () => {
+					const next = root.dataset.layout === 'stack' ? 'grid' : 'stack';
+					root.dataset.layout = next;
+				});
+			});
+
+			shuffleCards?.addEventListener('click', () => {
+				runTransition('same-page-shuffle', () => {
+					const cards = Array.from(board.querySelectorAll('.card'));
+					if (cards.length > 1) {
+						const first = cards.shift();
+						first && cards.push(first);
+					}
+					cards.forEach((card) => board.appendChild(card));
+				});
+			});
+
+			toggleTheme?.addEventListener('click', () => {
+				runTransition('same-page-theme', () => {
+					root.style.colorScheme =
+						getComputedStyle(root).colorScheme.startsWith('dark') ? 'light' : 'dark';
+				});
+			});
+		</script>
+	</body>
+</html>
