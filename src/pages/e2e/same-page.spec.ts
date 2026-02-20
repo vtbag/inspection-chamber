@@ -3,13 +3,9 @@ import { test, expect } from '@playwright/test';
 if (process.env.VTBAG_ASTRO_BUILD !== '1') {
 	test('same-page demo supports layout/shuffle/theme transitions @same', async ({ page }) => {
 		await page.goto('/e2e/same-page/');
-		await page.waitForTimeout(300);
-		const useFrame = (await page.locator('iframe').count()) > 0;
-		if (useFrame) {
-			await expect(page.locator('iframe').first()).toBeVisible();
-		}
+		await expect(page.locator('iframe').first()).toBeVisible();
 
-		const mainFrame = useFrame ? page.frameLocator('iframe').first() : page;
+		const mainFrame = page.frameLocator('iframe').first();
 
 		await expect(mainFrame.locator('#title')).toHaveText('Same-page VT Playground');
 

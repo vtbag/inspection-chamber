@@ -11,12 +11,8 @@ if (process.env.VTBAG_ASTRO_BUILD !== '1') {
 		);
 
 		await page.goto('/e2e/cross-a/');
-		await page.waitForTimeout(300);
-		const useFrame = (await page.locator('iframe').count()) > 0;
-		if (useFrame) {
-			await expect(page.locator('iframe').first()).toBeVisible();
-		}
-		const mainFrame = useFrame ? page.frameLocator('iframe').first() : page;
+		await expect(page.locator('iframe').first()).toBeVisible();
+		const mainFrame = page.frameLocator('iframe').first();
 		await expect(mainFrame.locator('#page-id')).toHaveText('Page A');
 
 		await mainFrame.locator('#go-next').click();

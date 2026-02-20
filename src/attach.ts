@@ -3,10 +3,14 @@ if (parent !== self) {
 	// If the parent window is not ready yet, we wait until it is.
 	setup();
 } else {
+	const schedule =
+		typeof globalThis.requestIdleCallback === 'function'
+			? globalThis.requestIdleCallback.bind(globalThis)
+			: (callback: IdleRequestCallback) => setTimeout(() => callback(0 as never), 0);
 	// This is the top window
 	// Nothing is urgent here and we do not want to mess with loading.
 	console.info('[inspection-chamber] Top window detected, scheduling document replacement');
-	requestIdleCallback(() => {
+	schedule(() => {
 		replaceDocument(location.href, document.title);
 	});
 }
