@@ -5,7 +5,7 @@ if (process.env.VTBAG_ASTRO_BUILD !== '1') {
 		await page.goto('/e2e/same-page/');
 		await expect(page.locator('iframe').first()).toBeVisible();
 
-		const mainFrame = page.frameLocator('iframe').first();
+			const mainFrame = page.locator('iframe').first().contentFrame();
 
 		await expect(mainFrame.locator('#title')).toHaveText('Same-page VT Playground');
 
