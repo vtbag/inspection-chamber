@@ -1,6 +1,6 @@
 #! /bin/sh
 
-VTBAG_ASTRO_BUILD=1 astro build
+astro build
 if [ "$1" = "dev" ]; then
   OPTS="--sourcemap --watch"
 elif [ "$1" = "test" ]; then
