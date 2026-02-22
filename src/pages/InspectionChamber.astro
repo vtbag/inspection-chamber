@@ -187,7 +187,6 @@ import Window from '@/components/Window.astro';
 						content.style.flex = '';
 						dock.style.display = 'block';
 						dragBar.style.display = 'block';
-						// win.style.display = 'none';
 						const len = side.length;
 						if (len > 1) {
 							side = matchMedia('(orientation: portrait)').matches ? side[0] : side[len - 1];

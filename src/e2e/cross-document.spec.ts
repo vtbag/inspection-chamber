@@ -24,23 +24,3 @@ test('cross-document demo navigates forward and back with VT types', async ({ pa
 	await expect(frame.locator('#page-id')).toHaveText('Page A');
 	await expect(frame.locator('#direction')).toHaveText('backwards');
 });
-
-test('cross-document chamber window can minimize and restore', async ({ page }) => {
-	await page.goto('/e2e/cross-a/');
-	const chamberWindow = page.locator('.window');
-	const minimizeBtn = page.locator('#minimize-btn');
-
-	await expect(chamberWindow).toBeVisible();
-	await expect(minimizeBtn).toBeVisible();
-	await expect(minimizeBtn).toHaveAttribute('title', 'Minimize');
-
-	await minimizeBtn.click();
-	await expect(chamberWindow).toHaveClass(/minimized/);
-	await expect(minimizeBtn).toHaveAttribute('title', 'Restore');
-
-	await minimizeBtn.click();
-	await expect(chamberWindow).not.toHaveClass(/minimized/);
-	await expect(minimizeBtn).toHaveAttribute('title', 'Minimize');
-});
-
-

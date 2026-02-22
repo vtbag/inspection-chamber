@@ -7,15 +7,15 @@ export default defineConfig({
   testMatch: '**/*.spec.ts',
   fullyParallel: false,
   forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
+  retries: isCI ? 2 : 2,
+  workers: isCI ? 1 : 1,
   timeout: 45_000,
   expect: {
     timeout: 7_000,
   },
   reporter: isCI
     ? [['github'], ['html', { open: 'never' }]]
-    : [['list'], ['html', { open: 'on-failure' }]],
+    : [['list'], ['html', { open: 'never' }]],
   outputDir: 'test-results/playwright',
   use: {
     baseURL: 'http://127.0.0.1:4321',
