@@ -44,6 +44,7 @@ import Window from '@/components/Window.astro';
 				const dragBar = document.getElementById('dragBar')!;
 				const dock = document.getElementById('dock')!;
 				const win = dock!.nextElementSibling as HTMLElement;
+				const windowContent = win.querySelector('.window-content')!;
 
 				const srcdoc =
 					`<html lang="en" style="overflow: clip">` +
@@ -172,7 +173,7 @@ import Window from '@/components/Window.astro';
 						document.body.style.display = 'block';
 						specimen.style.width = '100%';
 						specimen.style.height = '100%';
-						win.insertAdjacentElement('beforeend', content);
+						windowContent.insertAdjacentElement('beforeend', content);
 						dragBar.style.display = 'none';
 						dock.style.display = 'none';
 						win.style.display = 'flex';
@@ -186,7 +187,7 @@ import Window from '@/components/Window.astro';
 						content.style.flex = '';
 						dock.style.display = 'block';
 						dragBar.style.display = 'block';
-						win.style.display = 'none';
+						// win.style.display = 'none';
 						const len = side.length;
 						if (len > 1) {
 							side = matchMedia('(orientation: portrait)').matches ? side[0] : side[len - 1];
