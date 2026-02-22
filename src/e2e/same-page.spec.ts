@@ -1,5 +1,33 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 
+const LONG_TAP_HOLD_MS = 1000;
+
+
+
+async function frames(page: Page) {
+
+
+
+	await page.goto('/e2e/same-page/');
+
+	const resizeHandle = page.locator('.window .resize-handle.edge.n').first();
+	await expect(resizeHandle).toBeVisible();
+	await longTap(resizeHandle, page);
+
+	const frameLocator = page.locator('iframe').first();
+	await expect(frameLocator).toBeVisible();
+	const mainFrame = frameLocator.contentFrame();
+	expect(mainFrame).not.toBeNull();
+	const frame = mainFrame!;
+
+	const chamberFrameLocator = page.locator('iframe').nth(1);
+	await expect(chamberFrameLocator).toBeVisible();
+	const chamberFrameHandle = chamberFrameLocator.contentFrame();
+	expect(chamberFrameHandle).not.toBeNull();
+	const chamberFrame = chamberFrameHandle!;
+	return { frame, chamberFrame };
+}
+
 async function longTap(locator: Locator, page: Page): Promise<void> {
 	const box = await locator.boundingBox();
 	if (!box) throw new Error('Could not get bounding box for long-tap');
@@ -8,7 +36,7 @@ async function longTap(locator: Locator, page: Page): Promise<void> {
 
 	await page.mouse.move(centerX, centerY);
 	await page.mouse.down();
-	await page.waitForTimeout(650);
+	await page.waitForTimeout(LONG_TAP_HOLD_MS);
 	await page.mouse.up();
 }
 
@@ -53,6 +81,27 @@ async function expectDockedLayout(page: Page, side: 'n' | 's' | 'e' | 'w', resiz
 			expect(dockBox.x).toBeLessThan(specimenBox.x);
 		}
 	}
+}
+
+async function testPlaybackRate(page: Page, radioLabel: string, radioId: string, expectedRate: number): Promise<void> {
+	const { frame, chamberFrame } = await frames(page);
+
+	const hasExpectedPlaybackRate = async () =>
+		frame.locator('html').evaluate((_, rate) => (
+			document.getAnimations().length > 0 &&
+			document
+				.getAnimations()
+				.every((animation) => animation.playbackRate === rate)
+		), expectedRate);
+
+	await chamberFrame.getByRole('radio', { name: 'Analyze animations' }).check();
+	await chamberFrame.getByRole('radio', { name: 'Run' }).check();
+	await chamberFrame.getByRole('radio', { name: 'Normal' }).check();
+
+	await chamberFrame.locator(`label[for="${radioId}"]`).click();
+	await expect(chamberFrame.locator(`#${radioId}`)).toBeChecked();
+	await frame.locator('#toggle-layout').click();
+	await expect.poll(hasExpectedPlaybackRate, { timeout: 3000 }).toBe(true);
 }
 
 
@@ -238,61 +287,103 @@ test('chamber switches back to window mode on drag-bar long-tap', async ({
 	const resizeHandle = chamberWindow.locator('.resize-handle.edge.n').first();
 	await longTap(resizeHandle, page);
 
-	await page.waitForTimeout(200);
 	await expect(dragBar).toBeVisible();
 	await expect(dock).toBeVisible();
 	await expect(chamberWindow).toHaveCount(0);
 
 	await longTap(dragBar, page);
 
-	await page.waitForTimeout(500);
 	await expect(chamberWindow).toBeVisible();
 	await expect(dragBar).toHaveCount(0);
 	await expect(dock).toHaveCount(0);
 });
 
 
-test('slower changes view transition animation playbackRate', async ({ page }) => {
-	onmessage = (event) => {
-		if (event.data === 'slow-down') {
-			document.getAnimations().forEach((animation) => {
-				animation.playbackRate = 0.025;
-			});
-		}
-	};
-	await page.goto('/e2e/same-page/');
-
-	const resizeHandle = page.locator('.window .resize-handle.edge.n').first();
-	await expect(resizeHandle).toBeVisible();
-	await longTap(resizeHandle, page);
 
 
-	const frameLocator = page.locator('iframe').first();
-	await expect(frameLocator).toBeVisible();
-	const mainFrame = await frameLocator.contentFrame();
-	expect(mainFrame).not.toBeNull();
-	const frame = mainFrame!;
-
-	const chamberFrameLocator = page.locator('iframe').nth(1);
-	await expect(chamberFrameLocator).toBeVisible();
-	const chamberFrameHandle = await chamberFrameLocator.contentFrame();
-	expect(chamberFrameHandle).not.toBeNull();
-	const chamberFrame = chamberFrameHandle!;
-
-	const hasSlowerPlaybackRate = async () =>
-		frame.locator('html').evaluate(() =>
-			document.getAnimations().length > 0 &&
-			document
-				.getAnimations()
-				.every((animation) => (console.log(animation.playbackRate), animation.playbackRate === 0.025))
-		);
-
-	await chamberFrame.getByRole('radio', { name: 'Analyze animations' }).check();
-	await chamberFrame.getByRole('radio', { name: 'Run' }).check();
-	await chamberFrame.getByRole('radio', { name: 'Normal' }).check();
-
-	await chamberFrame.locator('#slower').click();
-	await expect(chamberFrame.locator('#slower')).toBeChecked();
-	await frame.locator('#toggle-layout').click();
-	await expect.poll(hasSlowerPlaybackRate, { timeout: 3000 }).toBe(true);
+test('slow changes view transition animation playbackRate', async ({ page }) => {
+	await testPlaybackRate(page, 'Slow', 'slow', 0.16);
 });
+
+test('slower changes view transition animation playbackRate even more', async ({ page }) => {
+	await testPlaybackRate(page, 'Slower', 'slower', 0.025);
+});
+
+test('analyze capturing shows captured elements and captured groups', async ({ page }) => {
+	const { frame, chamberFrame } = await frames(page);
+
+	await chamberFrame.locator('label[for="capture"]').click();
+	await expect(chamberFrame.locator('#capture')).toBeChecked();
+
+	await frame.locator('#toggle-layout').click();
+
+	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+	await expect(captureView).toBeVisible();
+	await expect(captureView.locator('summary').first()).toHaveText(/Named elements/i);
+
+	const capturedGroups = captureView.locator('.content > details');
+	await expect(capturedGroups.first().locator('summary')).toHaveText(/Group/i);
+	await expect.poll(async () => capturedGroups.count()).toBeGreaterThan(0);
+
+	const paintOrder = await capturedGroups.evaluateAll((groups) =>
+		groups.map((group) => Number(group.getAttribute('data-paint-order') ?? Number.NaN))
+	);
+	expect(paintOrder.length).toBeGreaterThan(0);
+	expect(paintOrder.every(Number.isFinite)).toBe(true);
+	expect([...paintOrder].sort((a, b) => a - b)).toEqual(paintOrder);
+
+	const groupSummaries = await capturedGroups.locator('summary').allTextContents();
+	expect(groupSummaries.length).toBeGreaterThan(0);
+	expect(groupSummaries.every((summary) => /group/i.test(summary))).toBe(true);
+
+	await expect(captureView.locator('.content')).toContainText(/(old|new) image element:/i);
+});
+
+test('analyze capturing switches captured groups to alphabetical sorting', async ({ page }) => {
+	const { frame, chamberFrame } = await frames(page);
+
+	await chamberFrame.locator('label[for="capture"]').click();
+	await expect(chamberFrame.locator('#capture')).toBeChecked();
+
+	await frame.locator('#toggle-layout').click();
+
+	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+	await expect(captureView).toBeVisible();
+
+	const groupNameSummaries = captureView.locator('.content > details > summary > strong');
+	await expect.poll(async () => groupNameSummaries.count()).toBeGreaterThan(1);
+
+	await chamberFrame.locator('label[for="capture-sort-alpha"]').click();
+	await expect(chamberFrame.locator('#capture-sort-alpha')).toBeChecked();
+
+	await expect
+		.poll(async () =>
+			groupNameSummaries.evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim() ?? ''))
+		)
+		.toEqual(
+			await groupNameSummaries.evaluateAll((nodes) =>
+				nodes
+					.map((node) => node.textContent?.trim() ?? '')
+					.sort((a, b) => a.localeCompare(b))
+			)
+		);
+});
+
+test('analyze capturing shows view-transition classes in capture result', async ({ page }) => {
+	const { frame, chamberFrame } = await frames(page);
+
+	await chamberFrame.locator('label[for="capture"]').click();
+	await expect(chamberFrame.locator('#capture')).toBeChecked();
+
+	await frame.locator('#toggle-layout').click();
+
+	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+	await expect(captureView).toBeVisible();
+
+	const groupSummaries = captureView.locator('.content > details > summary');
+	await expect.poll(async () => groupSummaries.count()).toBeGreaterThan(0);
+
+	const summaryTexts = await groupSummaries.allTextContents();
+	expect(summaryTexts.some((summary) => /classes:\s*dashboard-card/i.test(summary))).toBe(true);
+});
+
