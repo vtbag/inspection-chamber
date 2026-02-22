@@ -1,6 +1,15 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 
 const LONG_TAP_HOLD_MS = 1000;
+const RETRY_INTERVAL_MS = 50;
+const SHORT_WAIT_TIMEOUT_MS = 3000;
+const LONG_TAP_TEST_NAME = /long-tap/;
+
+test.beforeEach(async ({ browserName }, testInfo) => {
+	if (browserName === 'firefox' && LONG_TAP_TEST_NAME.test(testInfo.title)) {
+		test.slow();
+	}
+});
 
 
 
@@ -38,6 +47,34 @@ async function longTap(locator: Locator, page: Page): Promise<void> {
 	await page.mouse.down();
 	await page.waitForTimeout(LONG_TAP_HOLD_MS);
 	await page.mouse.up();
+}
+
+async function waitForCondition(
+	page: Page,
+	condition: () => Promise<boolean>,
+	timeout = SHORT_WAIT_TIMEOUT_MS,
+	errorMessage = 'Timed out waiting for condition'
+): Promise<void> {
+	const startedAt = Date.now();
+	while (Date.now() - startedAt < timeout) {
+		if (await condition()) return;
+		await page.waitForTimeout(RETRY_INTERVAL_MS);
+	}
+	throw new Error(errorMessage);
+}
+
+async function openCaptureView(page: Page) {
+	const { frame, chamberFrame } = await frames(page);
+
+	await chamberFrame.locator('label[for="capture"]').click();
+	await expect(chamberFrame.locator('#capture')).toBeChecked();
+
+	await frame.locator('#toggle-layout').click();
+
+	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+	await expect(captureView).toBeVisible();
+
+	return { frame, chamberFrame, captureView };
 }
 
 async function expectDockedLayout(page: Page, side: 'n' | 's' | 'e' | 'w', resizeHandleBox: { x: number; y: number; width: number; height: number; } | null): Promise<void> {
@@ -83,16 +120,8 @@ async function expectDockedLayout(page: Page, side: 'n' | 's' | 'e' | 'w', resiz
 	}
 }
 
-async function testPlaybackRate(page: Page, radioLabel: string, radioId: string, expectedRate: number): Promise<void> {
+async function testPlaybackRate(page: Page, radioId: string, expectedRate: number): Promise<void> {
 	const { frame, chamberFrame } = await frames(page);
-
-	const hasExpectedPlaybackRate = async () =>
-		frame.locator('html').evaluate((_, rate) => (
-			document.getAnimations().length > 0 &&
-			document
-				.getAnimations()
-				.every((animation) => animation.playbackRate === rate)
-		), expectedRate);
 
 	await chamberFrame.getByRole('radio', { name: 'Analyze animations' }).check();
 	await chamberFrame.getByRole('radio', { name: 'Run' }).check();
@@ -101,7 +130,18 @@ async function testPlaybackRate(page: Page, radioLabel: string, radioId: string,
 	await chamberFrame.locator(`label[for="${radioId}"]`).click();
 	await expect(chamberFrame.locator(`#${radioId}`)).toBeChecked();
 	await frame.locator('#toggle-layout').click();
-	await expect.poll(hasExpectedPlaybackRate, { timeout: 3000 }).toBe(true);
+	await waitForCondition(
+		page,
+		async () =>
+			frame.locator('html').evaluate((_, rate) => (
+				document.getAnimations().length > 0 &&
+				document
+					.getAnimations()
+					.every((animation) => animation.playbackRate === rate)
+			), expectedRate),
+		SHORT_WAIT_TIMEOUT_MS,
+		`Expected all active animations to have playbackRate ${expectedRate}`
+	);
 }
 
 
@@ -302,28 +342,20 @@ test('chamber switches back to window mode on drag-bar long-tap', async ({
 
 
 test('slow changes view transition animation playbackRate', async ({ page }) => {
-	await testPlaybackRate(page, 'Slow', 'slow', 0.16);
+	await testPlaybackRate(page, 'slow', 0.16);
 });
 
 test('slower changes view transition animation playbackRate even more', async ({ page }) => {
-	await testPlaybackRate(page, 'Slower', 'slower', 0.025);
+	await testPlaybackRate(page, 'slower', 0.025);
 });
 
 test('analyze capturing shows captured elements and captured groups', async ({ page }) => {
-	const { frame, chamberFrame } = await frames(page);
-
-	await chamberFrame.locator('label[for="capture"]').click();
-	await expect(chamberFrame.locator('#capture')).toBeChecked();
-
-	await frame.locator('#toggle-layout').click();
-
-	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
-	await expect(captureView).toBeVisible();
+	const { captureView } = await openCaptureView(page);
 	await expect(captureView.locator('summary').first()).toHaveText(/Named elements/i);
 
 	const capturedGroups = captureView.locator('.content > details');
 	await expect(capturedGroups.first().locator('summary')).toHaveText(/Group/i);
-	await expect.poll(async () => capturedGroups.count()).toBeGreaterThan(0);
+	await expect(capturedGroups.first()).toBeVisible();
 
 	const paintOrder = await capturedGroups.evaluateAll((groups) =>
 		groups.map((group) => Number(group.getAttribute('data-paint-order') ?? Number.NaN))
@@ -340,48 +372,33 @@ test('analyze capturing shows captured elements and captured groups', async ({ p
 });
 
 test('analyze capturing switches captured groups to alphabetical sorting', async ({ page }) => {
-	const { frame, chamberFrame } = await frames(page);
-
-	await chamberFrame.locator('label[for="capture"]').click();
-	await expect(chamberFrame.locator('#capture')).toBeChecked();
-
-	await frame.locator('#toggle-layout').click();
-
-	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
-	await expect(captureView).toBeVisible();
+	const { chamberFrame, captureView } = await openCaptureView(page);
 
 	const groupNameSummaries = captureView.locator('.content > details > summary > strong');
-	await expect.poll(async () => groupNameSummaries.count()).toBeGreaterThan(1);
+	await expect(groupNameSummaries.nth(1)).toBeVisible();
 
 	await chamberFrame.locator('label[for="capture-sort-alpha"]').click();
 	await expect(chamberFrame.locator('#capture-sort-alpha')).toBeChecked();
 
-	await expect
-		.poll(async () =>
-			groupNameSummaries.evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim() ?? ''))
-		)
-		.toEqual(
-			await groupNameSummaries.evaluateAll((nodes) =>
-				nodes
-					.map((node) => node.textContent?.trim() ?? '')
-					.sort((a, b) => a.localeCompare(b))
-			)
-		);
+	await waitForCondition(
+		page,
+		async () => {
+			const current = await groupNameSummaries.evaluateAll((nodes) =>
+				nodes.map((node) => node.textContent?.trim() ?? '')
+			);
+			const sorted = [...current].sort((a, b) => a.localeCompare(b));
+			return current.length > 1 && current.every((value, index) => value === sorted[index]);
+		},
+		SHORT_WAIT_TIMEOUT_MS,
+		'Expected captured groups to be sorted alphabetically'
+	);
 });
 
 test('analyze capturing shows view-transition classes in capture result', async ({ page }) => {
-	const { frame, chamberFrame } = await frames(page);
-
-	await chamberFrame.locator('label[for="capture"]').click();
-	await expect(chamberFrame.locator('#capture')).toBeChecked();
-
-	await frame.locator('#toggle-layout').click();
-
-	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
-	await expect(captureView).toBeVisible();
+	const { captureView } = await openCaptureView(page);
 
 	const groupSummaries = captureView.locator('.content > details > summary');
-	await expect.poll(async () => groupSummaries.count()).toBeGreaterThan(0);
+	await expect(groupSummaries.first()).toBeVisible();
 
 	const summaryTexts = await groupSummaries.allTextContents();
 	expect(summaryTexts.some((summary) => /classes:\s*dashboard-card/i.test(summary))).toBe(true);
