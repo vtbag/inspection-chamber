@@ -6,7 +6,8 @@
   "description": "The Inspection Chamber is an in-browser development tool that gives you all the knobs and dials to interactively put your view transitions through their paces.",
   "files": [
     "lib/index.js",
-    "lib/index.d.ts"
+    "lib/index.d.ts",
+    "lib/attach.js"
   ],
   "scripts": {
     "dev": "bin/bundle dev",

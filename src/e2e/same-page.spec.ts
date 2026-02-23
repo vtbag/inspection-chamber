@@ -11,12 +11,7 @@ test.beforeEach(async ({ browserName }, testInfo) => {
 	}
 });
 
-
-
 async function frames(page: Page) {
-
-
-
 	await page.goto('/e2e/same-page/');
 
 	const resizeHandle = page.locator('.window .resize-handle.edge.n').first();
@@ -77,7 +72,11 @@ async function openCaptureView(page: Page) {
 	return { frame, chamberFrame, captureView };
 }
 
-async function expectDockedLayout(page: Page, side: 'n' | 's' | 'e' | 'w', resizeHandleBox: { x: number; y: number; width: number; height: number; } | null): Promise<void> {
+async function expectDockedLayout(
+	page: Page,
+	side: 'n' | 's' | 'e' | 'w',
+	resizeHandleBox: { x: number; y: number; width: number; height: number } | null
+): Promise<void> {
 	const specimen = page.locator('#specimen');
 	const dragBar = page.locator('#dragBar');
 	const dock = page.locator('#dock');
@@ -90,7 +89,8 @@ async function expectDockedLayout(page: Page, side: 'n' | 's' | 'e' | 'w', resiz
 	const specimenBox = await specimen.boundingBox();
 	const dragBarBox = await dragBar.boundingBox();
 	const dockBox = await dock.boundingBox();
-	if (!specimenBox || !dragBarBox || !dockBox || !resizeHandleBox) throw new Error('Missing docked layout bounds');
+	if (!specimenBox || !dragBarBox || !dockBox || !resizeHandleBox)
+		throw new Error('Missing docked layout bounds');
 
 	const sumWidth = specimenBox.width + dragBarBox.width + dockBox.width;
 	const sumHeight = specimenBox.height + dragBarBox.height + dockBox.height;
@@ -133,17 +133,18 @@ async function testPlaybackRate(page: Page, radioId: string, expectedRate: numbe
 	await waitForCondition(
 		page,
 		async () =>
-			frame.locator('html').evaluate((_, rate) => (
-				document.getAnimations().length > 0 &&
-				document
-					.getAnimations()
-					.every((animation) => animation.playbackRate === rate)
-			), expectedRate),
+			frame
+				.locator('html')
+				.evaluate(
+					(_, rate) =>
+						document.getAnimations().length > 0 &&
+						document.getAnimations().every((animation) => animation.playbackRate === rate),
+					expectedRate
+				),
 		SHORT_WAIT_TIMEOUT_MS,
 		`Expected all active animations to have playbackRate ${expectedRate}`
 	);
 }
-
 
 test('same-page demo supports layout/shuffle/theme transitions @same', async ({ page }) => {
 	await page.goto('/e2e/same-page/');
@@ -177,8 +178,6 @@ test('same-page demo supports layout/shuffle/theme transitions @same', async ({ 
 	await expect(frame.locator('#status')).toHaveText(/same-page-theme/);
 	await expect(frame.locator('html')).toHaveCSS('color-scheme', /^(light|dark)$/);
 });
-
-
 
 test('chamber window can minimize and restore', async ({ page }) => {
 	await page.goto('/e2e/same-page/');
@@ -251,7 +250,6 @@ test('chamber switches to docking mode on north edge long-tap', async ({ page })
 	await expect(resizeHandle).toBeVisible();
 	const resizeHandleBox = await resizeHandle.boundingBox();
 
-
 	await longTap(resizeHandle, page);
 	await expectDockedLayout(page, 'n', resizeHandleBox);
 	await expect(chamberWindow).toHaveCount(0);
@@ -314,9 +312,7 @@ test('chamber switches to docking mode on west edge long-tap', async ({ page }) 
 	await expect(chamberWindow).toHaveCount(0);
 });
 
-test('chamber switches back to window mode on drag-bar long-tap', async ({
-	page,
-}) => {
+test('chamber switches back to window mode on drag-bar long-tap', async ({ page }) => {
 	await page.goto('/e2e/same-page/');
 	const chamberWindow = page.locator('.window');
 	const dragBar = page.locator('#dragBar');
@@ -337,9 +333,6 @@ test('chamber switches back to window mode on drag-bar long-tap', async ({
 	await expect(dragBar).toHaveCount(0);
 	await expect(dock).toHaveCount(0);
 });
-
-
-
 
 test('slow changes view transition animation playbackRate', async ({ page }) => {
 	await testPlaybackRate(page, 'slow', 0.16);
@@ -403,4 +396,3 @@ test('analyze capturing shows view-transition classes in capture result', async 
 	const summaryTexts = await groupSummaries.allTextContents();
 	expect(summaryTexts.some((summary) => /classes:\s*dashboard-card/i.test(summary))).toBe(true);
 });
-

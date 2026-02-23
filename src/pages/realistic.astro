@@ -45,6 +45,7 @@
 				transform: rotateZ(10deg);
 			}
 			#scope {
+				view-transition-name: scope-element;
 				view-transition-scope: auto;
 			}
 			header {
@@ -66,7 +67,9 @@
 				border: 1px solid blue;
 				border-radius: 4px 2px;
 			}
-			main {view-transition-name: main;}
+			main {
+				view-transition-name: main;
+			}
 			aside {
 				contain: layout;
 				height: fit-content;
@@ -235,7 +238,9 @@
 				<p style="view-transition-name: other;">This is another paragraph.</p>
 				<kbd id="!empty">?</kbd>
 			</header>
-			<div style="text-align: center; margin-bottom: 2rem; view-transition-name: div; border: 2px solid darkgreen; border-radius: 4px;">
+			<div
+				style="text-align: center; margin-bottom: 2rem; view-transition-name: div; border: 2px solid darkgreen; border-radius: 4px;"
+			>
 				<img
 					id="bot"
 					src="/bot1.png"
