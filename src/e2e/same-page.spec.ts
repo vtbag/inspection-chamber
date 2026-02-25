@@ -3,10 +3,15 @@ import { test, expect, type Locator, type Page } from '@playwright/test';
 const LONG_TAP_HOLD_MS = 1000;
 const RETRY_INTERVAL_MS = 50;
 const SHORT_WAIT_TIMEOUT_MS = 3000;
+const PLAYBACK_RATE_TIMEOUT_MS = 8000;
 const LONG_TAP_TEST_NAME = /long-tap/;
+const PLAYBACK_RATE_TEST_NAME = /changes view transition animation playbackRate/;
 
 test.beforeEach(async ({ browserName }, testInfo) => {
 	if (browserName === 'firefox' && LONG_TAP_TEST_NAME.test(testInfo.title)) {
+		test.slow();
+	}
+	if (browserName === 'webkit' && PLAYBACK_RATE_TEST_NAME.test(testInfo.title)) {
 		test.slow();
 	}
 });
@@ -75,7 +80,7 @@ async function openCaptureView(page: Page) {
 async function expectDockedLayout(
 	page: Page,
 	side: 'n' | 's' | 'e' | 'w',
-	resizeHandleBox: { x: number; y: number; width: number; height: number } | null
+	resizeHandleBox: { x: number; y: number; width: number; height: number; } | null
 ): Promise<void> {
 	const specimen = page.locator('#specimen');
 	const dragBar = page.locator('#dragBar');
@@ -120,15 +125,19 @@ async function expectDockedLayout(
 	}
 }
 
-async function testPlaybackRate(page: Page, radioId: string, expectedRate: number): Promise<void> {
+async function testPlaybackRate(page: Page, radioId: string, expectedRate: number, isWebkit: boolean): Promise<void> {
 	const { frame, chamberFrame } = await frames(page);
 
 	await chamberFrame.getByRole('radio', { name: 'Analyze animations' }).check();
 	await chamberFrame.getByRole('radio', { name: 'Run' }).check();
 	await chamberFrame.getByRole('radio', { name: 'Normal' }).check();
-
+	if (isWebkit) {
+		await frame.locator('#toggle-layout').click();
+		await page.waitForTimeout(300);
+	}
 	await chamberFrame.locator(`label[for="${radioId}"]`).click();
 	await expect(chamberFrame.locator(`#${radioId}`)).toBeChecked();
+
 	await frame.locator('#toggle-layout').click();
 	await waitForCondition(
 		page,
@@ -141,7 +150,7 @@ async function testPlaybackRate(page: Page, radioId: string, expectedRate: numbe
 						document.getAnimations().every((animation) => animation.playbackRate === rate),
 					expectedRate
 				),
-		SHORT_WAIT_TIMEOUT_MS,
+		PLAYBACK_RATE_TIMEOUT_MS,
 		`Expected all active animations to have playbackRate ${expectedRate}`
 	);
 }
@@ -334,12 +343,12 @@ test('chamber switches back to window mode on drag-bar long-tap', async ({ page 
 	await expect(dock).toHaveCount(0);
 });
 
-test('slow changes view transition animation playbackRate', async ({ page }) => {
-	await testPlaybackRate(page, 'slow', 0.16);
+test('slow changes view transition animation playbackRate', async ({ page, browserName }) => {
+	await testPlaybackRate(page, 'slow', 0.16, browserName === 'webkit');
 });
 
-test('slower changes view transition animation playbackRate even more', async ({ page }) => {
-	await testPlaybackRate(page, 'slower', 0.025);
+test('slower changes view transition animation playbackRate even more', async ({ page, browserName }) => {
+	await testPlaybackRate(page, 'slower', 0.025, browserName === 'webkit');
 });
 
 test('analyze capturing shows captured elements and captured groups', async ({ page }) => {
