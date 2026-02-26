@@ -44,9 +44,7 @@ export function nestGroups(
 	let hasDuplicates = false;
 	if (node.viewTransitionName === 'none') {
 		node.children.forEach((child) => {
-			hidden ||=
-				child.viewTransitionScope === 'auto' &&
-				child.context! /* https://issues.chromium.org/issues/481934462*/;
+			hidden ||= child.viewTransitionScope === 'auto' // && child.context! /* https://issues.chromium.org/issues/481934462*/;
 			hasDuplicates =
 				((!hidden || capture) &&
 					nestGroups(child, parent, container, groups, oldOrNew, capture, hidden)) ||
@@ -70,8 +68,7 @@ export function nestGroups(
 		}
 		node.children.forEach((child) => {
 			hidden ||=
-				child.viewTransitionScope === 'auto' &&
-				child.context! /* https://issues.chromium.org/issues/481934462 */;
+				child.viewTransitionScope === 'auto' // && child.context! /* https://issues.chromium.org/issues/481934462 */;
 			hasDuplicates =
 				((!hidden || capture) &&
 					nestGroups(

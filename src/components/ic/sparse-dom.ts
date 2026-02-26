@@ -119,17 +119,17 @@ export function sort(node: SparseDOMNode) {
 	});
 }
 
-export function print(group: SparseDOMNode, depth = 0) {
-	let what = deriveCSSSelector(group.element);
+export function print(root: SparseDOMNode, depth = 0) {
+	let what = deriveCSSSelector(root.element);
 	let pruned = '';
-	if (what.startsWith('#')) what = what + ' (' + (group.element.tagName || '') + ')';
-	if (group.viewTransitionScope === 'auto')
+	if (what.startsWith('#')) what = what + ' (' + (root.element.tagName || '') + ')';
+	if (root.viewTransitionScope === 'auto')
 		pruned = 'color: light-dark(orange, darkorange); font-weight: bold;';
 	console.log(
-		`%c${' '.repeat(depth * 2)} - ${what}${group.pseudoElement || ''}, name: ${group.viewTransitionName}, paint order modifier: ${group.paintGroup}.${group.zIndex}.${group.order}${pruned ? ', defines a new view transition scope that prunes this DOM subtree' : ''}`,
+		`%c${' '.repeat(depth * 2)} - ${what}${root.pseudoElement || ''}, name: ${root.viewTransitionName}, paint order modifier: ${root.paintGroup}.${root.zIndex}.${root.order}${pruned ? ', defines a new view transition scope that prunes this DOM subtree' : ''}`,
 		pruned
 	);
-	group.children.forEach((child) => print(child, depth + 1));
+	root.children.forEach((child) => print(child, depth + 1));
 }
 
 const noneProps = [
