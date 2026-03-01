@@ -1,6 +1,12 @@
 /**
  * Shared Playwright fixtures and helpers for capture/animation testing.
  * Consolidates duplicate setup logic from capture-test-helpers and same-page.spec.
+ *
+ * TESTING GUIDELINE: Radio buttons and checkboxes
+ * ================================================
+ * Always interact with form inputs via their associated <label> elements, never the <input> directly.
+ * This prevents Firefox pointer interception issues where child elements in labels block clicks on inputs.
+ * Pattern: locator('label[for="input-id"]').click() ✓  NOT  locator('#input-id').click() ✗
  */
 
 import { expect, type FrameLocator, type Locator, type Page } from '@playwright/test';
@@ -142,7 +148,11 @@ export async function ensureCaptureModeEnabled(chamberFrame: FrameLocator): Prom
 		return;
 	}
 
-	// Click the label instead of the input to avoid pointer interception in Firefox
+	// IMPORTANT: Always click labels, not inputs, for radio/checkbox interactions.
+	// Reason: In Firefox, child elements (like <span class="radio-text">) inside the label
+	// can intercept pointer events, causing clicks on the input to fail with "subtree intercepts".
+	// The DOM structure is: <input id="X"> <label for="X"><span>...</span></label>
+	// Clicking the label reliably toggles the associated input across all browsers.
 	const captureLabel = chamberFrame.locator('label[for="capture"]');
 	await expect(captureLabel).toBeVisible({ timeout: 5000 });
 	await captureLabel.click();
