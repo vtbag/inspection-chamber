@@ -1,0 +1,104 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Basic Capture Test</title>
+		<script is:inline src="/attach.js"></script>
+		<style>
+			:root {
+				color-scheme: light dark;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				padding: 2rem;
+				font-family: system-ui, sans-serif;
+			}
+
+			h1 {
+				margin: 0;
+				font-size: 2rem;
+			}
+
+			button {
+				margin-top: 0.5rem;
+				padding: 0.5rem 1rem;
+				font-size: 1rem;
+				cursor: pointer;
+			}
+
+			/* --- shared base styles --- */
+
+			#hero {
+				padding: 2rem;
+				background: light-dark(#dbeafe, #1e3a8a);
+				border-radius: 0.5rem;
+				view-transition-name: hero;
+			}
+
+			#old-only {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#fee2e2, #7f1d1d);
+				border-radius: 0.5rem;
+				/* no view-transition-name by default */
+			}
+
+			/* --- test-1-1: basic capture with hero --- */
+
+			html:active-view-transition-type(test-1-1) {
+				.state-b #hero {
+					background: light-dark(#dcfce7, #14532d);
+				}
+				.state-b h1 {
+					font-size: 3rem;
+				}
+			}
+
+			/* --- test-1-2: old-only element (removed in new state) --- */
+
+			html:active-view-transition-type(test-1-2) {
+				#old-only {
+					view-transition-name: old-only-element;
+				}
+				.state-b #hero {
+					background: light-dark(#dcfce7, #14532d);
+				}
+				.state-b #old-only {
+					display: none;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div id="hero">
+			<h1>Hero Element</h1>
+			<button id="trigger-test-1-1">Test 1.1</button>
+			<button id="trigger-test-1-2">Test 1.2</button>
+		</div>
+
+		<div id="old-only">
+			<p>This element only exists in the old state</p>
+		</div>
+
+		<script>
+			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+
+			function triggerTransition(type: string) {
+				mayStartViewTransition(
+					{ update: () => document.body.classList.toggle('state-b'), types: [type] },
+					{ useTypesPolyfill: 'always' }
+				);
+			}
+			document.getElementById('trigger-test-1-1')?.addEventListener('click', () => triggerTransition('test-1-1'));
+			document.getElementById('trigger-test-1-2')?.addEventListener('click', () => triggerTransition('test-1-2'));
+		</script>
+	</body>
+</html>

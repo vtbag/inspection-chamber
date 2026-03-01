@@ -34,7 +34,9 @@ export function disableLedGroup(element: HTMLElement, message: string) {
 	const glass = element.querySelector<HTMLDivElement>('.led-group-glass-pane')!;
 	glass.style.zIndex = '1';
 	glass.addEventListener('click', () =>
-		document.dispatchEvent(new CustomEvent('ic-show-message', { detail: {severity: 'info', message } }))
+		document.dispatchEvent(
+			new CustomEvent('ic-show-message', { detail: { severity: 'info', message } })
+		)
 	);
 }
 export function enableLedGroup(element: HTMLElement) {

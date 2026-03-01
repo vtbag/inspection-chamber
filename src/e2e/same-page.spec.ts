@@ -19,17 +19,17 @@ test.beforeEach(async ({ browserName }, testInfo) => {
 async function frames(page: Page) {
 	await page.goto('/e2e/same-page/');
 
-	const resizeHandle = page.locator('.window .resize-handle.edge.n').first();
+	const resizeHandle = page.locator('.window .resize-handle.edge.s').first();
 	await expect(resizeHandle).toBeVisible();
 	await longTap(resizeHandle, page);
 
-	const frameLocator = page.locator('iframe').first();
+	const frameLocator = page.locator('iframe').nth(1);
 	await expect(frameLocator).toBeVisible();
 	const mainFrame = frameLocator.contentFrame();
 	expect(mainFrame).not.toBeNull();
 	const frame = mainFrame!;
 
-	const chamberFrameLocator = page.locator('iframe').nth(1);
+	const chamberFrameLocator = page.locator('iframe').nth(0);
 	await expect(chamberFrameLocator).toBeVisible();
 	const chamberFrameHandle = chamberFrameLocator.contentFrame();
 	expect(chamberFrameHandle).not.toBeNull();
@@ -80,7 +80,7 @@ async function openCaptureView(page: Page) {
 async function expectDockedLayout(
 	page: Page,
 	side: 'n' | 's' | 'e' | 'w',
-	resizeHandleBox: { x: number; y: number; width: number; height: number; } | null
+	resizeHandleBox: { x: number; y: number; width: number; height: number } | null
 ): Promise<void> {
 	const specimen = page.locator('#specimen');
 	const dragBar = page.locator('#dragBar');
@@ -125,7 +125,12 @@ async function expectDockedLayout(
 	}
 }
 
-async function testPlaybackRate(page: Page, radioId: string, expectedRate: number, isWebkit: boolean): Promise<void> {
+async function testPlaybackRate(
+	page: Page,
+	radioId: string,
+	expectedRate: number,
+	isWebkit: boolean
+): Promise<void> {
 	const { frame, chamberFrame } = await frames(page);
 
 	await chamberFrame.getByRole('radio', { name: 'Analyze animations' }).check();
@@ -347,7 +352,10 @@ test('slow changes view transition animation playbackRate', async ({ page, brows
 	await testPlaybackRate(page, 'slow', 0.16, browserName === 'webkit');
 });
 
-test('slower changes view transition animation playbackRate even more', async ({ page, browserName }) => {
+test('slower changes view transition animation playbackRate even more', async ({
+	page,
+	browserName,
+}) => {
 	await testPlaybackRate(page, 'slower', 0.025, browserName === 'webkit');
 });
 
@@ -404,4 +412,28 @@ test('analyze capturing shows view-transition classes in capture result', async 
 
 	const summaryTexts = await groupSummaries.allTextContents();
 	expect(summaryTexts.some((summary) => /classes:\s*dashboard-card/i.test(summary))).toBe(true);
+});
+
+test('vtbag-ic-welcome details element can be collapsed and expanded', async ({ page }) => {
+	const { chamberFrame } = await frames(page);
+
+	const welcomeElement = chamberFrame.locator('vtbag-ic-welcome');
+	await expect(welcomeElement).toBeVisible();
+
+	const detailsElement = welcomeElement.locator('details').first();
+	await expect(detailsElement).toBeVisible();
+
+	// Initially should be open
+	const isInitiallyOpen = await detailsElement.evaluate((el: any) => el.open);
+	expect(isInitiallyOpen).toBe(true);
+
+	// Click the summary to collapse
+	await detailsElement.locator('summary').first().click();
+	const isClosedAfterClick = await detailsElement.evaluate((el: any) => el.open);
+	expect(isClosedAfterClick).toBe(false);
+
+	// Click the summary again to expand
+	await detailsElement.locator('summary').first().click();
+	const isOpenAfterSecondClick = await detailsElement.evaluate((el: any) => el.open);
+	expect(isOpenAfterSecondClick).toBe(true);
 });

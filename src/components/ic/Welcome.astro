@@ -17,7 +17,7 @@
 			const viewTransitionName = CSS.supports('view-transition-name', 'none');
 			const viewTransitionScope = CSS.supports('view-transition-scope', 'none');
 			const navigationAPI = 'navigation' in window;
-			this.innerHTML = `<details ${localStorage.getItem('vtbag-ic-welcome-closed') !== 'yes' ? 'open' : ''}><summary>Welcome</summary>
+			this.innerHTML = `<details id="welcome"${localStorage.getItem('vtbag-ic-welcome-closed') !== 'yes' ? 'open' : ''}><summary>Welcome</summary>
 <p>
 The Inspection Chamber is a developer tool for putting your view transitions through their paces. Debug view transitions with clarity instead of guesswork.
 </p>
