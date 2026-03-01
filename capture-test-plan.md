@@ -38,33 +38,88 @@ Each test spec will:
 
 ## Phase 1: Core Capture Tests (capture-basic)
 
-### Test 1.1: Old Capture Only
-**Scenario:** Element with `view-transition-name` present in old state, removed in new state
+### Test 1.1: Basic capture with single named element
+**Scenario:** Basic same-document view transition with single named element (#hero)
+
+**Implementation:** `src/pages/e2e/capture-basic.astro`, `src/e2e/capture-basic.spec.ts`
 
 ```astro
-<div id="old-only" style="view-transition-name: old-only-element">Old Only</div>
-<!-- button removes this element -->
+<div id="hero" style="view-transition-name: hero">Hero Element</div>
+<!-- button triggers transition, hero changes color and h1 font size grows -->
 ```
 
 **Verify:**
-- Group "old-only-element" exists in `moduleGroupMaps`
-- Group has `old` node but no `new` node
+- Group "root" (document root) exists with both old and new nodes
+- Group "hero" exists with both old and new nodes
+- Total 2 groups captured
+- Both groups have `old` and `new` image elements
+- Console devtools output reports both groups
+- `hasOld: true, hasNew: true` for both groups
+
+**Status:** ✅ Implemented - passes on chromium, webkit, firefox
+
+### Test 1.2: Old-only element (hidden in new state)
+**Scenario:** Element with `view-transition-name` that becomes hidden via `display: none` in new state
+
+**Implementation:** `src/pages/e2e/capture-basic.astro`, `src/e2e/capture-basic.spec.ts`
+
+```astro
+<div id="old-only">This element only exists in the old state</div>
+
+<!-- CSS type guard for test-1-2: -->
+html:active-view-transition-type(test-1-2) {
+  #old-only {
+    view-transition-name: old-only-element;
+  }
+  .state-b #old-only {
+    display: none;
+  }
+}
+```
+
+**Verify:**
+- Group "old-only-element" exists in capture
+- Group has `old` image element (element rendered before state change)
+- Group has NO `new` image element (element has `display: none` after state change)
 - `hasOld: true, hasNew: false`
+- Console devtools verifies capture contains old element but not new image
+- @root and #hero groups still have both old and new
+- Total 3 groups captured
 
-### Test 1.2: New Capture Only
-**Scenario:** Element with `view-transition-name` absent in old state, added in new state
+**Status:** ✅ Implemented - passes on chromium, webkit, firefox
+
+### Test 1.3: New-only element (created in new state)
+**Scenario:** Element with `view-transition-name` that is hidden in old state and becomes visible in new state
+
+**Implementation:** `src/pages/e2e/capture-basic.astro`, `src/e2e/capture-basic.spec.ts`
 
 ```astro
-<!-- button adds: -->
-<div style="view-transition-name: new-only-element">New Only</div>
+<div id="new-only">This element is created in the new state</div>
+
+<!-- CSS type guard for test-1-3: -->
+html:active-view-transition-type(test-1-3) {
+  #new-only {
+    view-transition-name: new-only-element;
+    display: none;  /* Hidden in old state */
+  }
+  .state-b #new-only {
+    display: block;  /* Visible in new state */
+  }
+}
 ```
 
 **Verify:**
-- Group "new-only-element" exists
-- Group has `new` node but no `old` node
+- Group "new-only-element" exists in capture
+- Group has NO `old` image element (element has `display: none` before state change)
+- Group has `new` image element (element rendered after state change)
 - `hasOld: false, hasNew: true`
+- Console devtools verifies capture contains no old image but has new element
+- @root and #hero groups still have both old and new
+- Total 3 groups captured
 
-### Test 1.3: Same Element Old and New
+**Status:** ✅ Implemented - passes on chromium, webkit, firefox
+
+### Test 1.4: Same Element Old and New
 **Scenario:** Element keeps same `view-transition-name` across transition
 
 ```astro
@@ -78,7 +133,7 @@ Each test spec will:
 - `hasOld: true, hasNew: true`
 - `oldSelector === newSelector`
 
-### Test 1.4: Different Elements Old and New
+### Test 1.5: Different Elements Old and New
 **Scenario:** Element A has name "shared" in old, Element B has name "shared" in new
 
 ```astro
@@ -91,7 +146,7 @@ Each test spec will:
 - Different CSS selectors for old vs new
 - `oldSelector !== newSelector`
 
-### Test 1.5: Pseudo-element ::before with view-transition-name
+### Test 1.6: Pseudo-element ::before with view-transition-name
 **Scenario:** Element with `::before { view-transition-name: before-name }`
 
 ```css
@@ -105,7 +160,7 @@ Each test spec will:
 - Group "before-pseudo" created
 - `pseudoElement: '::before'` in node data
 
-### Test 1.6: Pseudo-element ::after with view-transition-name
+### Test 1.7: Pseudo-element ::after with view-transition-name
 **Scenario:** Element with `::after { view-transition-name: after-name }`
 
 ```css
@@ -119,7 +174,7 @@ Each test spec will:
 - Group "after-pseudo" created
 - `pseudoElement: '::after'` in node data
 
-### Test 1.7: Duplicate view-transition-name Detection ⭐
+### Test 1.8: Duplicate view-transition-name Detection ⭐
 **Scenario:** Two elements with same `view-transition-name` in same state
 
 ```astro
