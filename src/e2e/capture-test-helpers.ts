@@ -1,5 +1,5 @@
-import { expect, type Locator, type Page } from '@playwright/test';
-import { CHAMBER_CONFIG, getTimeout, getSelectorPath } from './chamber-config';
+import { expect, type FrameLocator, type Locator, type Page } from '@playwright/test';
+import { CHAMBER_CONFIG, getTimeout } from './chamber-config';
 
 /**
  * Perform a long tap (press) on a locator
@@ -43,32 +43,52 @@ async function frames(page: Page) {
 	return { frame, chamberFrame };
 }
 
+async function closeWelcomePanelIfOpen(chamberFrame: FrameLocator): Promise<void> {
+	const welcomeDetails = chamberFrame
+		.locator(CHAMBER_CONFIG.selectors.chamber.welcomePanel)
+		.first();
+
+	if ((await welcomeDetails.count()) === 0) {
+		return;
+	}
+
+	await welcomeDetails.locator(CHAMBER_CONFIG.selectors.chamber.welcome.summary).first().click();
+	await expect(welcomeDetails).toHaveJSProperty('open', false);
+}
+
+async function ensureCaptureModeEnabled(chamberFrame: FrameLocator): Promise<void> {
+	const captureCheckbox = chamberFrame.locator(CHAMBER_CONFIG.selectors.chamber.captureCheckbox);
+	await expect
+		.poll(async () => captureCheckbox.count(), { timeout: getTimeout('captureView') })
+		.toBeGreaterThan(0);
+
+	if (await captureCheckbox.isChecked()) {
+		return;
+	}
+
+	await captureCheckbox.click({ force: true });
+	await expect(captureCheckbox).toBeChecked();
+}
+
+async function triggerCaptureTransition(frame: FrameLocator, testType: string): Promise<void> {
+	await frame.locator(`#trigger-${testType}`).click();
+}
+
+async function waitForCaptureView(chamberFrame: FrameLocator): Promise<Locator> {
+	const captureView = chamberFrame.locator(CHAMBER_CONFIG.selectors.chamber.viewTransitionCapture);
+	await expect(captureView).toBeVisible({ timeout: getTimeout('captureView') });
+	return captureView;
+}
+
 /**
  * Open capture view: set up frames, enable capture mode, trigger transition with given type
  */
 export async function openCaptureView(page: Page, testType: string) {
 	const { frame, chamberFrame } = await frames(page);
-
-	// Close welcome panel if open
-	const welcomeDetails = chamberFrame
-		.locator(CHAMBER_CONFIG.selectors.chamber.welcomePanel)
-		.first();
-	if ((await welcomeDetails.count()) > 0) {
-		await welcomeDetails.locator(CHAMBER_CONFIG.selectors.chamber.welcome.summary).first().click();
-		await expect(welcomeDetails).toHaveJSProperty('open', false);
-	}
-
-	// Enable capture mode
-	const captureCheckbox = chamberFrame.locator(CHAMBER_CONFIG.selectors.chamber.captureCheckbox);
-	if ((await captureCheckbox.count()) > 0 && !(await captureCheckbox.isChecked())) {
-		await captureCheckbox.click({ force: true });
-	}
-
-	// Trigger the transition for this test type
-	await frame.locator(`#trigger-${testType}`).click();
-
-	const captureView = chamberFrame.locator(CHAMBER_CONFIG.selectors.chamber.viewTransitionCapture);
-	await expect(captureView).toBeVisible({ timeout: getTimeout('captureView') });
+	await closeWelcomePanelIfOpen(chamberFrame);
+	await ensureCaptureModeEnabled(chamberFrame);
+	await triggerCaptureTransition(frame, testType);
+	const captureView = await waitForCaptureView(chamberFrame);
 
 	return { captureView };
 }
@@ -135,23 +155,25 @@ export async function verifyImageElements(captureView: Locator, selectors: strin
 /**
  * Click devtools print icon and verify console output
  */
-export async function verifyDevtoolsConsoleOutput(
-	page: Page,
-	captureView: Locator,
-	options: {
-		targetTag: string;
-		expectedGroups: string[];
-		oldOnlyGroups?: string[];
-		newOnlyGroups?: string[];
-		verifyIdentity?: {
-			groupName: string;
-			dataAttribute:
-				| { name: string; value: string }
-				| { name: string; oldValue: string; newValue: string };
-			expectSameElement?: boolean;
-		};
-	}
-): Promise<void> {
+type CaptureIdentityDataAttribute =
+	| { name: string; value: string }
+	| { name: string; oldValue: string; newValue: string };
+
+type CaptureIdentityOptions = {
+	groupName: string;
+	dataAttribute: CaptureIdentityDataAttribute;
+	expectSameElement?: boolean;
+};
+
+type VerifyDevtoolsOptions = {
+	targetTag: string;
+	expectedGroups: string[];
+	oldOnlyGroups?: string[];
+	newOnlyGroups?: string[];
+	verifyIdentity?: CaptureIdentityOptions;
+};
+
+async function waitForDevtoolsLog(page: Page, captureView: Locator) {
 	const consoleEvent = page.waitForEvent('console', {
 		predicate: (msg) =>
 			msg.text().includes(CHAMBER_CONFIG.console.inspectionChamberMarker) &&
@@ -159,123 +181,192 @@ export async function verifyDevtoolsConsoleOutput(
 	});
 
 	await captureView.locator(CHAMBER_CONFIG.selectors.captureView.devtoolsButton).click();
-	const devtoolsLog = await consoleEvent;
+	return consoleEvent;
+}
 
-	// Verify console message text
-	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.inspectionChamberMarker);
-	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.viewTransitionMarker);
-	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.startedAtPattern);
-	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.codeLocationPattern);
-	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.elementsCapuredPattern);
+function verifyDevtoolsMessageText(logText: string) {
+	expect(logText).toContain(CHAMBER_CONFIG.console.inspectionChamberMarker);
+	expect(logText).toContain(CHAMBER_CONFIG.console.viewTransitionMarker);
+	expect(logText).toContain(CHAMBER_CONFIG.console.startedAtPattern);
+	expect(logText).toContain(CHAMBER_CONFIG.console.codeLocationPattern);
+	expect(logText).toContain(CHAMBER_CONFIG.console.elementsCapuredPattern);
+}
 
-	const args = devtoolsLog.args();
-	expect(args.length).toBeGreaterThan(0);
-
-	// Find the HTML element arg
-	let targetTag: string | null = null;
+async function findTargetElementTag(args: any[]): Promise<string | null> {
 	for (const arg of args) {
 		try {
 			const tag = await arg.evaluate((node: any) =>
 				node?.nodeType === 1 ? node.tagName.toLowerCase() : null
 			);
 			if (tag) {
-				targetTag = tag;
-				break;
+				return tag;
 			}
 		} catch {
 			/* not an element */
 		}
 	}
-	expect(targetTag).toBe(options.targetTag);
+	return null;
+}
 
-	// Find the captures object arg and verify group keys
-	let capturedKeys: string[] | null = null;
+async function findCaptureArg(args: any[], expectedGroups: string[]): Promise<any | null> {
+	const expectedSorted = [...expectedGroups].sort();
+
 	for (const arg of args) {
 		try {
-			const keys = await arg.evaluate((obj: any) => {
-				if (obj && typeof obj === 'object' && !obj.nodeType) {
-					const k = Object.keys(obj);
-					return k.length > 0 ? k.sort() : null;
+			const match = await arg.evaluate((obj: any, expected: string[]) => {
+				if (!obj || typeof obj !== 'object' || obj.nodeType) {
+					return false;
 				}
-				return null;
-			});
-			if (keys && keys.length === options.expectedGroups.length) {
-				capturedKeys = keys;
-				const oldOnly = new Set(options.oldOnlyGroups ?? []);
-				const newOnly = new Set(options.newOnlyGroups ?? []);
-				for (const groupName of options.expectedGroups) {
-					if (oldOnly.has(groupName)) {
-						const hasOldOnly = await arg.evaluate(
-							(captured: Record<string, any>, name: string) =>
-								!!captured[name]?.oldNamedElement && !captured[name]?.newNamedElement,
-							groupName
-						);
-						expect(hasOldOnly).toBe(true);
-					} else if (newOnly.has(groupName)) {
-						const hasNewOnly = await arg.evaluate(
-							(captured: Record<string, any>, name: string) =>
-								!captured[name]?.oldNamedElement && !!captured[name]?.newNamedElement,
-							groupName
-						);
-						expect(hasNewOnly).toBe(true);
-					} else {
-						const hasNamedElements = await arg.evaluate(
-							(captured: Record<string, any>, name: string) =>
-								!!captured[name]?.oldNamedElement && !!captured[name]?.newNamedElement,
-							groupName
-						);
-						expect(hasNamedElements).toBe(true);
+
+				const keys = Object.keys(obj).sort();
+				if (keys.length !== expected.length) {
+					return false;
+				}
+
+				for (let i = 0; i < keys.length; i++) {
+					if (keys[i] !== expected[i]) {
+						return false;
 					}
 				}
 
-				// Optionally verify element identity
-				if (options.verifyIdentity) {
-					const dataAttr = options.verifyIdentity.dataAttribute;
-					const oldValue = 'value' in dataAttr ? dataAttr.value : dataAttr.oldValue;
-					const newValue = 'value' in dataAttr ? dataAttr.value : dataAttr.newValue;
-
-					const identityResult = await arg.evaluate(
-						(
-							captured: Record<string, any>,
-							opts: { groupName: string; attrName: string; oldValue: string; newValue: string }
-						) => {
-							const group = captured[opts.groupName];
-							if (!group) return { error: 'Group not found' };
-
-							const oldElem = group.oldNamedElement;
-							const newElem = group.newNamedElement;
-
-							if (!oldElem || !newElem) return { error: 'Elements not found' };
-
-							return {
-								oldDataAttr: oldElem.getAttribute(opts.attrName),
-								newDataAttr: newElem.getAttribute(opts.attrName),
-								isSameObject: oldElem === newElem,
-							};
-						},
-						{
-							groupName: options.verifyIdentity.groupName,
-							attrName: options.verifyIdentity.dataAttribute.name,
-							oldValue,
-							newValue,
-						}
-					);
-
-					if ('error' in identityResult) {
-						throw new Error(`Element identity verification failed: ${identityResult.error}`);
+				return expected.every((name) => {
+					const group = obj[name];
+					if (!group || typeof group !== 'object') {
+						return false;
 					}
-					expect(identityResult.oldDataAttr).toBe(oldValue);
-					expect(identityResult.newDataAttr).toBe(newValue);
-					// Check if expecting same or different element
-					const expectSame = options.verifyIdentity.expectSameElement ?? true;
-					expect(identityResult.isSameObject).toBe(expectSame);
-				}
+					const oldElem = group.oldNamedElement?.element;
+					const newElem = group.newNamedElement?.element;
+					const oldOk = !oldElem || typeof oldElem === 'object';
+					const newOk = !newElem || typeof newElem === 'object';
+					return oldOk && newOk;
+				});
+			}, expectedSorted);
 
-				break;
+			if (match) {
+				return arg;
 			}
 		} catch {
 			/* not our object */
 		}
 	}
+	return null;
+}
+
+async function getCaptureKeys(captureArg: any): Promise<string[]> {
+	return captureArg.evaluate((obj: any) => Object.keys(obj).sort());
+}
+
+async function verifyGroupPresence(captureArg: any, options: VerifyDevtoolsOptions): Promise<void> {
+	const oldOnly = new Set(options.oldOnlyGroups ?? []);
+	const newOnly = new Set(options.newOnlyGroups ?? []);
+
+	for (const groupName of options.expectedGroups) {
+		if (oldOnly.has(groupName)) {
+			const hasOldOnly = await captureArg.evaluate(
+				(captured: Record<string, any>, name: string) =>
+					!!captured[name]?.oldNamedElement && !captured[name]?.newNamedElement,
+				groupName
+			);
+			expect(hasOldOnly).toBe(true);
+			continue;
+		}
+
+		if (newOnly.has(groupName)) {
+			const hasNewOnly = await captureArg.evaluate(
+				(captured: Record<string, any>, name: string) =>
+					!captured[name]?.oldNamedElement && !!captured[name]?.newNamedElement,
+				groupName
+			);
+			expect(hasNewOnly).toBe(true);
+			continue;
+		}
+
+		const hasNamedElements = await captureArg.evaluate(
+			(captured: Record<string, any>, name: string) =>
+				!!captured[name]?.oldNamedElement && !!captured[name]?.newNamedElement,
+			groupName
+		);
+		expect(hasNamedElements).toBe(true);
+	}
+}
+
+async function verifyGroupIdentity(
+	captureArg: any,
+	verifyIdentity: CaptureIdentityOptions
+): Promise<void> {
+	const dataAttr = verifyIdentity.dataAttribute;
+	const oldValue = 'value' in dataAttr ? dataAttr.value : dataAttr.oldValue;
+	const newValue = 'value' in dataAttr ? dataAttr.value : dataAttr.newValue;
+
+	const identityResult = await captureArg.evaluate(
+		(
+			captured: Record<string, any>,
+			opts: { groupName: string; attrName: string; oldValue: string; newValue: string }
+		) => {
+			const group = captured[opts.groupName];
+			if (!group) return { error: 'Group not found' };
+
+			const oldElem = group.oldNamedElement?.element;
+			const newElem = group.newNamedElement?.element;
+
+			if (!oldElem || !newElem) return { error: 'Elements not found' };
+			if (
+				typeof oldElem.getAttribute !== 'function' ||
+				typeof newElem.getAttribute !== 'function'
+			) {
+				return { error: 'Named elements are not attribute-capable nodes' };
+			}
+
+			return {
+				oldDataAttr: oldElem.getAttribute(opts.attrName),
+				newDataAttr: newElem.getAttribute(opts.attrName),
+				isSameObject: oldElem === newElem,
+			};
+		},
+		{
+			groupName: verifyIdentity.groupName,
+			attrName: verifyIdentity.dataAttribute.name,
+			oldValue,
+			newValue,
+		}
+	);
+
+	if ('error' in identityResult) {
+		throw new Error(`Element identity verification failed: ${identityResult.error}`);
+	}
+	expect(identityResult.oldDataAttr).toBe(oldValue);
+	expect(identityResult.newDataAttr).toBe(newValue);
+	const expectSame = verifyIdentity.expectSameElement ?? true;
+	expect(identityResult.isSameObject).toBe(expectSame);
+}
+
+export async function verifyDevtoolsConsoleOutput(
+	page: Page,
+	captureView: Locator,
+	options: VerifyDevtoolsOptions
+): Promise<void> {
+	const devtoolsLog = await waitForDevtoolsLog(page, captureView);
+	verifyDevtoolsMessageText(devtoolsLog.text());
+
+	const args = devtoolsLog.args();
+	expect(args.length).toBeGreaterThan(0);
+
+	const targetTag = await findTargetElementTag(args);
+	expect(targetTag).toBe(options.targetTag);
+
+	const captureArg = await findCaptureArg(args, options.expectedGroups);
+	expect(captureArg).not.toBeNull();
+
+	if (!captureArg) {
+		return;
+	}
+
+	await verifyGroupPresence(captureArg, options);
+
+	if (options.verifyIdentity) {
+		await verifyGroupIdentity(captureArg, options.verifyIdentity);
+	}
+
+	const capturedKeys = await getCaptureKeys(captureArg);
 	expect(capturedKeys).toEqual([...options.expectedGroups].sort());
 }
