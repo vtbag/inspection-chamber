@@ -1,5 +1,11 @@
 import { expect, type FrameLocator, type Locator, type Page } from '@playwright/test';
-import { CHAMBER_CONFIG, getTimeout } from './chamber-config';
+import { CHAMBER_CONFIG } from './chamber-config';
+import {
+	setupFrames,
+	closeWelcomePanelIfOpen,
+	ensureCaptureModeEnabled,
+	waitForCaptureView,
+} from './fixtures/capture-harness';
 import type {
 	CaptureTestConfig,
 	GroupIdentityExpectation,
@@ -7,89 +13,22 @@ import type {
 } from './capture-test-config';
 
 /**
- * Perform a long tap (press) on a locator
+ * Trigger a view transition by clicking the trigger button for a given test type.
  */
-async function longTap(locator: Locator, page: Page): Promise<void> {
-	const box = await locator.boundingBox();
-	if (!box) throw new Error('Could not get bounding box for long-tap');
-	const centerX = box.x + box.width / 2;
-	const centerY = box.y + box.height / 2;
-
-	await page.mouse.move(centerX, centerY);
-	await page.mouse.down();
-	await page.waitForTimeout(getTimeout('longTap'));
-	await page.mouse.up();
-}
-
-/**
- * Navigate to capture-basic test page, long-tap to open chamber, return frame locators
- */
-async function frames(page: Page) {
-	// Use 'commit' instead of default 'load' because IC's attach.js calls
-	// document.open() via requestIdleCallback, which in Firefox can abort
-	// pending module scripts and prevent the load event from ever firing.
-	await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
-
-	const resizeHandle = page.locator(CHAMBER_CONFIG.selectors.window.resizeHandle).first();
-	await expect(resizeHandle).toBeVisible();
-	await longTap(resizeHandle, page);
-	await page.waitForTimeout(getTimeout('afterLongTap'));
-
-	const frameLocator = page.locator('iframe').nth(CHAMBER_CONFIG.selectors.testFrame.index);
-	await expect(frameLocator).toBeVisible();
-	const frame = frameLocator.contentFrame();
-
-	const chamberFrameLocator = page
-		.locator('iframe')
-		.nth(CHAMBER_CONFIG.selectors.chamberFrame.index);
-	await expect(chamberFrameLocator).toBeVisible();
-	const chamberFrame = chamberFrameLocator.contentFrame();
-
-	return { frame, chamberFrame };
-}
-
-async function closeWelcomePanelIfOpen(chamberFrame: FrameLocator): Promise<void> {
-	const welcomeDetails = chamberFrame
-		.locator(CHAMBER_CONFIG.selectors.chamber.welcomePanel)
-		.first();
-
-	if ((await welcomeDetails.count()) === 0) {
-		return;
-	}
-
-	await welcomeDetails.locator(CHAMBER_CONFIG.selectors.chamber.welcome.summary).first().click();
-	await expect(welcomeDetails).toHaveJSProperty('open', false);
-}
-
-async function ensureCaptureModeEnabled(chamberFrame: FrameLocator): Promise<void> {
-	const captureCheckbox = chamberFrame.locator(CHAMBER_CONFIG.selectors.chamber.captureCheckbox);
-	await expect
-		.poll(async () => captureCheckbox.count(), { timeout: getTimeout('captureView') })
-		.toBeGreaterThan(0);
-
-	if (await captureCheckbox.isChecked()) {
-		return;
-	}
-
-	await captureCheckbox.click({ force: true });
-	await expect(captureCheckbox).toBeChecked();
-}
-
 async function triggerCaptureTransition(frame: FrameLocator, testType: string): Promise<void> {
 	await frame.locator(`#trigger-${testType}`).click();
-}
-
-async function waitForCaptureView(chamberFrame: FrameLocator): Promise<Locator> {
-	const captureView = chamberFrame.locator(CHAMBER_CONFIG.selectors.chamber.viewTransitionCapture);
-	await expect(captureView).toBeVisible({ timeout: getTimeout('captureView') });
-	return captureView;
 }
 
 /**
  * Open capture view: set up frames, enable capture mode, trigger transition with given type
  */
 export async function openCaptureView(page: Page, testType: string) {
-	const { frame, chamberFrame } = await frames(page);
+	const { frame, chamberFrame } = await setupFrames(page, {
+		url: '/e2e/capture-basic/',
+		waitUntil: 'commit', // Handle IC's document.open() via requestIdleCallback
+		openChamber: true,
+	});
+
 	await closeWelcomePanelIfOpen(chamberFrame);
 	await ensureCaptureModeEnabled(chamberFrame);
 	await triggerCaptureTransition(frame, testType);

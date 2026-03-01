@@ -1,8 +1,10 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import {
+	longTap,
+	setupFrames,
+	waitForCondition,
+} from './fixtures/capture-harness';
 
-const LONG_TAP_HOLD_MS = 1000;
-const RETRY_INTERVAL_MS = 50;
-const SHORT_WAIT_TIMEOUT_MS = 3000;
 const PLAYBACK_RATE_TIMEOUT_MS = 8000;
 const LONG_TAP_TEST_NAME = /long-tap/;
 const PLAYBACK_RATE_TEST_NAME = /changes view transition animation playbackRate/;
@@ -16,61 +18,24 @@ test.beforeEach(async ({ browserName }, testInfo) => {
 	}
 });
 
-async function frames(page: Page) {
-	await page.goto('/e2e/same-page/');
+/**
+ * Open capture view in same-page demo (variant of shared harness).
+ * Handles the specific transition (#toggle-layout) for this test.
+ */
+async function openCaptureViewSamePage(page: Page) {
+	const { frame, chamberFrame } = await setupFrames(page, {
+		url: '/e2e/same-page/',
+		openChamber: true,
+	});
 
-	const resizeHandle = page.locator('.window .resize-handle.edge.s').first();
-	await expect(resizeHandle).toBeVisible();
-	await longTap(resizeHandle, page);
-
-	const frameLocator = page.locator('iframe').nth(1);
-	await expect(frameLocator).toBeVisible();
-	const mainFrame = frameLocator.contentFrame();
-	expect(mainFrame).not.toBeNull();
-	const frame = mainFrame!;
-
-	const chamberFrameLocator = page.locator('iframe').nth(0);
-	await expect(chamberFrameLocator).toBeVisible();
-	const chamberFrameHandle = chamberFrameLocator.contentFrame();
-	expect(chamberFrameHandle).not.toBeNull();
-	const chamberFrame = chamberFrameHandle!;
-	return { frame, chamberFrame };
-}
-
-async function longTap(locator: Locator, page: Page): Promise<void> {
-	const box = await locator.boundingBox();
-	if (!box) throw new Error('Could not get bounding box for long-tap');
-	const centerX = box.x + box.width / 2;
-	const centerY = box.y + box.height / 2;
-
-	await page.mouse.move(centerX, centerY);
-	await page.mouse.down();
-	await page.waitForTimeout(LONG_TAP_HOLD_MS);
-	await page.mouse.up();
-}
-
-async function waitForCondition(
-	page: Page,
-	condition: () => Promise<boolean>,
-	timeout = SHORT_WAIT_TIMEOUT_MS,
-	errorMessage = 'Timed out waiting for condition'
-): Promise<void> {
-	const startedAt = Date.now();
-	while (Date.now() - startedAt < timeout) {
-		if (await condition()) return;
-		await page.waitForTimeout(RETRY_INTERVAL_MS);
-	}
-	throw new Error(errorMessage);
-}
-
-async function openCaptureView(page: Page) {
-	const { frame, chamberFrame } = await frames(page);
-
+	// Enable capture mode
 	await chamberFrame.locator('label[for="capture"]').click();
 	await expect(chamberFrame.locator('#capture')).toBeChecked();
 
+	// Trigger layout transition
 	await frame.locator('#toggle-layout').click();
 
+	// Get capture view
 	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
 	await expect(captureView).toBeVisible();
 
@@ -131,7 +96,10 @@ async function testPlaybackRate(
 	expectedRate: number,
 	isWebkit: boolean
 ): Promise<void> {
-	const { frame, chamberFrame } = await frames(page);
+	const { frame, chamberFrame } = await setupFrames(page, {
+		url: '/e2e/same-page/',
+		openChamber: true,
+	});
 
 	await chamberFrame.getByRole('radio', { name: 'Analyze animations' }).check();
 	await chamberFrame.getByRole('radio', { name: 'Run' }).check();
@@ -360,7 +328,7 @@ test('slower changes view transition animation playbackRate even more', async ({
 });
 
 test('analyze capturing shows captured elements and captured groups', async ({ page }) => {
-	const { captureView } = await openCaptureView(page);
+	const { captureView } = await openCaptureViewSamePage(page);
 	await expect(captureView.locator('summary').first()).toHaveText(/Named elements/i);
 
 	const capturedGroups = captureView.locator('.content > details');
@@ -382,7 +350,7 @@ test('analyze capturing shows captured elements and captured groups', async ({ p
 });
 
 test('analyze capturing switches captured groups to alphabetical sorting', async ({ page }) => {
-	const { chamberFrame, captureView } = await openCaptureView(page);
+	const { chamberFrame, captureView } = await openCaptureViewSamePage(page);
 
 	const groupNameSummaries = captureView.locator('.content > details > summary > strong');
 	await expect(groupNameSummaries.nth(1)).toBeVisible();
@@ -399,13 +367,13 @@ test('analyze capturing switches captured groups to alphabetical sorting', async
 			const sorted = [...current].sort((a, b) => a.localeCompare(b));
 			return current.length > 1 && current.every((value, index) => value === sorted[index]);
 		},
-		SHORT_WAIT_TIMEOUT_MS,
+		3000, // SHORT_WAIT_TIMEOUT_MS
 		'Expected captured groups to be sorted alphabetically'
 	);
 });
 
 test('analyze capturing shows view-transition classes in capture result', async ({ page }) => {
-	const { captureView } = await openCaptureView(page);
+	const { captureView } = await openCaptureViewSamePage(page);
 
 	const groupSummaries = captureView.locator('.content > details > summary');
 	await expect(groupSummaries.first()).toBeVisible();
@@ -415,7 +383,10 @@ test('analyze capturing shows view-transition classes in capture result', async 
 });
 
 test('vtbag-ic-welcome details element can be collapsed and expanded', async ({ page }) => {
-	const { chamberFrame } = await frames(page);
+	const { chamberFrame } = await setupFrames(page, {
+		url: '/e2e/same-page/',
+		openChamber: true,
+	});
 
 	const welcomeElement = chamberFrame.locator('vtbag-ic-welcome');
 	await expect(welcomeElement).toBeVisible();
