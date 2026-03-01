@@ -1,5 +1,10 @@
 import { expect, type FrameLocator, type Locator, type Page } from '@playwright/test';
 import { CHAMBER_CONFIG, getTimeout } from './chamber-config';
+import type {
+	CaptureTestConfig,
+	GroupIdentityExpectation,
+	GroupPresence,
+} from './capture-test-config';
 
 /**
  * Perform a long tap (press) on a locator
@@ -171,7 +176,96 @@ type VerifyDevtoolsOptions = {
 	oldOnlyGroups?: string[];
 	newOnlyGroups?: string[];
 	verifyIdentity?: CaptureIdentityOptions;
+	verifyIdentities?: CaptureIdentityOptions[];
 };
+
+type CaptureTextAssertion = {
+	pattern: RegExp;
+	present: boolean;
+};
+
+type RunCaptureTestOptions = {
+	testType: string;
+	config: CaptureTestConfig;
+	header?: {
+		selector: string;
+		oldTypes?: string;
+		newTypes?: string;
+	};
+	imageSelectors?: string[];
+	textAssertions?: CaptureTextAssertion[];
+};
+
+function toDevtoolsIdentity(
+	groupName: string,
+	identity: GroupIdentityExpectation
+): CaptureIdentityOptions {
+	if (identity.oldValue === identity.newValue) {
+		return {
+			groupName,
+			dataAttribute: {
+				name: identity.attributeName,
+				value: identity.oldValue,
+			},
+			expectSameElement: identity.expectSameElement,
+		};
+	}
+
+	return {
+		groupName,
+		dataAttribute: {
+			name: identity.attributeName,
+			oldValue: identity.oldValue,
+			newValue: identity.newValue,
+		},
+		expectSameElement: identity.expectSameElement,
+	};
+}
+
+function groupNamesByPresence(
+	groups: { name: string; presence: GroupPresence }[],
+	presence: GroupPresence
+) {
+	return groups.filter((group) => group.presence === presence).map((group) => group.name);
+}
+
+export async function runCaptureTest(page: Page, options: RunCaptureTestOptions): Promise<void> {
+	const { captureView } = await openCaptureView(page, options.testType);
+
+	if (options.header) {
+		await verifyCaptureHeader(captureView, options.header);
+	}
+
+	const expectedGroups = options.config.groups.map((group) => group.name);
+	await verifyCapturedGroups(captureView, expectedGroups);
+
+	if (options.imageSelectors && options.imageSelectors.length > 0) {
+		await verifyImageElements(captureView, options.imageSelectors);
+	}
+
+	for (const assertion of options.textAssertions ?? []) {
+		if (assertion.present) {
+			await expect(captureView).toContainText(assertion.pattern);
+		} else {
+			await expect(captureView).not.toContainText(assertion.pattern);
+		}
+	}
+
+	const oldOnlyGroups = groupNamesByPresence(options.config.groups, 'old-only');
+	const newOnlyGroups = groupNamesByPresence(options.config.groups, 'new-only');
+	const verifyIdentities = options.config.groups
+		.filter((group) => !!group.identity)
+		.map((group) => toDevtoolsIdentity(group.name, group.identity!));
+
+	await verifyDevtoolsConsoleOutput(page, captureView, {
+		targetTag: options.config.targetTag,
+		expectedGroups,
+		oldOnlyGroups: oldOnlyGroups.length > 0 ? oldOnlyGroups : undefined,
+		newOnlyGroups: newOnlyGroups.length > 0 ? newOnlyGroups : undefined,
+		verifyIdentity: verifyIdentities[0],
+		verifyIdentities: verifyIdentities.length > 1 ? verifyIdentities.slice(1) : undefined,
+	});
+}
 
 async function waitForDevtoolsLog(page: Page, captureView: Locator) {
 	const consoleEvent = page.waitForEvent('console', {
@@ -365,6 +459,10 @@ export async function verifyDevtoolsConsoleOutput(
 
 	if (options.verifyIdentity) {
 		await verifyGroupIdentity(captureArg, options.verifyIdentity);
+	}
+
+	for (const identity of options.verifyIdentities ?? []) {
+		await verifyGroupIdentity(captureArg, identity);
 	}
 
 	const capturedKeys = await getCaptureKeys(captureArg);
