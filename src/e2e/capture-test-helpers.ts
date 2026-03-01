@@ -283,7 +283,7 @@ function verifyDevtoolsMessageText(logText: string) {
 	expect(logText).toContain(CHAMBER_CONFIG.console.viewTransitionMarker);
 	expect(logText).toContain(CHAMBER_CONFIG.console.startedAtPattern);
 	expect(logText).toContain(CHAMBER_CONFIG.console.codeLocationPattern);
-	expect(logText).toContain(CHAMBER_CONFIG.console.elementsCapuredPattern);
+	expect(logText).toContain(CHAMBER_CONFIG.console.elementsCapturedPattern);
 }
 
 async function findTargetElementTag(args: any[]): Promise<string | null> {

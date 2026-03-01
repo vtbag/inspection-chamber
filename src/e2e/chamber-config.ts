@@ -83,7 +83,7 @@ export const CHAMBER_CONFIG = {
 		viewTransitionMarker: 'View transition on',
 		startedAtPattern: 'was started at',
 		codeLocationPattern: 'from this code location',
-		elementsCapuredPattern: 'It captured the following elements',
+		elementsCapturedPattern: 'It captured the following elements',
 	},
 } as const;
 
