@@ -120,18 +120,36 @@ html:active-view-transition-type(test-1-3) {
 **Status:** ✅ Implemented - passes on chromium, webkit, firefox
 
 ### Test 1.4: Same Element Old and New
-**Scenario:** Element keeps same `view-transition-name` across transition
+**Scenario:** Element keeps same `view-transition-name` across transition, proving it's the same DOM element (not replaced)
+
+**Implementation:** `src/pages/e2e/capture-basic.astro`, `src/e2e/capture-basic.spec.ts`
 
 ```astro
-<div id="consistent" style="view-transition-name: consistent-element">Both States</div>
-<!-- button modifies but keeps name -->
+<div id="persistent" data-test-element="same">Persistent Element (same across transition)</div>
+
+<!-- CSS type guard for test-1-4: -->
+html:active-view-transition-type(test-1-4) {
+  #persistent {
+    view-transition-name: persistent-element;
+    background: lightblue;
+    padding: 10px;
+  }
+  .state-b #persistent {
+    background: lightcoral;
+    padding: 20px;
+    font-size: 1.2em;
+  }
+}
 ```
 
 **Verify:**
-- Group "consistent-element" has both `old` and `new` nodes
-- Same CSS selector for both
+- Group "persistent-element" has both `old` and `new` nodes
+- Data attribute `data-test-element="same"` exists on both old and new captured elements
+- JavaScript object reference equality: `oldNamedElement === newNamedElement` (same DOM object, not two different elements)
 - `hasOld: true, hasNew: true`
-- `oldSelector === newSelector`
+- Total 3 groups: root, hero, persistent-element
+
+**Status:** ✅ Implemented - passes on chromium, webkit, firefox
 
 ### Test 1.5: Different Elements Old and New
 **Scenario:** Element A has name "shared" in old, Element B has name "shared" in new
