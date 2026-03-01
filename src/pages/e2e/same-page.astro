@@ -129,7 +129,7 @@
 	<body>
 		<main>
 			<header>
-				<h1 id="title" style="view-transition-name: title; view-transition-class: hero-title">Same-page VT Playground</h1>
+				<h1 id="title" style="view-transition-name: title; view-transition-class: hero-title">Same-page view transition Playground</h1>
 				<div class="controls">
 					<button id="toggle-layout" type="button">Toggle layout</button>
 					<button id="shuffle-cards" type="button">Shuffle cards</button>
@@ -177,7 +177,7 @@
 			const runTransition = (type, update) => {
 				if (!document.startViewTransition) {
 					update();
-					updateStatus(`${type} (no native VT support)`);
+					updateStatus(`${type} (no native view transition support)`);
 					return;
 				}
 
@@ -189,7 +189,7 @@
 						transition = document.startViewTransition(update);
 					} catch {
 						update();
-						updateStatus(`${type} (VT invocation fallback)`);
+						updateStatus(`${type} (view transition invocation fallback)`);
 						return;
 					}
 				}

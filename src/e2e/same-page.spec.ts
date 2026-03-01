@@ -3,6 +3,7 @@ import {
 	longTap,
 	setupFrames,
 	waitForCondition,
+	ensureCaptureModeEnabled,
 } from './fixtures/capture-harness';
 
 const PLAYBACK_RATE_TIMEOUT_MS = 8000;
@@ -19,27 +20,16 @@ test.beforeEach(async ({ browserName }, testInfo) => {
 });
 
 /**
- * Open capture view in same-page demo (variant of shared harness).
- * Handles the specific transition (#toggle-layout) for this test.
+ * Setup same-page test with chamber frames (default: animation mode).
+ * Does NOT trigger any transitions - tests should trigger them explicitly.
  */
-async function openCaptureViewSamePage(page: Page) {
+async function setupSamePageTest(page: Page) {
 	const { frame, chamberFrame } = await setupFrames(page, {
 		url: '/e2e/same-page/',
 		openChamber: true,
 	});
 
-	// Enable capture mode
-	await chamberFrame.locator('label[for="capture"]').click();
-	await expect(chamberFrame.locator('#capture')).toBeChecked();
-
-	// Trigger layout transition
-	await frame.locator('#toggle-layout').click();
-
-	// Get capture view
-	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
-	await expect(captureView).toBeVisible();
-
-	return { frame, chamberFrame, captureView };
+	return { frame, chamberFrame };
 }
 
 async function expectDockedLayout(
@@ -128,7 +118,7 @@ async function testPlaybackRate(
 	);
 }
 
-test('same-page demo supports layout/shuffle/theme transitions @same', async ({ page }) => {
+test('same-page demo supports layout/shuffle/theme transitions', async ({ page }) => {
 	await page.goto('/e2e/same-page/');
 	const frameLocator = page.locator('iframe').first();
 	await expect(frameLocator).toBeVisible();
@@ -136,7 +126,7 @@ test('same-page demo supports layout/shuffle/theme transitions @same', async ({ 
 	expect(mainFrame).not.toBeNull();
 	const frame = mainFrame!;
 
-	await expect(frame.locator('#title')).toHaveText('Same-page VT Playground');
+	await expect(frame.locator('#title')).toHaveText('Same-page view transition Playground');
 
 	const getOrder = () =>
 		frame
@@ -328,7 +318,14 @@ test('slower changes view transition animation playbackRate even more', async ({
 });
 
 test('analyze capturing shows captured elements and captured groups', async ({ page }) => {
-	const { captureView } = await openCaptureViewSamePage(page);
+	const { frame, chamberFrame } = await setupSamePageTest(page);
+	await ensureCaptureModeEnabled(chamberFrame);
+	
+	// Trigger transition while in capture mode
+	await frame.locator('#toggle-layout').click();
+	
+	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+	await expect(captureView).toBeVisible();
 	await expect(captureView.locator('summary').first()).toHaveText(/Named elements/i);
 
 	const capturedGroups = captureView.locator('.content > details');
@@ -350,7 +347,14 @@ test('analyze capturing shows captured elements and captured groups', async ({ p
 });
 
 test('analyze capturing switches captured groups to alphabetical sorting', async ({ page }) => {
-	const { chamberFrame, captureView } = await openCaptureViewSamePage(page);
+	const { frame, chamberFrame } = await setupSamePageTest(page);
+	await ensureCaptureModeEnabled(chamberFrame);
+	
+	// Trigger transition while in capture mode
+	await frame.locator('#toggle-layout').click();
+	
+	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+	await expect(captureView).toBeVisible();
 
 	const groupNameSummaries = captureView.locator('.content > details > summary > strong');
 	await expect(groupNameSummaries.nth(1)).toBeVisible();
@@ -373,7 +377,14 @@ test('analyze capturing switches captured groups to alphabetical sorting', async
 });
 
 test('analyze capturing shows view-transition classes in capture result', async ({ page }) => {
-	const { captureView } = await openCaptureViewSamePage(page);
+	const { frame, chamberFrame } = await setupSamePageTest(page);
+	await ensureCaptureModeEnabled(chamberFrame);
+	
+	// Trigger transition while in capture mode
+	await frame.locator('#toggle-layout').click();
+	
+	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+	await expect(captureView).toBeVisible();
 
 	const groupSummaries = captureView.locator('.content > details > summary');
 	await expect(groupSummaries.first()).toBeVisible();
