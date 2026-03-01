@@ -38,7 +38,6 @@ test.describe('Capture Mode: Basic Tests', () => {
 		});
 	});
 
-
 	test('1.3: New-only element (created in new state)', async ({ page }) => {
 		const { captureView } = await openCaptureView(page, 'test-1-3');
 
@@ -54,6 +53,22 @@ test.describe('Capture Mode: Basic Tests', () => {
 			targetTag: 'html',
 			expectedGroups: ['root', 'hero', 'new-only-element'],
 			newOnlyGroups: ['new-only-element'],
+		});
+	});
+
+
+	test('1.4: Same element old and new', async ({ page }) => {
+		const { captureView } = await openCaptureView(page, 'test-1-4');
+
+		await verifyCapturedGroups(captureView, ['root', 'hero', 'persistent-element']);
+
+		await verifyDevtoolsConsoleOutput(page, captureView, {
+			targetTag: 'html',
+			expectedGroups: ['root', 'hero', 'persistent-element'],
+			verifyIdentity: {
+				groupName: 'persistent-element',
+				dataAttribute: { name: 'data-test-element', value: 'same' },
+			},
 		});
 	});
 });

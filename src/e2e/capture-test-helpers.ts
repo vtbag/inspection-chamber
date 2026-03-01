@@ -134,8 +134,12 @@ export async function verifyDevtoolsConsoleOutput(
 		expectedGroups: string[];
 		oldOnlyGroups?: string[];
 		newOnlyGroups?: string[];
+		verifyIdentity?: {
+			groupName: string;
+			dataAttribute: { name: string; value: string };
+		};
 	}
-) {
+): Promise<void> {
 	const consoleEvent = page.waitForEvent('console', {
 		predicate: (msg) =>
 			msg.text().includes('[inspection chamber]') && msg.text().includes('View transition on'),
@@ -210,6 +214,49 @@ export async function verifyDevtoolsConsoleOutput(
 						expect(hasNamedElements).toBe(true);
 					}
 				}
+
+				// Optionally verify element identity
+				if (options.verifyIdentity) {
+					const identityResult = await arg.evaluate(
+						(
+							captured: Record<string, any>,
+							opts: { groupName: string; attrName: string; attrValue: string }
+						) => {
+							const group = captured[opts.groupName];
+							if (!group) return { error: 'Group not found' };
+
+							const oldElem = group.oldNamedElement;
+							const newElem = group.newNamedElement;
+
+							if (!oldElem || !newElem) return { error: 'Elements not found' };
+
+							return {
+								oldDataAttr: oldElem.getAttribute(opts.attrName),
+								newDataAttr: newElem.getAttribute(opts.attrName),
+								isSameObject: oldElem === newElem,
+							};
+						},
+						{
+							groupName: options.verifyIdentity.groupName,
+							attrName: options.verifyIdentity.dataAttribute.name,
+							attrValue: options.verifyIdentity.dataAttribute.value,
+						}
+					);
+
+					if ('error' in identityResult) {
+						throw new Error(
+							`Element identity verification failed: ${identityResult.error}`
+						);
+					}
+					expect(identityResult.oldDataAttr).toBe(
+						options.verifyIdentity.dataAttribute.value
+					);
+					expect(identityResult.newDataAttr).toBe(
+						options.verifyIdentity.dataAttribute.value
+					);
+					expect(identityResult.isSameObject).toBe(true);
+				}
+
 				break;
 			}
 		} catch {
@@ -218,3 +265,4 @@ export async function verifyDevtoolsConsoleOutput(
 	}
 	expect(capturedKeys).toEqual([...options.expectedGroups].sort());
 }
+
