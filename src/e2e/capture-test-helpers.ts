@@ -129,7 +129,12 @@ export async function verifyImageElements(captureView: Locator, selectors: strin
 export async function verifyDevtoolsConsoleOutput(
 	page: Page,
 	captureView: Locator,
-	options: { targetTag: string; expectedGroups: string[]; oldOnlyGroups?: string[] }
+	options: {
+		targetTag: string;
+		expectedGroups: string[];
+		oldOnlyGroups?: string[];
+		newOnlyGroups?: string[];
+	}
 ) {
 	const consoleEvent = page.waitForEvent('console', {
 		predicate: (msg) =>
@@ -180,6 +185,7 @@ export async function verifyDevtoolsConsoleOutput(
 			if (keys && keys.length === options.expectedGroups.length) {
 				capturedKeys = keys;
 				const oldOnly = new Set(options.oldOnlyGroups ?? []);
+				const newOnly = new Set(options.newOnlyGroups ?? []);
 				for (const groupName of options.expectedGroups) {
 					if (oldOnly.has(groupName)) {
 						const hasOldOnly = await arg.evaluate(
@@ -188,6 +194,13 @@ export async function verifyDevtoolsConsoleOutput(
 							groupName
 						);
 						expect(hasOldOnly).toBe(true);
+					} else if (newOnly.has(groupName)) {
+						const hasNewOnly = await arg.evaluate(
+							(captured: Record<string, any>, name: string) =>
+								!captured[name]?.oldNamedElement && !!captured[name]?.newNamedElement,
+							groupName
+						);
+						expect(hasNewOnly).toBe(true);
 					} else {
 						const hasNamedElements = await arg.evaluate(
 							(captured: Record<string, any>, name: string) =>

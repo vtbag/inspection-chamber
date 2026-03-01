@@ -51,6 +51,14 @@
 				/* no view-transition-name by default */
 			}
 
+			#new-only {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#fef3c7, #92400e);
+				border-radius: 0.5rem;
+				/* no view-transition-name by default */
+			}
+
 			/* --- test-1-1: basic capture with hero --- */
 
 			html:active-view-transition-type(test-1-1) {
@@ -75,6 +83,21 @@
 					display: none;
 				}
 			}
+
+			/* --- test-1-3: new-only element (created in new state) --- */
+
+			html:active-view-transition-type(test-1-3) {
+				#new-only {
+					view-transition-name: new-only-element;
+					display: none;
+				}
+				.state-b #hero {
+					background: light-dark(#dcfce7, #14532d);
+				}
+				.state-b #new-only {
+					display: block;
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -82,10 +105,15 @@
 			<h1>Hero Element</h1>
 			<button id="trigger-test-1-1">Test 1.1</button>
 			<button id="trigger-test-1-2">Test 1.2</button>
+			<button id="trigger-test-1-3">Test 1.3</button>
 		</div>
 
 		<div id="old-only">
 			<p>This element only exists in the old state</p>
+		</div>
+
+		<div id="new-only">
+			<p>This element is created in the new state</p>
 		</div>
 
 		<script>
@@ -99,6 +127,7 @@
 			}
 			document.getElementById('trigger-test-1-1')?.addEventListener('click', () => triggerTransition('test-1-1'));
 			document.getElementById('trigger-test-1-2')?.addEventListener('click', () => triggerTransition('test-1-2'));
+			document.getElementById('trigger-test-1-3')?.addEventListener('click', () => triggerTransition('test-1-3'));
 		</script>
 	</body>
 </html>
