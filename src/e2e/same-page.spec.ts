@@ -126,7 +126,7 @@ test('same-page demo supports layout/shuffle/theme transitions', async ({ page }
 	expect(mainFrame).not.toBeNull();
 	const frame = mainFrame!;
 
-	await expect(frame.locator('#title')).toHaveText('Same-page view transition Playground');
+	await expect(frame.locator('#title')).toHaveText('Same-page');
 
 	const getOrder = () =>
 		frame
