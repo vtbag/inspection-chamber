@@ -119,7 +119,14 @@ function monkey<
 	): ViewTransition {
 		const traces = new Error().stack?.split('\n');
 		const trace =
-			traces?.slice(traces[2].includes('mayStartViewTransition') ? 3 : 2).join('\n') ?? '';
+			traces
+				?.flatMap((line) => {
+					if (line === 'Error') return [];
+					return ['→  ' + line.replace(/^\s*at\s+/, '')];
+				})
+				.join('\n') ?? '';
+		console.log('[inspection chamber] startViewTransition called', trace);
+
 		const time = Date.now();
 		const transitionRoot = this.ownerDocument ? this : this.documentElement;
 		let features = parent.__vtbag.ic2!.vtMap!.get(transitionRoot)!;
