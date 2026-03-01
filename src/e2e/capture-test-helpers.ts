@@ -1,7 +1,8 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { CHAMBER_CONFIG, getTimeout, getSelectorPath } from './chamber-config';
 
 /**
- * Perform a long tap (1 second press) on a locator
+ * Perform a long tap (press) on a locator
  */
 async function longTap(locator: Locator, page: Page): Promise<void> {
 	const box = await locator.boundingBox();
@@ -11,7 +12,7 @@ async function longTap(locator: Locator, page: Page): Promise<void> {
 
 	await page.mouse.move(centerX, centerY);
 	await page.mouse.down();
-	await page.waitForTimeout(1000);
+	await page.waitForTimeout(getTimeout('longTap'));
 	await page.mouse.up();
 }
 
@@ -24,16 +25,18 @@ async function frames(page: Page) {
 	// pending module scripts and prevent the load event from ever firing.
 	await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
 
-	const resizeHandle = page.locator('.window .resize-handle.edge.s').first();
+	const resizeHandle = page.locator(CHAMBER_CONFIG.selectors.window.resizeHandle).first();
 	await expect(resizeHandle).toBeVisible();
 	await longTap(resizeHandle, page);
-	await page.waitForTimeout(500);
+	await page.waitForTimeout(getTimeout('afterLongTap'));
 
-	const frameLocator = page.locator('iframe').nth(1);
+	const frameLocator = page.locator('iframe').nth(CHAMBER_CONFIG.selectors.testFrame.index);
 	await expect(frameLocator).toBeVisible();
 	const frame = frameLocator.contentFrame();
 
-	const chamberFrameLocator = page.locator('iframe').nth(0);
+	const chamberFrameLocator = page
+		.locator('iframe')
+		.nth(CHAMBER_CONFIG.selectors.chamberFrame.index);
 	await expect(chamberFrameLocator).toBeVisible();
 	const chamberFrame = chamberFrameLocator.contentFrame();
 
@@ -47,14 +50,16 @@ export async function openCaptureView(page: Page, testType: string) {
 	const { frame, chamberFrame } = await frames(page);
 
 	// Close welcome panel if open
-	const welcomeDetails = chamberFrame.locator('vtbag-ic-welcome details').first();
+	const welcomeDetails = chamberFrame
+		.locator(CHAMBER_CONFIG.selectors.chamber.welcomePanel)
+		.first();
 	if ((await welcomeDetails.count()) > 0) {
-		await welcomeDetails.locator('summary').first().click();
+		await welcomeDetails.locator(CHAMBER_CONFIG.selectors.chamber.welcome.summary).first().click();
 		await expect(welcomeDetails).toHaveJSProperty('open', false);
 	}
 
 	// Enable capture mode
-	const captureCheckbox = chamberFrame.locator('#capture');
+	const captureCheckbox = chamberFrame.locator(CHAMBER_CONFIG.selectors.chamber.captureCheckbox);
 	if ((await captureCheckbox.count()) > 0 && !(await captureCheckbox.isChecked())) {
 		await captureCheckbox.click({ force: true });
 	}
@@ -62,8 +67,8 @@ export async function openCaptureView(page: Page, testType: string) {
 	// Trigger the transition for this test type
 	await frame.locator(`#trigger-${testType}`).click();
 
-	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
-	await expect(captureView).toBeVisible({ timeout: 10000 });
+	const captureView = chamberFrame.locator(CHAMBER_CONFIG.selectors.chamber.viewTransitionCapture);
+	await expect(captureView).toBeVisible({ timeout: getTimeout('captureView') });
 
 	return { captureView };
 }
@@ -101,13 +106,17 @@ export async function verifyCaptureHeader(
  * Verify captured groups count and names in display order
  */
 export async function verifyCapturedGroups(captureView: Locator, expectedGroups: string[]) {
-	await expect(captureView.locator('summary').first()).toHaveText(/Named elements/i);
+	await expect(
+		captureView.locator(CHAMBER_CONFIG.selectors.captureView.summary).first()
+	).toHaveText(/Named elements/i);
 
-	const capturedGroups = captureView.locator('.content > details');
+	const capturedGroups = captureView.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer);
 	await expect(capturedGroups.first()).toBeVisible();
 	expect(await capturedGroups.count()).toBe(expectedGroups.length);
 
-	const groupSummaries = await capturedGroups.locator('summary').allTextContents();
+	const groupSummaries = await capturedGroups
+		.locator(CHAMBER_CONFIG.selectors.captureView.summary)
+		.allTextContents();
 	expectedGroups.forEach((groupName, idx) => {
 		expect(groupSummaries[idx]).toBe(`Group ${groupName}`);
 	});
@@ -145,18 +154,19 @@ export async function verifyDevtoolsConsoleOutput(
 ): Promise<void> {
 	const consoleEvent = page.waitForEvent('console', {
 		predicate: (msg) =>
-			msg.text().includes('[inspection chamber]') && msg.text().includes('View transition on'),
+			msg.text().includes(CHAMBER_CONFIG.console.inspectionChamberMarker) &&
+			msg.text().includes(CHAMBER_CONFIG.console.viewTransitionMarker),
 	});
 
-	await captureView.locator('summary .devtools').click();
+	await captureView.locator(CHAMBER_CONFIG.selectors.captureView.devtoolsButton).click();
 	const devtoolsLog = await consoleEvent;
 
 	// Verify console message text
-	expect(devtoolsLog.text()).toContain('[inspection chamber]');
-	expect(devtoolsLog.text()).toContain('View transition on');
-	expect(devtoolsLog.text()).toContain('was started at');
-	expect(devtoolsLog.text()).toContain('from this code location:');
-	expect(devtoolsLog.text()).toContain('It captured the following elements');
+	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.inspectionChamberMarker);
+	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.viewTransitionMarker);
+	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.startedAtPattern);
+	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.codeLocationPattern);
+	expect(devtoolsLog.text()).toContain(CHAMBER_CONFIG.console.elementsCapuredPattern);
 
 	const args = devtoolsLog.args();
 	expect(args.length).toBeGreaterThan(0);
