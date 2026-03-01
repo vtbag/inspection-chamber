@@ -67,6 +67,22 @@
 				/* no view-transition-name by default */
 			}
 
+			#elem-a {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#fce7f3, #831843);
+				border-radius: 0.5rem;
+				/* no view-transition-name by default */
+			}
+
+			#elem-b {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#e0f2fe, #0c4a6e);
+				border-radius: 0.5rem;
+				/* no view-transition-name by default */
+			}
+
 			/* --- test-1-1: basic capture with hero --- */
 
 			html:active-view-transition-type(test-1-1) {
@@ -119,6 +135,27 @@
 					font-size: 1.5rem;
 				}
 			}
+
+			/* --- test-1-5: different elements with same name --- */
+
+			html:active-view-transition-type(test-1-5) {
+				/* elem-a has the name in old state, visible */
+				#elem-a {
+					view-transition-name: shared-element;
+				}
+				/* elem-b is hidden in old state */
+				#elem-b {
+					display: none;
+				}
+				/* in new state: elem-a hidden, elem-b visible with the name */
+				.state-b #elem-a {
+					display: none;
+				}
+				.state-b #elem-b {
+					view-transition-name: shared-element;
+					display: block;
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -128,6 +165,7 @@
 			<button id="trigger-test-1-2">Test 1.2</button>
 			<button id="trigger-test-1-3">Test 1.3</button>
 			<button id="trigger-test-1-4">Test 1.4</button>
+			<button id="trigger-test-1-5">Test 1.5</button>
 		</div>
 
 		<div id="old-only">
@@ -140,6 +178,14 @@
 
 		<div id="persistent" data-test-element="same">
 			<p>Persistent Element (same across transition)</p>
+		</div>
+
+		<div id="elem-a" data-test-element="a">
+			<p>Element A (old state only)</p>
+		</div>
+
+		<div id="elem-b" data-test-element="b">
+			<p>Element B (new state only)</p>
 		</div>
 
 		<script>
@@ -155,6 +201,7 @@
 			document.getElementById('trigger-test-1-2')?.addEventListener('click', () => triggerTransition('test-1-2'));
 			document.getElementById('trigger-test-1-3')?.addEventListener('click', () => triggerTransition('test-1-3'));
 			document.getElementById('trigger-test-1-4')?.addEventListener('click', () => triggerTransition('test-1-4'));
+			document.getElementById('trigger-test-1-5')?.addEventListener('click', () => triggerTransition('test-1-5'));
 		</script>
 	</body>
 </html>

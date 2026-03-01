@@ -136,7 +136,10 @@ export async function verifyDevtoolsConsoleOutput(
 		newOnlyGroups?: string[];
 		verifyIdentity?: {
 			groupName: string;
-			dataAttribute: { name: string; value: string };
+			dataAttribute:
+				| { name: string; value: string }
+				| { name: string; oldValue: string; newValue: string };
+			expectSameElement?: boolean;
 		};
 	}
 ): Promise<void> {
@@ -217,10 +220,14 @@ export async function verifyDevtoolsConsoleOutput(
 
 				// Optionally verify element identity
 				if (options.verifyIdentity) {
+					const dataAttr = options.verifyIdentity.dataAttribute;
+					const oldValue = 'value' in dataAttr ? dataAttr.value : dataAttr.oldValue;
+					const newValue = 'value' in dataAttr ? dataAttr.value : dataAttr.newValue;
+
 					const identityResult = await arg.evaluate(
 						(
 							captured: Record<string, any>,
-							opts: { groupName: string; attrName: string; attrValue: string }
+							opts: { groupName: string; attrName: string; oldValue: string; newValue: string }
 						) => {
 							const group = captured[opts.groupName];
 							if (!group) return { error: 'Group not found' };
@@ -239,22 +246,19 @@ export async function verifyDevtoolsConsoleOutput(
 						{
 							groupName: options.verifyIdentity.groupName,
 							attrName: options.verifyIdentity.dataAttribute.name,
-							attrValue: options.verifyIdentity.dataAttribute.value,
+							oldValue,
+							newValue,
 						}
 					);
 
 					if ('error' in identityResult) {
-						throw new Error(
-							`Element identity verification failed: ${identityResult.error}`
-						);
+						throw new Error(`Element identity verification failed: ${identityResult.error}`);
 					}
-					expect(identityResult.oldDataAttr).toBe(
-						options.verifyIdentity.dataAttribute.value
-					);
-					expect(identityResult.newDataAttr).toBe(
-						options.verifyIdentity.dataAttribute.value
-					);
-					expect(identityResult.isSameObject).toBe(true);
+					expect(identityResult.oldDataAttr).toBe(oldValue);
+					expect(identityResult.newDataAttr).toBe(newValue);
+					// Check if expecting same or different element
+					const expectSame = options.verifyIdentity.expectSameElement ?? true;
+					expect(identityResult.isSameObject).toBe(expectSame);
 				}
 
 				break;
@@ -265,4 +269,3 @@ export async function verifyDevtoolsConsoleOutput(
 	}
 	expect(capturedKeys).toEqual([...options.expectedGroups].sort());
 }
-

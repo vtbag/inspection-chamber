@@ -152,17 +152,44 @@ html:active-view-transition-type(test-1-4) {
 **Status:** ✅ Implemented - passes on chromium, webkit, firefox
 
 ### Test 1.5: Different Elements Old and New
-**Scenario:** Element A has name "shared" in old, Element B has name "shared" in new
+**Scenario:** Two different DOM elements (elem-a and elem-b) share the same view-transition-name across old and new states
+
+**Implementation:** `src/pages/e2e/capture-basic.astro`, `src/e2e/capture-basic.spec.ts`
 
 ```astro
-<div id="elem-a" style="view-transition-name: shared">Element A</div>
-<!-- button removes A, adds B with same name -->
+<div id="elem-a" data-test-element="a">Element A (old state only)</div>
+<div id="elem-b" data-test-element="b">Element B (new state only)</div>
+
+<!-- CSS type guard for test-1-5: -->
+html:active-view-transition-type(test-1-5) {
+  /* elem-a has the name in old state, visible */
+  #elem-a {
+    view-transition-name: shared-element;
+  }
+  /* elem-b is hidden in old state */
+  #elem-b {
+    display: none;
+  }
+  /* in new state: elem-a hidden, elem-b visible with the name */
+  .state-b #elem-a {
+    display: none;
+  }
+  .state-b #elem-b {
+    view-transition-name: shared-element;
+    display: block;
+  }
+}
 ```
 
 **Verify:**
-- Group "shared" has both `old` and `new` nodes
-- Different CSS selectors for old vs new
-- `oldSelector !== newSelector`
+- Group "shared-element" has both `old` and `new` nodes
+- Old element has `data-test-element="a"` (elem-a)
+- New element has `data-test-element="b"` (elem-b)
+- JavaScript object reference inequality: `oldNamedElement !== newNamedElement` (different DOM objects)
+- `hasOld: true, hasNew: true`
+- Total 3 groups: root, hero, shared-element
+
+**Status:** ✅ Implemented - passes on chromium, webkit, firefox
 
 ### Test 1.6: Pseudo-element ::before with view-transition-name
 **Scenario:** Element with `::before { view-transition-name: before-name }`

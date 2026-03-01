@@ -56,7 +56,6 @@ test.describe('Capture Mode: Basic Tests', () => {
 		});
 	});
 
-
 	test('1.4: Same element old and new', async ({ page }) => {
 		const { captureView } = await openCaptureView(page, 'test-1-4');
 
@@ -68,6 +67,23 @@ test.describe('Capture Mode: Basic Tests', () => {
 			verifyIdentity: {
 				groupName: 'persistent-element',
 				dataAttribute: { name: 'data-test-element', value: 'same' },
+				expectSameElement: true,
+			},
+		});
+	});
+
+	test('1.5: Different elements with same name', async ({ page }) => {
+		const { captureView } = await openCaptureView(page, 'test-1-5');
+
+		await verifyCapturedGroups(captureView, ['root', 'hero', 'shared-element']);
+
+		await verifyDevtoolsConsoleOutput(page, captureView, {
+			targetTag: 'html',
+			expectedGroups: ['root', 'hero', 'shared-element'],
+			verifyIdentity: {
+				groupName: 'shared-element',
+				dataAttribute: { name: 'data-test-element', oldValue: 'a', newValue: 'b' },
+				expectSameElement: false,
 			},
 		});
 	});
