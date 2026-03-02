@@ -34,7 +34,7 @@ export async function openCaptureView(page: Page, testType: string) {
 	await triggerCaptureTransition(frame, testType);
 	const captureView = await waitForCaptureView(chamberFrame);
 
-	return { captureView };
+	return { captureView, chamberFrame };
 }
 
 /**
