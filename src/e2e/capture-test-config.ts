@@ -12,6 +12,7 @@ export type GroupExpectation = {
 	presence: GroupPresence;
 	identity?: GroupIdentityExpectation;
 	pseudoElement?: string;
+	className?: string;
 };
 
 export type CaptureTestConfig = {
@@ -62,6 +63,11 @@ class GroupBuilder {
 
 	pseudoElement(value: string): this {
 		this.group.pseudoElement = value;
+		return this;
+	}
+
+	className(value: string): this {
+		this.group.className = value;
 		return this;
 	}
 

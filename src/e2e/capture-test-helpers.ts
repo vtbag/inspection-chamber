@@ -22,9 +22,9 @@ async function triggerCaptureTransition(frame: FrameLocator, testType: string): 
 /**
  * Open capture view: set up frames, enable capture mode, trigger transition with given type
  */
-export async function openCaptureView(page: Page, testType: string) {
+export async function openCaptureView(page: Page, testType: string, url = '/e2e/capture-basic/') {
 	const { frame, chamberFrame } = await setupFrames(page, {
-		url: '/e2e/capture-basic/',
+		url,
 		waitUntil: 'commit', // Handle IC's document.open() via requestIdleCallback
 		openChamber: true,
 	});

@@ -266,7 +266,7 @@ await verifyTransitionError(
 ```
 
 **Verify:**
-- Name derived from ID (consistent `-ua-` prefixed name)
+- Name derived from ID
 - Same element old/new matches correctly
 - Works as same-element transition
 
@@ -278,7 +278,7 @@ await verifyTransitionError(
 ```
 
 **Verify:**
-- Generates unique `-ua-auto-{n}` style name
+- Generates unique auto style name
 - Name is consistent for same element across old/new
 - Different elements get different names
 
@@ -290,7 +290,7 @@ await verifyTransitionError(
 ```
 
 **Verify:**
-- Generates unique `-ua-match-element-{n}` name
+- Generates unique match-element name
 - Ignores `id` attribute
 - Consistent for same element old/new
 
@@ -302,7 +302,7 @@ await verifyTransitionError(
 ```
 
 **Verify:**
-- Group "box" has `className: 'card'`
+- Group "box" has `className: 'card'` and name box
 
 ### Test 2.5: Multiple view-transition-class
 **Scenario:** Element with multiple classes
@@ -330,19 +330,7 @@ await verifyTransitionError(
 **Verify:**
 - Only `new-class` appears in final group data (per spec: new state takes precedence)
 
-### Test 2.7: Combined name and class
-**Scenario:** Both properties on same element
 
-```astro
-<div style="view-transition-name: named; view-transition-class: styled">Both</div>
-```
-
-**Verify:**
-- Group "named" exists
-- `className: 'styled'`
-- Both properties captured correctly
-
----
 
 ## Phase 3: Element Visibility & Rendering (capture-edge-cases)
 

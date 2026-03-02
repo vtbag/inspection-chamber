@@ -1,0 +1,183 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Capture Properties Test</title>
+		<script is:inline src="/attach.js"></script>
+		<style>
+			:root {
+				color-scheme: light dark;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				padding: 2rem;
+				font-family: system-ui, sans-serif;
+			}
+
+			h1 {
+				margin: 0;
+				font-size: 2rem;
+			}
+
+			button {
+				margin-top: 0.5rem;
+				padding: 0.5rem 1rem;
+				font-size: 1rem;
+				cursor: pointer;
+			}
+
+			/* --- shared base styles --- */
+
+			#hero {
+				padding: 2rem;
+				background: light-dark(#dbeafe, #1e3a8a);
+				border-radius: 0.5rem;
+				view-transition-name: hero;
+			}
+
+			.test-element {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#e0e7ff, #312e81);
+				border-radius: 0.5rem;
+			}
+
+			/* --- test-2-1: view-transition-name: auto (with ID) --- */
+
+			html:active-view-transition-type(test-2-1) {
+				#my-element {
+					view-transition-name: auto;
+				}
+				.state-b #my-element {
+					background: light-dark(#dcfce7, #14532d);
+					padding: 1.5rem;
+				}
+			}
+
+			/* --- test-2-2: view-transition-name: auto (without ID) --- */
+
+			html:active-view-transition-type(test-2-2) {
+				.no-id {
+					view-transition-name: auto;
+				}
+				.state-b .no-id {
+					background: light-dark(#fef3c7, #92400e);
+					padding: 1.5rem;
+				}
+			}
+
+			/* --- test-2-3: view-transition-name: match-element --- */
+
+			html:active-view-transition-type(test-2-3) {
+				#match-elem {
+					view-transition-name: match-element;
+				}
+				.state-b #match-elem {
+					background: light-dark(#fee2e2, #7f1d1d);
+					padding: 1.5rem;
+				}
+			}
+
+			/* --- test-2-4: Single view-transition-class --- */
+
+			html:active-view-transition-type(test-2-4) {
+				#box-single {
+					view-transition-name: box;
+					view-transition-class: card;
+				}
+				.state-b #box-single {
+					background: light-dark(#fce7f3, #831843);
+					padding: 1.5rem;
+				}
+			}
+
+			/* --- test-2-5: Multiple view-transition-class --- */
+
+			html:active-view-transition-type(test-2-5) {
+				#box-multi {
+					view-transition-name: box;
+					view-transition-class: card primary featured;
+				}
+				.state-b #box-multi {
+					background: light-dark(#e0f2fe, #0c4a6e);
+					padding: 1.5rem;
+				}
+			}
+
+			/* --- test-2-6: view-transition-class Priority (New over Old) --- */
+
+			html:active-view-transition-type(test-2-6) {
+				#class-priority {
+					view-transition-name: elem;
+					view-transition-class: old-class;
+				}
+				.state-b #class-priority {
+					view-transition-name: elem;
+					view-transition-class: new-class;
+					background: light-dark(#f3e8ff, #4c1d95);
+					padding: 1.5rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div id="hero">
+			<h1>Capture Properties Test</h1>
+			<button id="trigger-test-2-1">Test 2.1</button>
+			<button id="trigger-test-2-2">Test 2.2</button>
+			<button id="trigger-test-2-3">Test 2.3</button>
+			<button id="trigger-test-2-4">Test 2.4</button>
+			<button id="trigger-test-2-5">Test 2.5</button>
+			<button id="trigger-test-2-6">Test 2.6</button>
+		</div>
+
+		<div id="my-element" class="test-element">
+			<p>Auto with ID</p>
+		</div>
+
+		<div class="no-id test-element">
+			<p>Auto no ID</p>
+		</div>
+
+		<div id="match-elem" class="test-element">
+			<p>Match Element</p>
+		</div>
+
+		<div id="box-single" class="test-element">
+			<p>Card (single class)</p>
+		</div>
+
+		<div id="box-multi" class="test-element">
+			<p>Multi-class Box</p>
+		</div>
+
+		<div id="class-priority" class="test-element">
+			<p>Class Priority</p>
+		</div>
+
+		<script>
+			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+
+			function triggerTransition(type: string) {
+				mayStartViewTransition(
+					{ update: () => document.body.classList.toggle('state-b'), types: [type] },
+					{ useTypesPolyfill: 'always' }
+				);
+			}
+			document.getElementById('trigger-test-2-1')?.addEventListener('click', () => triggerTransition('test-2-1'));
+			document.getElementById('trigger-test-2-2')?.addEventListener('click', () => triggerTransition('test-2-2'));
+			document.getElementById('trigger-test-2-3')?.addEventListener('click', () => triggerTransition('test-2-3'));
+			document.getElementById('trigger-test-2-4')?.addEventListener('click', () => triggerTransition('test-2-4'));
+			document.getElementById('trigger-test-2-5')?.addEventListener('click', () => triggerTransition('test-2-5'));
+			document.getElementById('trigger-test-2-6')?.addEventListener('click', () => triggerTransition('test-2-6'));
+		</script>
+	</body>
+</html>
