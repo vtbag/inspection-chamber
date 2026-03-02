@@ -7,7 +7,9 @@ test.beforeEach(({ browserName }) => {
 	);
 });
 
-test('cross-document demo navigates forward and back with view transition types', async ({ page }) => {
+test('cross-document demo navigates forward and back with view transition types', async ({
+	page,
+}) => {
 	await page.goto('/e2e/cross-a/');
 	const frameLocator = page.locator('iframe').first();
 	await expect(frameLocator).toBeVisible();

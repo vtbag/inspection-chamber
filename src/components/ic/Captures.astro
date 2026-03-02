@@ -142,7 +142,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 			);
 			const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
 			captureElement.init(key);
-			parent.__vtbag!.ic2!.vtMap?.clear();
+			event.type !== 'ic-ready-error' && parent.__vtbag!.ic2!.vtMap?.clear();
 		};
 	}
 	customElements.define('vtbag-ic-captures', ICCaptures);

@@ -103,7 +103,7 @@ async function pagereveal(event: PageRevealEvent) {
 
 	if (captureMode) fastForward(transition, root);
 
-	transition.ready.finally(() => {
+	transition.ready.then(() => {
 		captureOldOnly || beforeCaptureNew(root, transition, features);
 		captureOldOnly || afterCaptureNew(root, transition, features);
 	});
@@ -125,7 +125,6 @@ function monkey<
 					return ['→  ' + line.replace(/^\s*at\s+/, '')];
 				})
 				.join('\n') ?? '';
-		console.log('[inspection chamber] startViewTransition called', trace);
 
 		const time = Date.now();
 		const transitionRoot = this.ownerDocument ? this : this.documentElement;
@@ -146,7 +145,7 @@ function monkey<
 				'#capture'
 			)?.checked;
 		const captureOldOnly = captureMode && parent.__vtbag.ic2!.captureOldOnly;
-		let readyErrorOccurred = false;
+		features.readyErrorOccurred = false;
 
 		let transition: ViewTransition;
 		if (!original) {
@@ -179,14 +178,16 @@ function monkey<
 		transition.updateCallbackDone.catch((e) =>
 			updateError(transitionRoot, transition, features, e)
 		);
-		transition.ready.finally(() => {
-			captureOldOnly || beforeCaptureNew(transitionRoot, transition, features);
-			captureOldOnly || afterCaptureNew(transitionRoot, transition, features);
-		});
-		transition.ready.catch((e) => {
-			readyErrorOccurred = true;
-			readyError(transitionRoot, transition, features, e);
-		});
+		transition.ready.then(
+			() => {
+				captureOldOnly || beforeCaptureNew(transitionRoot, transition, features);
+				captureOldOnly || afterCaptureNew(transitionRoot, transition, features);
+			},
+			(e) => {
+				features.readyErrorOccurred = true;
+				readyError(transitionRoot, transition, features, e);
+			}
+		);
 
 		if (!('activeViewTransition' in this)) {
 			if (this.ownerDocument) {

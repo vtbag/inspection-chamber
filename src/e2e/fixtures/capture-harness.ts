@@ -127,7 +127,7 @@ export async function closeWelcomePanelIfOpen(chamberFrame: FrameLocator): Promi
 	// Wait for the summary to be visible and ready to click
 	const summary = welcomeDetails.locator(CHAMBER_CONFIG.selectors.chamber.welcome.summary).first();
 	await expect(summary).toBeVisible({ timeout: 5000 });
-	
+
 	// Click to close and wait for the details to actually close
 	await summary.click();
 	await expect(welcomeDetails).toHaveJSProperty('open', false, { timeout: 5000 });
@@ -195,8 +195,14 @@ export async function openCaptureView(
 	// Setup frames if not already done
 	const handles = options.skipFrameSetup
 		? (() => {
-				const testFrame = page.locator('iframe').nth(options.testFrameIndex ?? 1).contentFrame();
-				const chamberFrame = page.locator('iframe').nth(options.chamberFrameIndex ?? 0).contentFrame();
+				const testFrame = page
+					.locator('iframe')
+					.nth(options.testFrameIndex ?? 1)
+					.contentFrame();
+				const chamberFrame = page
+					.locator('iframe')
+					.nth(options.chamberFrameIndex ?? 0)
+					.contentFrame();
 				if (!testFrame || !chamberFrame) throw new Error('Frames not available');
 				return { frame: testFrame, chamberFrame, page };
 			})()

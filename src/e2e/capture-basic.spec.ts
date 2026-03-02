@@ -102,22 +102,22 @@ test.describe('Capture Mode: Basic Tests', () => {
 
 	test('1.7: Pseudo-elements ::before and ::after with view-transition-name', async ({ page }) => {
 		const { captureView } = await openCaptureView(page, 'test-1-7');
-		
+
 		// Verify both pseudo-elements are captured
 		const summaries = await captureView
 			.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer)
 			.locator(CHAMBER_CONFIG.selectors.captureView.summary)
 			.allTextContents();
-		
+
 		// Check that both groups exist
 		expect(summaries).toContain('Group before-pseudo');
 		expect(summaries).toContain('Group after-pseudo');
-		
+
 		// Verify that ::before comes before ::after in the list
 		const beforeIndex = summaries.findIndex((s) => s.includes('before-pseudo'));
 		const afterIndex = summaries.findIndex((s) => s.includes('after-pseudo'));
 		expect(beforeIndex).toBeLessThan(afterIndex);
-		
+
 		// Verify root and hero are also present
 		expect(summaries).toContain('Group root');
 		expect(summaries).toContain('Group hero');
@@ -125,9 +125,10 @@ test.describe('Capture Mode: Basic Tests', () => {
 
 	test('1.8: Duplicate view-transition-name Detection', async ({ page }) => {
 		const { captureView } = await openCaptureView(page, 'test-1-8');
-		
-		// When duplicate view-transition-names are detected, the transition fails
-		// and the chamber shows "Cross-document navigation" as a fallback
-		await expect(captureView).toContainText(/Cross-document navigation|duplicate|error/i);
+		await expect(captureView).toContainText(/Same-document call/i);
+		await expect(captureView).toContainText('Group duplicate');
+		await expect(captureView).toContainText("old image element: #duplicate-a");
+		await expect(captureView).toContainText("old-duplicates image element: #duplicate-b");
+	
 	});
 });

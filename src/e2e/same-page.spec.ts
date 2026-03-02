@@ -320,10 +320,10 @@ test('slower changes view transition animation playbackRate even more', async ({
 test('analyze capturing shows captured elements and captured groups', async ({ page }) => {
 	const { frame, chamberFrame } = await setupSamePageTest(page);
 	await ensureCaptureModeEnabled(chamberFrame);
-	
+
 	// Trigger transition while in capture mode
 	await frame.locator('#toggle-layout').click();
-	
+
 	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
 	await expect(captureView).toBeVisible();
 	await expect(captureView.locator('summary').first()).toHaveText(/Named elements/i);
@@ -349,10 +349,10 @@ test('analyze capturing shows captured elements and captured groups', async ({ p
 test('analyze capturing switches captured groups to alphabetical sorting', async ({ page }) => {
 	const { frame, chamberFrame } = await setupSamePageTest(page);
 	await ensureCaptureModeEnabled(chamberFrame);
-	
+
 	// Trigger transition while in capture mode
 	await frame.locator('#toggle-layout').click();
-	
+
 	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
 	await expect(captureView).toBeVisible();
 
@@ -379,10 +379,10 @@ test('analyze capturing switches captured groups to alphabetical sorting', async
 test('analyze capturing shows view-transition classes in capture result', async ({ page }) => {
 	const { frame, chamberFrame } = await setupSamePageTest(page);
 	await ensureCaptureModeEnabled(chamberFrame);
-	
+
 	// Trigger transition while in capture mode
 	await frame.locator('#toggle-layout').click();
-	
+
 	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
 	await expect(captureView).toBeVisible();
 
