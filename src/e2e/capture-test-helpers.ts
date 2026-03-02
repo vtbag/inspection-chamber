@@ -125,7 +125,7 @@ type CaptureTextAssertion = {
 
 type RunCaptureTestOptions = {
 	testType: string;
-	config: CaptureTestConfig;
+	config?: CaptureTestConfig;
 	header?: {
 		selector: string;
 		oldTypes?: string;
@@ -133,6 +133,7 @@ type RunCaptureTestOptions = {
 	};
 	imageSelectors?: string[];
 	textAssertions?: CaptureTextAssertion[];
+	expectError?: boolean;
 };
 
 function toDevtoolsIdentity(
@@ -170,6 +171,22 @@ function groupNamesByPresence(
 
 export async function runCaptureTest(page: Page, options: RunCaptureTestOptions): Promise<void> {
 	const { captureView } = await openCaptureView(page, options.testType);
+
+	// For error cases, skip capture verification and only check text assertions
+	if (options.expectError) {
+		for (const assertion of options.textAssertions ?? []) {
+			if (assertion.present) {
+				await expect(captureView).toContainText(assertion.pattern);
+			} else {
+				await expect(captureView).not.toContainText(assertion.pattern);
+			}
+		}
+		return;
+	}
+
+	if (!options.config) {
+		throw new Error('config is required when expectError is not true');
+	}
 
 	if (options.header) {
 		await verifyCaptureHeader(captureView, options.header);

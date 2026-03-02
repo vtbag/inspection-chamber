@@ -83,6 +83,23 @@
 				/* no view-transition-name by default */
 			}
 
+			#pseudo-test {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#f3e8ff, #4c1d95);
+				border-radius: 0.5rem;
+				/* no view-transition-name by default */
+			}
+
+			#duplicate-a,
+			#duplicate-b {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#fecdd3, #7f2d2d);
+				border-radius: 0.5rem;
+				/* no view-transition-name by default */
+			}
+
 			/* --- test-1-1: basic capture with hero --- */
 
 			html:active-view-transition-type(test-1-1) {
@@ -156,6 +173,71 @@
 					display: block;
 				}
 			}
+
+			/* --- test-1-6: pseudo-element ::before with view-transition-name --- */
+
+			html:active-view-transition-type(test-1-6) {
+				#pseudo-test::before {
+					content: 'Before';
+					display: block;
+					margin-bottom: 1rem;
+					padding: 0.5rem;
+					background: light-dark(#fbbf24, #f59e0b);
+					border-radius: 0.25rem;
+					view-transition-name: before-pseudo;
+				}
+				.state-b #pseudo-test {
+					background: light-dark(#dbeafe, #1e3a8a);
+				}
+				.state-b #pseudo-test::before {
+					background: light-dark(#c7d2fe, #818cf8);
+				}
+			}
+
+			/* --- test-1-7: pseudo-element ::before and ::after with view-transition-name --- */
+
+			html:active-view-transition-type(test-1-7) {
+				#pseudo-test::before {
+					content: 'Before';
+					display: block;
+					margin-bottom: 1rem;
+					padding: 0.5rem;
+					background: light-dark(#fbbf24, #f59e0b);
+					border-radius: 0.25rem;
+					view-transition-name: before-pseudo;
+				}
+				#pseudo-test::after {
+					content: 'After';
+					display: block;
+					margin-top: 1rem;
+					padding: 0.5rem;
+					background: light-dark(#86efac, #22c55e);
+					border-radius: 0.25rem;
+					view-transition-name: after-pseudo;
+				}
+				.state-b #pseudo-test {
+					background: light-dark(#dbeafe, #1e3a8a);
+				}
+				.state-b #pseudo-test::before {
+					background: light-dark(#c7d2fe, #818cf8);
+				}
+				.state-b #pseudo-test::after {
+					background: light-dark(#c7d2fe, #818cf8);
+				}
+			}
+
+			/* --- test-1-8: duplicate view-transition-name detection --- */
+
+			html:active-view-transition-type(test-1-8) {
+				#duplicate-a,
+				#duplicate-b {
+					view-transition-name: duplicate;
+				}
+				.state-b #duplicate-a,
+				.state-b #duplicate-b {
+					background: light-dark(#fed7aa, #b45309);
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -166,42 +248,60 @@
 			<button id="trigger-test-1-3">Test 1.3</button>
 			<button id="trigger-test-1-4">Test 1.4</button>
 			<button id="trigger-test-1-5">Test 1.5</button>
-		</div>
+		<button id="trigger-test-1-6">Test 1.6</button>
+		<button id="trigger-test-1-7">Test 1.7</button>
+		<button id="trigger-test-1-8">Test 1.8</button>
+	</div>
 
-		<div id="old-only">
-			<p>This element only exists in the old state</p>
-		</div>
+	<div id="old-only">
+		<p>This element only exists in the old state</p>
+	</div>
 
-		<div id="new-only">
-			<p>This element is created in the new state</p>
-		</div>
+	<div id="new-only">
+		<p>This element is created in the new state</p>
+	</div>
 
-		<div id="persistent" data-test-element="same">
-			<p>Persistent Element (same across transition)</p>
-		</div>
+	<div id="persistent" data-test-element="same">
+		<p>Persistent Element (same across transition)</p>
+	</div>
 
-		<div id="elem-a" data-test-element="a">
-			<p>Element A (old state only)</p>
-		</div>
+	<div id="elem-a" data-test-element="a">
+		<p>Element A (old state only)</p>
+	</div>
 
-		<div id="elem-b" data-test-element="b">
-			<p>Element B (new state only)</p>
-		</div>
+	<div id="elem-b" data-test-element="b">
+		<p>Element B (new state only)</p>
+	</div>
 
-		<script>
-			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+	<div id="pseudo-test">
+		<p>Pseudo Element Test</p>
+	</div>
 
-			function triggerTransition(type: string) {
-				mayStartViewTransition(
-					{ update: () => document.body.classList.toggle('state-b'), types: [type] },
-					{ useTypesPolyfill: 'always' }
-				);
-			}
-			document.getElementById('trigger-test-1-1')?.addEventListener('click', () => triggerTransition('test-1-1'));
-			document.getElementById('trigger-test-1-2')?.addEventListener('click', () => triggerTransition('test-1-2'));
-			document.getElementById('trigger-test-1-3')?.addEventListener('click', () => triggerTransition('test-1-3'));
-			document.getElementById('trigger-test-1-4')?.addEventListener('click', () => triggerTransition('test-1-4'));
-			document.getElementById('trigger-test-1-5')?.addEventListener('click', () => triggerTransition('test-1-5'));
-		</script>
-	</body>
+	<div id="duplicate-a">
+		<p>Duplicate A</p>
+	</div>
+
+	<div id="duplicate-b">
+		<p>Duplicate B</p>
+	</div>
+
+	<script>
+		import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+
+		function triggerTransition(type: string) {
+			mayStartViewTransition(
+				{ update: () => document.body.classList.toggle('state-b'), types: [type] },
+				{ useTypesPolyfill: 'always' }
+			);
+		}
+		document.getElementById('trigger-test-1-1')?.addEventListener('click', () => triggerTransition('test-1-1'));
+		document.getElementById('trigger-test-1-2')?.addEventListener('click', () => triggerTransition('test-1-2'));
+		document.getElementById('trigger-test-1-3')?.addEventListener('click', () => triggerTransition('test-1-3'));
+		document.getElementById('trigger-test-1-4')?.addEventListener('click', () => triggerTransition('test-1-4'));
+		document.getElementById('trigger-test-1-5')?.addEventListener('click', () => triggerTransition('test-1-5'));
+		document.getElementById('trigger-test-1-6')?.addEventListener('click', () => triggerTransition('test-1-6'));
+		document.getElementById('trigger-test-1-7')?.addEventListener('click', () => triggerTransition('test-1-7'));
+		document.getElementById('trigger-test-1-8')?.addEventListener('click', () => triggerTransition('test-1-8'));
+	</script>
+</body>
 </html>
