@@ -162,15 +162,15 @@
 				}
 				/* elem-b is hidden in old state */
 				#elem-b {
-					display: none;
+					visibility: hidden;
 				}
 				/* in new state: elem-a hidden, elem-b visible with the name */
 				.state-b #elem-a {
-					display: none;
+					display: contents;
 				}
 				.state-b #elem-b {
 					view-transition-name: shared-element;
-					display: block;
+					visibility: visible;
 				}
 			}
 
