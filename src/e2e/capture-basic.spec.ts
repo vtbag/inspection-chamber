@@ -45,10 +45,10 @@ test.describe('Capture Mode: Basic Tests', () => {
 			],
 			config: captureTestConfig()
 				.group('root')
-			.oldOnly()
-			.done()
-			.group('hero')
-			.oldOnly()
+				.oldOnly()
+				.done()
+				.group('hero')
+				.oldOnly()
 				.done()
 				.group('old-only-element')
 				.oldOnly()
@@ -77,7 +77,7 @@ test.describe('Capture Mode: Basic Tests', () => {
 				.build(),
 		});
 	});
-	
+
 	test('1.3 old-only: New-only element (created in new state)', async ({ page }) => {
 		await runCaptureTest(page, {
 			testType: 'test-1-3',
@@ -89,10 +89,10 @@ test.describe('Capture Mode: Basic Tests', () => {
 			],
 			config: captureTestConfig()
 				.group('root')
-			.oldOnly()
-			.done()
-			.group('hero')
-			.oldOnly()
+				.oldOnly()
+				.done()
+				.group('hero')
+				.oldOnly()
 				.done()
 				.build(),
 		});
@@ -165,8 +165,8 @@ test.describe('Capture Mode: Basic Tests', () => {
 		const { captureView, chamberFrame } = await openCaptureView(page, 'test-1-8');
 		await expect(captureView).toContainText(/Same-document call/i);
 		await expect(captureView).toContainText('Group duplicate');
-		await expect(captureView).toContainText("old image element: #duplicate-a");
-		await expect(captureView).toContainText("old-duplicates image element: #duplicate-b");
+		await expect(captureView).toContainText('old image element: #duplicate-a');
+		await expect(captureView).toContainText('old-duplicates image element: #duplicate-b');
 		const messageComponent = chamberFrame.locator('vtbag-ic-message');
 		await expect(messageComponent).toBeVisible();
 		const messages = messageComponent.locator('.message');

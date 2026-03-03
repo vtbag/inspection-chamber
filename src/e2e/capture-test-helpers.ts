@@ -49,7 +49,8 @@ export async function openCaptureView(
 	const clickList: BeforeTriggerClick[] = [];
 
 	for (const click of options.beforeTriggerClicks ?? []) {
-		const clickItem: BeforeTriggerClick = typeof click === 'string' ? { selector: click, frame: 'test' } : click;
+		const clickItem: BeforeTriggerClick =
+			typeof click === 'string' ? { selector: click, frame: 'test' } : click;
 		clickList.push(clickItem);
 	}
 

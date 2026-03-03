@@ -1,0 +1,222 @@
+---
+
+---
+
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Advanced Capture Test (Chrome-only)</title>
+		<script is:inline src="/attach.js"></script>
+		<style>
+			:root {
+				color-scheme: light dark;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				padding: 2rem;
+				font-family: system-ui, sans-serif;
+			}
+
+			h1 {
+				margin: 0;
+				font-size: 2rem;
+			}
+
+			button {
+				margin-top: 0.5rem;
+				padding: 0.5rem 1rem;
+				font-size: 1rem;
+				cursor: pointer;
+			}
+
+			/* --- shared base styles --- */
+
+			#hero {
+				padding: 2rem;
+				background: light-dark(#dbeafe, #1e3a8a);
+				border-radius: 0.5rem;
+				view-transition-name: hero;
+			}
+
+			.container {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#e0e7ff, #312e81);
+				border-radius: 0.5rem;
+				border: 2px solid light-dark(#6366f1, #818cf8);
+			}
+
+			.child {
+				margin-top: 0.5rem;
+				padding: 0.5rem;
+				background: light-dark(#fce7f3, #831843);
+				border-radius: 0.25rem;
+			}
+
+			/* --- test-3-1: view-transition-group: contain --- */
+
+			html:active-view-transition-type(test-3-1) {
+				#container-1 {
+					view-transition-group: contain;
+					view-transition-name: container;
+				}
+				#child-1 {
+					view-transition-name: child;
+				}
+				.state-b #container-1 {
+					background: light-dark(#dcfce7, #14532d);
+					border-color: light-dark(#22c55e, #86efac);
+				}
+				.state-b #child-1 {
+					background: light-dark(#fef3c7, #92400e);
+				}
+			}
+
+			/* --- test-3-2: view-transition-group: nearest --- */
+
+			html:active-view-transition-type(test-3-2) {
+				#parent-2 {
+					view-transition-name: parent;
+				}
+				#child-2 {
+					view-transition-name: child;
+					view-transition-group: nearest;
+				}
+				.state-b #parent-2 {
+					background: light-dark(#dcfce7, #14532d);
+					border-color: light-dark(#22c55e, #86efac);
+				}
+				.state-b #child-2 {
+					background: light-dark(#fef3c7, #92400e);
+					padding: 1rem;
+				}
+			}
+
+			/* --- test-3-3: view-transition-group: <custom-ident> --- */
+
+			html:active-view-transition-type(test-3-3) {
+				#target-3 {
+					view-transition-name: target;
+				}
+				#child-3 {
+					view-transition-name: child;
+					view-transition-group: target;
+				}
+				.state-b #target-3 {
+					background: light-dark(#dcfce7, #14532d);
+					border-color: light-dark(#22c55e, #86efac);
+				}
+				.state-b #child-3 {
+					background: light-dark(#fef3c7, #92400e);
+				}
+			}
+
+			/* --- test-3-4: multiple nesting levels (3+ deep) --- */
+
+			html:active-view-transition-type(test-3-4) {
+				#level1 {
+					view-transition-group: horschd;
+					view-transition-name: level1;
+				}
+				#level2 {
+					view-transition-name: level2;
+				}
+				#level3 {
+					view-transition-name: level3;
+          view-transition-group: nearest;
+				}
+				#level3b {
+					view-transition-name: level3b;
+          view-transition-group: level1;
+				}
+				.state-b #level1 {
+					background: light-dark(#fef3c7, #92400e);
+					border-color: light-dark(#f59e0b, #fbbf24);
+				}
+				.state-b #level2 {
+					background: light-dark(#dbeafe, #1e3a8a);
+					border-color: light-dark(#3b82f6, #60a5fa);
+				}
+				.state-b #level3 {
+					background: light-dark(#dcfce7, #14532d);
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div id="hero">
+			<h1>Advanced Capture Tests (Chrome-only)</h1>
+			<button id="trigger-test-3-1">Test 3.1</button>
+			<button id="trigger-test-3-2">Test 3.2</button>
+			<button id="trigger-test-3-3">Test 3.3</button>
+			<button id="trigger-test-3-4">Test 3.4</button>
+		</div>
+
+		<!-- Test 3.1: view-transition-group: contain -->
+		<div id="container-1" class="container">
+			<p>Container (test 3.1)</p>
+			<div id="child-1" class="child">
+				<p>Child element</p>
+			</div>
+		</div>
+
+		<!-- Test 3.2: view-transition-group: nearest -->
+		<div id="parent-2" class="container">
+			<p>Parent (test 3.2)</p>
+			<div id="child-2" class="child">
+				<p>Child with nearest</p>
+			</div>
+		</div>
+
+		<!-- Test 3.3: view-transition-group: <custom-ident> -->
+		<div id="target-3" class="container">
+			<p>Target (test 3.3)</p>
+			<div id="child-3" class="child">
+				<p>Child pointing to target</p>
+			</div>
+		</div>
+
+		<!-- Test 3.4: multiple nesting levels -->
+		<div id="level1" class="container">
+			<p>Level 1</p>
+			<div id="level2" class="container" style="border-width: 1px;">
+				<p>Level 2</p>
+				<div id="level3" class="child">
+					<p>Level 3 (leaf)</p>
+					<div id="level3b" class="child">
+						<p>Level 3b (leaf)</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+
+			function triggerTransition(type: string) {
+				mayStartViewTransition(
+					{ update: () => document.body.classList.toggle('state-b'), types: [type] },
+					{ useTypesPolyfill: 'always' }
+				);
+			}
+			document
+				.getElementById('trigger-test-3-1')
+				?.addEventListener('click', () => triggerTransition('test-3-1'));
+			document
+				.getElementById('trigger-test-3-2')
+				?.addEventListener('click', () => triggerTransition('test-3-2'));
+			document
+				.getElementById('trigger-test-3-3')
+				?.addEventListener('click', () => triggerTransition('test-3-3'));
+			document
+				.getElementById('trigger-test-3-4')
+				?.addEventListener('click', () => triggerTransition('test-3-4'));
+		</script>
+	</body>
+</html>

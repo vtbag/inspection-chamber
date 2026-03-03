@@ -5,7 +5,11 @@ import { CHAMBER_CONFIG } from './chamber-config';
 test.describe('Capture Mode: Properties Tests', () => {
 	test('2.1: view-transition-name: auto (with ID)', async ({ page, browserName }) => {
 		test.skip(browserName !== 'webkit', 'Only runs on webkit');
-		const { captureView, chamberFrame } = await openCaptureView(page, 'test-2-1', '/e2e/capture-properties/');
+		const { captureView, chamberFrame } = await openCaptureView(
+			page,
+			'test-2-1',
+			'/e2e/capture-properties/'
+		);
 		const summaries = await captureView
 			.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer)
 			.locator(CHAMBER_CONFIG.selectors.captureView.summary)
@@ -17,7 +21,11 @@ test.describe('Capture Mode: Properties Tests', () => {
 
 	test('2.2: view-transition-name: auto (without ID)', async ({ page, browserName }) => {
 		test.skip(browserName !== 'webkit', 'Only runs on webkit');
-		const { captureView, chamberFrame } = await openCaptureView(page, 'test-2-2', '/e2e/capture-properties/');
+		const { captureView, chamberFrame } = await openCaptureView(
+			page,
+			'test-2-2',
+			'/e2e/capture-properties/'
+		);
 		const summaries = await captureView
 			.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer)
 			.locator(CHAMBER_CONFIG.selectors.captureView.summary)
@@ -28,7 +36,11 @@ test.describe('Capture Mode: Properties Tests', () => {
 	});
 
 	test('2.3: view-transition-name: match-element', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(page, 'test-2-3', '/e2e/capture-properties/');
+		const { captureView, chamberFrame } = await openCaptureView(
+			page,
+			'test-2-3',
+			'/e2e/capture-properties/'
+		);
 
 		// Get all groups
 		const summaries = await captureView
@@ -46,12 +58,16 @@ test.describe('Capture Mode: Properties Tests', () => {
 	});
 
 	test('2.4: Single view-transition-class', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(page, 'test-2-4', '/e2e/capture-properties/');
+		const { captureView, chamberFrame } = await openCaptureView(
+			page,
+			'test-2-4',
+			'/e2e/capture-properties/'
+		);
 		// Wait a bit for transition to complete
 		await page.waitForTimeout(500);
 		await expect(captureView).toContainText('Group box');
 		const devtoolsButton = captureView.locator(CHAMBER_CONFIG.selectors.captureView.devtoolsButton);
-		
+
 		const consolePromise = page.waitForEvent('console');
 		await devtoolsButton.click();
 		const consoleMsg = await consolePromise;
@@ -64,7 +80,7 @@ test.describe('Capture Mode: Properties Tests', () => {
 					}
 					return null;
 				});
-				
+
 				if (className !== null) {
 					expect(className).toBe('card');
 					return;
@@ -73,12 +89,16 @@ test.describe('Capture Mode: Properties Tests', () => {
 				// This arg wasn't the captured groups object, continue
 			}
 		}
-		
+
 		throw new Error('Could not find captured groups object with box group');
 	});
 
 	test('2.5: Multiple view-transition-class', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(page, 'test-2-5', '/e2e/capture-properties/');
+		const { captureView, chamberFrame } = await openCaptureView(
+			page,
+			'test-2-5',
+			'/e2e/capture-properties/'
+		);
 		// Wait a bit for transition to complete
 		await page.waitForTimeout(500);
 		await expect(captureView).toContainText('Group box');
@@ -95,7 +115,7 @@ test.describe('Capture Mode: Properties Tests', () => {
 					}
 					return null;
 				});
-				
+
 				if (className !== null) {
 					expect(className).toBe('card primary featured');
 					return;
@@ -104,17 +124,21 @@ test.describe('Capture Mode: Properties Tests', () => {
 				// This arg wasn't the captured groups object, continue
 			}
 		}
-		
+
 		throw new Error('Could not find captured groups object with box group');
 	});
 
 	test('2.6: view-transition-class Priority (New over Old)', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(page, 'test-2-6', '/e2e/capture-properties/');
+		const { captureView, chamberFrame } = await openCaptureView(
+			page,
+			'test-2-6',
+			'/e2e/capture-properties/'
+		);
 		// Wait a bit for transition to complete
 		await page.waitForTimeout(500);
 		await expect(captureView).toContainText('Group elem');
 		const devtoolsButton = captureView.locator(CHAMBER_CONFIG.selectors.captureView.devtoolsButton);
-		
+
 		const consolePromise = page.waitForEvent('console');
 		await devtoolsButton.click();
 		const consoleMsg = await consolePromise;
@@ -127,7 +151,7 @@ test.describe('Capture Mode: Properties Tests', () => {
 					}
 					return null;
 				});
-				
+
 				if (className !== null) {
 					expect(className).toBe('new-class');
 					return;
@@ -136,7 +160,7 @@ test.describe('Capture Mode: Properties Tests', () => {
 				// This arg wasn't the captured groups object, continue
 			}
 		}
-		
+
 		throw new Error('Could not find captured groups object with elem group');
 	});
 });
