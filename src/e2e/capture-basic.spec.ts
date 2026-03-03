@@ -34,6 +34,29 @@ test.describe('Capture Mode: Basic Tests', () => {
 		});
 	});
 
+	test('1.2 old-only: Old-only element (click old-only before transition)', async ({ page }) => {
+		await runCaptureTest(page, {
+			testType: 'test-1-2',
+			beforeTriggerClicks: [{ selector: 'label[for="old-only"]', frame: 'chamber' }],
+			header: { selector: ':root' },
+			textAssertions: [
+				{ pattern: /old image element: #old-only/i, present: true },
+				{ pattern: /new image element:/i, present: false },
+			],
+			config: captureTestConfig()
+				.group('root')
+			.oldOnly()
+			.done()
+			.group('hero')
+			.oldOnly()
+				.done()
+				.group('old-only-element')
+				.oldOnly()
+				.done()
+				.build(),
+		});
+	});
+
 	test('1.3: New-only element (created in new state)', async ({ page }) => {
 		await runCaptureTest(page, {
 			testType: 'test-1-3',
@@ -50,6 +73,26 @@ test.describe('Capture Mode: Basic Tests', () => {
 				.done()
 				.group('new-only-element')
 				.newOnly()
+				.done()
+				.build(),
+		});
+	});
+	
+	test('1.3 old-only: New-only element (created in new state)', async ({ page }) => {
+		await runCaptureTest(page, {
+			testType: 'test-1-3',
+			beforeTriggerClicks: [{ selector: 'label[for="old-only"]', frame: 'chamber' }],
+			header: { selector: ':root' },
+			textAssertions: [
+				{ pattern: /old image element: #new-only/i, present: false },
+				{ pattern: /new image element: #new-only/i, present: false },
+			],
+			config: captureTestConfig()
+				.group('root')
+			.oldOnly()
+			.done()
+			.group('hero')
+			.oldOnly()
 				.done()
 				.build(),
 		});

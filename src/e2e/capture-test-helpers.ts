@@ -19,10 +19,24 @@ async function triggerCaptureTransition(frame: FrameLocator, testType: string): 
 	await frame.locator(`#trigger-${testType}`).click();
 }
 
+type BeforeTriggerClick = {
+	selector: string;
+	frame?: 'test' | 'chamber';
+};
+
+type OpenCaptureViewOptions = {
+	beforeTriggerClicks?: (string | BeforeTriggerClick)[];
+};
+
 /**
  * Open capture view: set up frames, enable capture mode, trigger transition with given type
  */
-export async function openCaptureView(page: Page, testType: string, url = '/e2e/capture-basic/') {
+export async function openCaptureView(
+	page: Page,
+	testType: string,
+	url = '/e2e/capture-basic/',
+	options: OpenCaptureViewOptions = {}
+) {
 	const { frame, chamberFrame } = await setupFrames(page, {
 		url,
 		waitUntil: 'commit', // Handle IC's document.open() via requestIdleCallback
@@ -31,6 +45,46 @@ export async function openCaptureView(page: Page, testType: string, url = '/e2e/
 
 	await closeWelcomePanelIfOpen(chamberFrame);
 	await ensureCaptureModeEnabled(chamberFrame);
+
+	const clickList: BeforeTriggerClick[] = [];
+
+	for (const click of options.beforeTriggerClicks ?? []) {
+		const clickItem: BeforeTriggerClick = typeof click === 'string' ? { selector: click, frame: 'test' } : click;
+		clickList.push(clickItem);
+	}
+
+	for (const click of clickList) {
+		const targetFrame = click.frame === 'test' ? frame : chamberFrame;
+		const targetLocator = targetFrame.locator(click.selector);
+		const target = targetLocator.first();
+		await expect(target).toBeVisible();
+		await target.click();
+
+		const associatedControlId = await target.evaluate((element) => {
+			if (element instanceof HTMLLabelElement && element.htmlFor) {
+				return element.htmlFor;
+			}
+			return null;
+		});
+
+		if (!associatedControlId) {
+			continue;
+		}
+
+		const associatedControl = targetFrame.locator(`#${associatedControlId}`).first();
+		await expect(associatedControl).toBeVisible();
+
+		const checkable = await associatedControl.evaluate((element) => {
+			return (
+				element instanceof HTMLInputElement &&
+				(element.type === 'checkbox' || element.type === 'radio')
+			);
+		});
+
+		if (checkable) {
+			await expect(associatedControl).toBeChecked();
+		}
+	}
 	await triggerCaptureTransition(frame, testType);
 	const captureView = await waitForCaptureView(chamberFrame);
 
@@ -125,6 +179,7 @@ type CaptureTextAssertion = {
 
 type RunCaptureTestOptions = {
 	testType: string;
+	beforeTriggerClicks?: (string | BeforeTriggerClick)[];
 	config?: CaptureTestConfig;
 	header?: {
 		selector: string;
@@ -170,7 +225,9 @@ function groupNamesByPresence(
 }
 
 export async function runCaptureTest(page: Page, options: RunCaptureTestOptions): Promise<void> {
-	const { captureView } = await openCaptureView(page, options.testType);
+	const { captureView } = await openCaptureView(page, options.testType, undefined, {
+		beforeTriggerClicks: options.beforeTriggerClicks,
+	});
 
 	// For error cases, skip capture verification and only check text assertions
 	if (options.expectError) {
