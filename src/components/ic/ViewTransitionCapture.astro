@@ -243,6 +243,8 @@
 						element: d.element,
 						pseudoElement: d.pseudoElement,
 					}));
+				group.oldHidden && (entry.oldHidden = group.oldHidden);
+				group.newHidden && (entry.newHidden = group.newHidden);
 				// if there is a new element, its view-transition-class property dominates
 				if (group.old && group.old.viewTransitionClass !== 'none')
 					entry.classProperty = group.old.viewTransitionClass;
