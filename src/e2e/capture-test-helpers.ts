@@ -29,7 +29,7 @@ type OpenCaptureViewOptions = {
 };
 
 
-export async function clickCheck( targetFrame: FrameLocator, targetLocator: Locator, off=false) {
+export async function clickCheck(targetFrame: FrameLocator, targetLocator: Locator, on = true) {
 	const target = targetLocator.first();
 	await expect(target).toBeVisible();
 	await target.click();
@@ -53,10 +53,10 @@ export async function clickCheck( targetFrame: FrameLocator, targetLocator: Loca
 		});
 
 		if (checkable) {
-			if (off) {
-				await expect(associatedControl).not.toBeChecked();
-			} else {
+			if (on) {
 				await expect(associatedControl).toBeChecked();
+			} else {
+				await expect(associatedControl).not.toBeChecked();
 			}
 		}
 	}
@@ -83,7 +83,7 @@ export async function openCaptureView(
 
 	for (const click of options.beforeTriggerClicks ?? []) {
 		const clickItem: BeforeTriggerClick =
-			typeof click === 'string' ? { selector: click, frame: 'test' } : click;
+			typeof click === 'string' ? { selector: click, frame: 'chamber' } : click;
 		clickList.push(clickItem);
 	}
 
@@ -231,7 +231,7 @@ function groupNamesByPresence(
 	return groups.filter((group) => group.presence === presence).map((group) => group.name);
 }
 
-export async function runCaptureTest(page: Page, options: RunCaptureTestOptions): Promise<{chamberFrame: FrameLocator, testFrame: FrameLocator}> {
+export async function runCaptureTest(page: Page, options: RunCaptureTestOptions): Promise<{ chamberFrame: FrameLocator, testFrame: FrameLocator; }> {
 	const { captureView, chamberFrame, testFrame } = await openCaptureView(page, options.testType, undefined, {
 		beforeTriggerClicks: options.beforeTriggerClicks,
 	});
@@ -246,7 +246,7 @@ export async function runCaptureTest(page: Page, options: RunCaptureTestOptions)
 			}
 		}
 		// make the function return chamberFrame with the promise
-		return {chamberFrame, testFrame};
+		return { chamberFrame, testFrame };
 	}
 
 	if (!options.config) {
@@ -286,7 +286,7 @@ export async function runCaptureTest(page: Page, options: RunCaptureTestOptions)
 		verifyIdentity: verifyIdentities[0],
 		verifyIdentities: verifyIdentities.length > 1 ? verifyIdentities.slice(1) : undefined,
 	});
-	return {chamberFrame, testFrame};
+	return { chamberFrame, testFrame };
 }
 
 async function waitForDevtoolsLog(page: Page, captureView: Locator) {

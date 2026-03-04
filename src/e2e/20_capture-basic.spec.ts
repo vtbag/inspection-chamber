@@ -60,7 +60,7 @@ test.describe('Capture Mode: Basic Tests', () => {
 	test('1.2 old-only + freeze: Old-only element (click old-only before transition)', async ({ page }) => {
 		const {chamberFrame, testFrame} = await runCaptureTest(page, {
 			testType: 'test-1-2',
-			beforeTriggerClicks: [{ selector: 'label[for="old-only"]' }, { selector: 'label[for="freeze-types"]' }],
+			beforeTriggerClicks: ['label[for="old-only"]','label[for="freeze-types"]' ],
 			header: { selector: ':root' },
 			textAssertions: [
 				{ pattern: /old image element: #old-only/i, present: true },
@@ -91,7 +91,7 @@ test.describe('Capture Mode: Basic Tests', () => {
 		await expect(clearButton).toBeVisible();
 		await clearButton.click();
 		await expect(messages).toHaveCount(0);
-		//clickCheck(chamberFrame, chamberFrame.locator('label[for="freeze-types"]'), true)
+		await clickCheck(chamberFrame, chamberFrame.locator('label[for="freeze-types"]'), true)
 	});
 
 	test('1.3: New-only element (created in new state)', async ({ page }) => {
