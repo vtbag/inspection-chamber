@@ -24,12 +24,12 @@ test.beforeEach(async ({ browserName }, testInfo) => {
  * Does NOT trigger any transitions - tests should trigger them explicitly.
  */
 async function setupSamePageTest(page: Page) {
-	const { frame, chamberFrame } = await setupFrames(page, {
+	const { testFrame, chamberFrame } = await setupFrames(page, {
 		url: '/e2e/same-page/',
 		openChamber: true,
 	});
 
-	return { frame, chamberFrame };
+	return { frame: testFrame, chamberFrame };
 }
 
 async function expectDockedLayout(
@@ -86,7 +86,7 @@ async function testPlaybackRate(
 	expectedRate: number,
 	isWebkit: boolean
 ): Promise<void> {
-	const { frame, chamberFrame } = await setupFrames(page, {
+	const { testFrame, chamberFrame } = await setupFrames(page, {
 		url: '/e2e/same-page/',
 		openChamber: true,
 	});
@@ -95,17 +95,17 @@ async function testPlaybackRate(
 	await chamberFrame.getByRole('radio', { name: 'Run' }).check();
 	await chamberFrame.getByRole('radio', { name: 'Normal' }).check();
 	if (isWebkit) {
-		await frame.locator('#toggle-layout').click();
+		await testFrame.locator('#toggle-layout').click();
 		await page.waitForTimeout(300);
 	}
 	await chamberFrame.locator(`label[for="${radioId}"]`).click();
 	await expect(chamberFrame.locator(`#${radioId}`)).toBeChecked();
 
-	await frame.locator('#toggle-layout').click();
+	await testFrame.locator('#toggle-layout').click();
 	await waitForCondition(
 		page,
 		async () =>
-			frame
+			testFrame
 				.locator('html')
 				.evaluate(
 					(_, rate) =>

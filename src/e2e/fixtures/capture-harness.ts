@@ -57,7 +57,7 @@ export interface SetupFramesOptions {
  * Return value from frame setup.
  */
 export interface FrameHandles {
-	frame: FrameLocator;
+	testFrame: FrameLocator;
 	chamberFrame: FrameLocator;
 	page: Page;
 }
@@ -98,8 +98,8 @@ export async function setupFrames(page: Page, options: SetupFramesOptions): Prom
 	// Get test frame (contains test content)
 	const frameLocator = page.locator('iframe').nth(testFrameIndex);
 	await expect(frameLocator).toBeVisible();
-	const frame = frameLocator.contentFrame();
-	if (!frame) throw new Error(`Test frame not found at index ${testFrameIndex}`);
+	const testFrame = frameLocator.contentFrame();
+	if (!testFrame) throw new Error(`Test frame not found at index ${testFrameIndex}`);
 
 	// Get chamber frame (contains inspection chamber UI)
 	const chamberFrameLocator = page.locator('iframe').nth(chamberFrameIndex);
@@ -107,7 +107,7 @@ export async function setupFrames(page: Page, options: SetupFramesOptions): Prom
 	const chamberFrame = chamberFrameLocator.contentFrame();
 	if (!chamberFrame) throw new Error(`Chamber frame not found at index ${chamberFrameIndex}`);
 
-	return { frame, chamberFrame, page };
+	return { testFrame, chamberFrame, page };
 }
 
 /**
@@ -204,11 +204,11 @@ export async function openCaptureView(
 					.nth(options.chamberFrameIndex ?? 0)
 					.contentFrame();
 				if (!testFrame || !chamberFrame) throw new Error('Frames not available');
-				return { frame: testFrame, chamberFrame, page };
+				return { testFrame, chamberFrame, page };
 			})()
 		: await setupFrames(page, options);
 
-	const { frame, chamberFrame } = handles;
+	const { testFrame, chamberFrame } = handles;
 
 	// Prepare chamber UI
 	await closeWelcomePanelIfOpen(chamberFrame);
@@ -217,7 +217,7 @@ export async function openCaptureView(
 	// Wait for capture view
 	const captureView = await waitForCaptureView(chamberFrame);
 
-	return { frame, chamberFrame, captureView, page };
+	return { testFrame, chamberFrame, captureView, page };
 }
 
 /**

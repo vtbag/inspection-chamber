@@ -28,6 +28,39 @@ type OpenCaptureViewOptions = {
 	beforeTriggerClicks?: (string | BeforeTriggerClick)[];
 };
 
+
+export async function clickCheck( targetFrame: FrameLocator, targetLocator: Locator, off=false) {
+	const target = targetLocator.first();
+	await expect(target).toBeVisible();
+	await target.click();
+
+	const associatedControlId = await target.evaluate((element) => {
+		if (element instanceof HTMLLabelElement && element.htmlFor) {
+			return element.htmlFor;
+		}
+		return null;
+	});
+
+	if (associatedControlId) {
+		const associatedControl = targetFrame.locator(`#${associatedControlId}`).first();
+		await expect(associatedControl).toBeVisible();
+
+		const checkable = await associatedControl.evaluate((element) => {
+			return (
+				element instanceof HTMLInputElement &&
+				(element.type === 'checkbox' || element.type === 'radio')
+			);
+		});
+
+		if (checkable) {
+			if (off) {
+				await expect(associatedControl).not.toBeChecked();
+			} else {
+				await expect(associatedControl).toBeChecked();
+			}
+		}
+	}
+}
 /**
  * Open capture view: set up frames, enable capture mode, trigger transition with given type
  */
@@ -37,7 +70,7 @@ export async function openCaptureView(
 	url = '/e2e/capture-basic/',
 	options: OpenCaptureViewOptions = {}
 ) {
-	const { frame, chamberFrame } = await setupFrames(page, {
+	const { testFrame, chamberFrame } = await setupFrames(page, {
 		url,
 		waitUntil: 'commit', // Handle IC's document.open() via requestIdleCallback
 		openChamber: true,
@@ -55,41 +88,14 @@ export async function openCaptureView(
 	}
 
 	for (const click of clickList) {
-		const targetFrame = click.frame === 'test' ? frame : chamberFrame;
+		const targetFrame = click.frame === 'test' ? testFrame : chamberFrame;
 		const targetLocator = targetFrame.locator(click.selector);
-		const target = targetLocator.first();
-		await expect(target).toBeVisible();
-		await target.click();
-
-		const associatedControlId = await target.evaluate((element) => {
-			if (element instanceof HTMLLabelElement && element.htmlFor) {
-				return element.htmlFor;
-			}
-			return null;
-		});
-
-		if (!associatedControlId) {
-			continue;
-		}
-
-		const associatedControl = targetFrame.locator(`#${associatedControlId}`).first();
-		await expect(associatedControl).toBeVisible();
-
-		const checkable = await associatedControl.evaluate((element) => {
-			return (
-				element instanceof HTMLInputElement &&
-				(element.type === 'checkbox' || element.type === 'radio')
-			);
-		});
-
-		if (checkable) {
-			await expect(associatedControl).toBeChecked();
-		}
+		await clickCheck(targetFrame, targetLocator);
 	}
-	await triggerCaptureTransition(frame, testType);
+	await triggerCaptureTransition(testFrame, testType);
 	const captureView = await waitForCaptureView(chamberFrame);
 
-	return { captureView, chamberFrame };
+	return { captureView, chamberFrame, testFrame };
 }
 
 /**
@@ -98,7 +104,7 @@ export async function openCaptureView(
  */
 export async function verifyCaptureHeader(
 	captureView: Locator,
-	options: { selector: string; oldTypes?: string; newTypes?: string }
+	options: { selector: string; oldTypes?: string; newTypes?: string; }
 ) {
 	await expect(captureView).toContainText(
 		new RegExp(`Same-document call on ${options.selector}, started at \\d{2}:\\d{2}:\\d{2}.\\d{3}`)
@@ -155,8 +161,8 @@ export async function verifyImageElements(captureView: Locator, selectors: strin
  * Click devtools print icon and verify console output
  */
 type CaptureIdentityDataAttribute =
-	| { name: string; value: string }
-	| { name: string; oldValue: string; newValue: string };
+	| { name: string; value: string; }
+	| { name: string; oldValue: string; newValue: string; };
 
 type CaptureIdentityOptions = {
 	groupName: string;
@@ -219,14 +225,14 @@ function toDevtoolsIdentity(
 }
 
 function groupNamesByPresence(
-	groups: { name: string; presence: GroupPresence }[],
+	groups: { name: string; presence: GroupPresence; }[],
 	presence: GroupPresence
 ) {
 	return groups.filter((group) => group.presence === presence).map((group) => group.name);
 }
 
-export async function runCaptureTest(page: Page, options: RunCaptureTestOptions): Promise<void> {
-	const { captureView } = await openCaptureView(page, options.testType, undefined, {
+export async function runCaptureTest(page: Page, options: RunCaptureTestOptions): Promise<{chamberFrame: FrameLocator, testFrame: FrameLocator}> {
+	const { captureView, chamberFrame, testFrame } = await openCaptureView(page, options.testType, undefined, {
 		beforeTriggerClicks: options.beforeTriggerClicks,
 	});
 
@@ -239,7 +245,8 @@ export async function runCaptureTest(page: Page, options: RunCaptureTestOptions)
 				await expect(captureView).not.toContainText(assertion.pattern);
 			}
 		}
-		return;
+		// make the function return chamberFrame with the promise
+		return {chamberFrame, testFrame};
 	}
 
 	if (!options.config) {
@@ -279,6 +286,7 @@ export async function runCaptureTest(page: Page, options: RunCaptureTestOptions)
 		verifyIdentity: verifyIdentities[0],
 		verifyIdentities: verifyIdentities.length > 1 ? verifyIdentities.slice(1) : undefined,
 	});
+	return {chamberFrame, testFrame};
 }
 
 async function waitForDevtoolsLog(page: Page, captureView: Locator) {
@@ -409,7 +417,7 @@ async function verifyGroupIdentity(
 	const identityResult = await captureArg.evaluate(
 		(
 			captured: Record<string, any>,
-			opts: { groupName: string; attrName: string; oldValue: string; newValue: string }
+			opts: { groupName: string; attrName: string; oldValue: string; newValue: string; }
 		) => {
 			const group = captured[opts.groupName];
 			if (!group) return { error: 'Group not found' };

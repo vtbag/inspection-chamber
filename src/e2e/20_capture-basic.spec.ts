@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { runCaptureTest, openCaptureView } from './capture-test-helpers';
+import { runCaptureTest, openCaptureView, clickCheck } from './capture-test-helpers';
 import { captureTestConfig } from './capture-test-config';
 import { CHAMBER_CONFIG } from './chamber-config';
 
@@ -55,6 +55,43 @@ test.describe('Capture Mode: Basic Tests', () => {
 				.done()
 				.build(),
 		});
+	});
+
+	test('1.2 old-only + freeze: Old-only element (click old-only before transition)', async ({ page }) => {
+		const {chamberFrame, testFrame} = await runCaptureTest(page, {
+			testType: 'test-1-2',
+			beforeTriggerClicks: [{ selector: 'label[for="old-only"]' }, { selector: 'label[for="freeze-types"]' }],
+			header: { selector: ':root' },
+			textAssertions: [
+				{ pattern: /old image element: #old-only/i, present: true },
+				{ pattern: /new image element:/i, present: false },
+			],
+			config: captureTestConfig()
+				.group('root')
+				.oldOnly()
+				.done()
+				.group('hero')
+				.oldOnly()
+				.done()
+				.group('old-only-element')
+				.oldOnly()
+				.done()
+				.build(),
+		});
+
+		
+		const messageComponent = chamberFrame.locator('vtbag-ic-message');
+		await expect(messageComponent).toBeVisible();
+		const messages = messageComponent.locator('.message');
+		await expect(messages).toHaveCount(1);
+		const firstMessage = messages.nth(0);
+		await expect(firstMessage).toContainText(/Don't forget to resume them when done/i);
+	
+		const clearButton = firstMessage.locator('button.clear');
+		await expect(clearButton).toBeVisible();
+		await clearButton.click();
+		await expect(messages).toHaveCount(0);
+		//clickCheck(chamberFrame, chamberFrame.locator('label[for="freeze-types"]'), true)
 	});
 
 	test('1.3: New-only element (created in new state)', async ({ page }) => {
@@ -175,6 +212,12 @@ test.describe('Capture Mode: Basic Tests', () => {
 		await expect(firstMessage).toContainText(/InvalidStateError/i);
 		const secondMessage = messages.nth(1);
 		await expect(secondMessage).toContainText(/duplicate.*name/i);
+		
+		const clearButton = firstMessage.locator('button.clear');
+		await expect(clearButton).toBeVisible();
+		await clearButton.click();
+		await expect(messages).toHaveCount(1);
+
 		const clearAllButton = messageComponent.locator('button.clear-all');
 		await expect(clearAllButton).toBeVisible();
 		await clearAllButton.click();
