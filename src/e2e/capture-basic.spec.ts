@@ -181,4 +181,23 @@ test.describe('Capture Mode: Basic Tests', () => {
 		await expect(messages).toHaveCount(0);
 		await expect(messageComponent).toHaveCSS('display', 'none');
 	});
+
+	test('4.5: CSS escape sequences in view-transition-name', async ({ page }) => {
+		const { captureView } = await openCaptureView(page, 'test-4-5');
+
+		await expect(captureView).toContainText(/Same-document call/i);
+
+		// Get all group summaries
+		const summaries = await captureView
+			.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer)
+			.locator(CHAMBER_CONFIG.selectors.captureView.summary)
+			.allTextContents();
+
+		// Verify root and hero groups exist
+		expect(summaries.some((s) => s.includes('root'))).toBe(true);
+		expect(summaries.some((s) => s.includes('hero'))).toBe(true);
+
+		// Verify the escaped name is unescaped correctly and displays as "!important"
+		expect(summaries.some((s) => s.includes('!important'))).toBe(true);
+	});
 });

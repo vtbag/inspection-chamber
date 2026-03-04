@@ -100,6 +100,14 @@
 				/* no view-transition-name by default */
 			}
 
+			#escaped-name {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#e0e7ff, #312e81);
+				border-radius: 0.5rem;
+				/* no view-transition-name by default */
+			}
+
 			/* --- test-1-1: basic capture with hero --- */
 
 			html:active-view-transition-type(test-1-1) {
@@ -238,6 +246,18 @@
 					background: light-dark(#fed7aa, #b45309);
 				}
 			}
+
+			/* --- test-4-5: CSS escape sequences in view-transition-name --- */
+
+			html:active-view-transition-type(test-4-5) {
+				#escaped-name {
+					view-transition-name: \!important;
+				}
+				.state-b #escaped-name {
+					background: light-dark(#dcfce7, #14532d);
+					padding: 2rem;
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -251,6 +271,7 @@
 		<button id="trigger-test-1-6">Test 1.6</button>
 		<button id="trigger-test-1-7">Test 1.7</button>
 		<button id="trigger-test-1-8">Test 1.8</button>
+		<button id="trigger-test-4-5">Test 4.5</button>
 	</div>
 
 	<div id="old-only">
@@ -285,6 +306,10 @@
 		<p>Duplicate B</p>
 	</div>
 
+	<div id="escaped-name">
+		<p>Element with escaped characters in name (!important)</p>
+	</div>
+
 	<script>
 		import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
@@ -302,6 +327,7 @@
 		document.getElementById('trigger-test-1-6')?.addEventListener('click', () => triggerTransition('test-1-6'));
 		document.getElementById('trigger-test-1-7')?.addEventListener('click', () => triggerTransition('test-1-7'));
 		document.getElementById('trigger-test-1-8')?.addEventListener('click', () => triggerTransition('test-1-8'));
+		document.getElementById('trigger-test-4-5')?.addEventListener('click', () => triggerTransition('test-4-5'));
 	</script>
 </body>
 </html>
