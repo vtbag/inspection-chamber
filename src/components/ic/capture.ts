@@ -38,7 +38,7 @@ function capture(
 
 		let style: CSSStyleDeclaration;
 		try {
-			style = element.ownerDocument.defaultView!.getComputedStyle(element, pseudoElement);
+			style = getComputedStyle(element, pseudoElement);
 		} catch (e) {
 			console.error(e);
 			return;

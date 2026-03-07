@@ -102,10 +102,10 @@ const { title, pageId, cardText, linkId, linkHref, linkLabel } = Astro.props;
 				});
 
 				window.addEventListener('pagereveal', (event) => {
-					const from = navigation.activation?.from?.url
+					const from = window.navigation?.activation?.from?.url
 						? new URL(navigation.activation.from.url).pathname
 						: '';
-					const to = navigation.activation?.entry?.url
+					const to = window.navigation?.activation?.entry?.url
 						? new URL(navigation.activation.entry.url).pathname
 						: new URL(location.href).pathname;
 					const direction =

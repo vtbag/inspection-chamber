@@ -88,7 +88,7 @@ async function pagereveal(event: PageRevealEvent) {
 	}
 
 	if (parent.__vtbag.ic2!.captureOldOnly) {
-		(event.target as Window).document.documentElement.style.opacity = '0';
+		doc.documentElement.style.opacity = '0';
 		parent.__vtbag.ic2!.crossDocumentBackNavigation = true;
 		event.stopImmediatePropagation();
 		history.back();

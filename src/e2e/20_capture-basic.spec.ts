@@ -12,6 +12,34 @@ test.describe('Capture Mode: Basic Tests', () => {
 			config: captureTestConfig().group('root').done().group('hero').done().build(),
 		});
 	});
+	test('1.1 Freeze: Basic capture with single named element', async ({ page }) => {
+		const { chamberFrame, testFrame } = await runCaptureTest(page, {
+			testType: 'test-1-1',
+			beforeTriggerClicks: ['label[for="freeze-types"]'],
+			header: { selector: ':root' },
+			imageSelectors: [':root', '#hero'],
+			config: captureTestConfig().group('root').done().group('hero').done().build(),
+		});
+
+		const messageComponent = chamberFrame.locator('vtbag-ic-message');
+		await expect(messageComponent).toBeVisible();
+		const messages = messageComponent.locator('.message');
+		await expect(messages).toHaveCount(1);
+		const firstMessage = messages.nth(0);
+		await expect(firstMessage).toContainText(/Don't forget to resume them when done/i);
+
+		const clearButton = firstMessage.locator('button.clear');
+		await expect(clearButton).toBeVisible();
+		await clearButton.click();
+		await expect(messages).toHaveCount(0);
+
+		const viewTransition = await testFrame
+			.locator(':root')
+			.evaluate((element) => !!element.ownerDocument.activeViewTransition);
+		expect(viewTransition).not.toBeNull();
+
+		await clickCheck(chamberFrame, chamberFrame.locator('label[for="freeze-types"]'), false);
+	});
 
 	test('1.2: Old-only element (hidden in new state)', async ({ page }) => {
 		await runCaptureTest(page, {
@@ -57,10 +85,12 @@ test.describe('Capture Mode: Basic Tests', () => {
 		});
 	});
 
-	test('1.2 old-only + freeze: Old-only element (click old-only before transition)', async ({ page }) => {
-		const {chamberFrame, testFrame} = await runCaptureTest(page, {
+	test('1.2 old-only + freeze: Old-only element (click old-only before transition)', async ({
+		page,
+	}) => {
+		const { chamberFrame, testFrame } = await runCaptureTest(page, {
 			testType: 'test-1-2',
-			beforeTriggerClicks: ['label[for="old-only"]','label[for="freeze-types"]' ],
+			beforeTriggerClicks: ['label[for="old-only"]', 'label[for="freeze-types"]'],
 			header: { selector: ':root' },
 			textAssertions: [
 				{ pattern: /old image element: #old-only/i, present: true },
@@ -79,19 +109,19 @@ test.describe('Capture Mode: Basic Tests', () => {
 				.build(),
 		});
 
-		
 		const messageComponent = chamberFrame.locator('vtbag-ic-message');
-		await expect(messageComponent).toBeVisible();
 		const messages = messageComponent.locator('.message');
-		await expect(messages).toHaveCount(1);
 		const firstMessage = messages.nth(0);
-		await expect(firstMessage).toContainText(/Don't forget to resume them when done/i);
-	
 		const clearButton = firstMessage.locator('button.clear');
-		await expect(clearButton).toBeVisible();
 		await clearButton.click();
 		await expect(messages).toHaveCount(0);
-		await clickCheck(chamberFrame, chamberFrame.locator('label[for="freeze-types"]'), true)
+
+		const viewTransition = await testFrame
+			.locator(':root')
+			.evaluate((element) => !!element.ownerDocument.activeViewTransition);
+		expect(viewTransition).not.toBeNull();
+
+		await clickCheck(chamberFrame, chamberFrame.locator('label[for="freeze-types"]'), false);
 	});
 
 	test('1.3: New-only element (created in new state)', async ({ page }) => {
@@ -212,7 +242,7 @@ test.describe('Capture Mode: Basic Tests', () => {
 		await expect(firstMessage).toContainText(/InvalidStateError/i);
 		const secondMessage = messages.nth(1);
 		await expect(secondMessage).toContainText(/duplicate.*name/i);
-		
+
 		const clearButton = firstMessage.locator('button.clear');
 		await expect(clearButton).toBeVisible();
 		await clearButton.click();

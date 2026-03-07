@@ -104,7 +104,7 @@ export async function openCaptureView(
  */
 export async function verifyCaptureHeader(
 	captureView: Locator,
-	options: { selector: string; oldTypes?: string; newTypes?: string; }
+	options: { selector: string; oldTypes?: string; newTypes?: string }
 ) {
 	await expect(captureView).toContainText(
 		new RegExp(`Same-document call on ${options.selector}, started at \\d{2}:\\d{2}:\\d{2}.\\d{3}`)
@@ -161,8 +161,8 @@ export async function verifyImageElements(captureView: Locator, selectors: strin
  * Click devtools print icon and verify console output
  */
 type CaptureIdentityDataAttribute =
-	| { name: string; value: string; }
-	| { name: string; oldValue: string; newValue: string; };
+	| { name: string; value: string }
+	| { name: string; oldValue: string; newValue: string };
 
 type CaptureIdentityOptions = {
 	groupName: string;
@@ -225,16 +225,24 @@ function toDevtoolsIdentity(
 }
 
 function groupNamesByPresence(
-	groups: { name: string; presence: GroupPresence; }[],
+	groups: { name: string; presence: GroupPresence }[],
 	presence: GroupPresence
 ) {
 	return groups.filter((group) => group.presence === presence).map((group) => group.name);
 }
 
-export async function runCaptureTest(page: Page, options: RunCaptureTestOptions): Promise<{ chamberFrame: FrameLocator, testFrame: FrameLocator; }> {
-	const { captureView, chamberFrame, testFrame } = await openCaptureView(page, options.testType, undefined, {
-		beforeTriggerClicks: options.beforeTriggerClicks,
-	});
+export async function runCaptureTest(
+	page: Page,
+	options: RunCaptureTestOptions
+): Promise<{ chamberFrame: FrameLocator; testFrame: FrameLocator }> {
+	const { captureView, chamberFrame, testFrame } = await openCaptureView(
+		page,
+		options.testType,
+		undefined,
+		{
+			beforeTriggerClicks: options.beforeTriggerClicks,
+		}
+	);
 
 	// For error cases, skip capture verification and only check text assertions
 	if (options.expectError) {
@@ -417,7 +425,7 @@ async function verifyGroupIdentity(
 	const identityResult = await captureArg.evaluate(
 		(
 			captured: Record<string, any>,
-			opts: { groupName: string; attrName: string; oldValue: string; newValue: string; }
+			opts: { groupName: string; attrName: string; oldValue: string; newValue: string }
 		) => {
 			const group = captured[opts.groupName];
 			if (!group) return { error: 'Group not found' };
