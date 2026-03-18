@@ -142,26 +142,31 @@
 				classP?: string,
 				groupP?: string
 			) {
-				function label(element: Element, oldNew: string, pseudoElement?: string) {
-					return `<div>${oldNew} image element: <span class="highlight ${oldNew}">${deriveCSSSelector(element) + (pseudoElement ? pseudoElement : '')}</span></div>`;
+				function label(element: Element, name: string, pseudoElement?: string) {
+					return `<div>${name}: <span class="highlight ${name}">${deriveCSSSelector(element) + (pseudoElement ? pseudoElement : '')}</span></div>`;
 				}
-				function printNode(node: SparseDOMNode | undefined): string {
+				function printNode(node: SparseDOMNode | undefined, oldNew:string): string {
 					if (!node || !node.element) return 'unknown element';
-					return deriveCSSSelector(node.element) + (node.pseudoElement ?? '');
+					return `<span class="highlight ${oldNew}">${deriveCSSSelector(node.element) + (node.pseudoElement ?? '')}</span>`;
 				}
 				function hidden(group: Group): string {
-					const hiddenBy = group.oldHiddenBy || group.newHiddenBy;
-					if (!hiddenBy) return '';
-					return `, hidden by view-transition-scope at ${printNode(hiddenBy)}`;
+					if (!group.oldHiddenBy && !group.newHiddenBy) return '';
+					const both = group.oldHiddenBy && group.newHiddenBy;
+					let res = ', hidden by view-transition-scope at ';
+					if (group.oldHiddenBy) res += printNode(group.oldHiddenBy, 'h-old');
+					if (both) res += ' and ';
+					if (group.newHiddenBy) res += printNode(group.newHiddenBy, 'h-new');
+					return res;
 				}
+				const hiddenText = hidden(group);
 				container.insertAdjacentHTML(
 					'beforeend',
 					`<details data-paint-order="${group.preOrder}" style="view-transition-name: G${group.preOrder}; view-transition-class: sorted-item">
-							<summary>Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <b>${groupP}</b>${group.oldHiddenBy || group.newHiddenBy ? ' (ignored)' : ''}]` : ''}${hidden(group)}</summary> 
-							${group.old ? label(group.old.element, 'old', group.old.pseudoElement) : ''}
-							${group.new ? label(group.new.element, 'new', group.new.pseudoElement) : ''}
-							${group.oldDuplicates?.map((d) => label(d.element, 'old-duplicates', d.pseudoElement)).join('') || ''}
-							${group.newDuplicates?.map((d) => label(d.element, 'new-duplicates', d.pseudoElement)).join('') || ''}
+							<summary>Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <b>${groupP}</b>${hiddenText ? ' (ignored)' : ''}]` : ''}${hiddenText}</summary> 
+							${group.old ? label(group.old.element, 'old image element', group.old.pseudoElement) : ''}
+							${group.new ? label(group.new.element, 'new image element', group.new.pseudoElement) : ''}
+							${group.oldDuplicates?.map((d) => label(d.element, 'duplicate old image element', d.pseudoElement)).join('') || ''}
+							${group.newDuplicates?.map((d) => label(d.element, 'duplicate new image element', d.pseudoElement)).join('') || ''}
 						</details>`
 				);
 				const classList = container.lastElementChild!.querySelector('summary strong')?.classList;
@@ -198,8 +203,26 @@
 					.lastElementChild!.querySelector('.highlight.new')
 					?.addEventListener('click', () => console.dir(group.new?.element));
 
+
 				container
-					.lastElementChild!.querySelectorAll('.highlight.old-duplicates')
+					.lastElementChild!.querySelector('.highlight.h-old')
+					?.addEventListener('pointerenter', () =>
+						highlight(group.oldHiddenBy?.element, "")
+					);
+				container
+					.lastElementChild!.querySelector('.highlight.h-old')
+					?.addEventListener('click', () => console.dir(group.oldHiddenBy?.element));
+				container
+					.lastElementChild!.querySelector('.highlight.h-new')
+					?.addEventListener('pointerenter', () =>
+						highlight(group.newHiddenBy?.element, "")
+					);
+				container
+					.lastElementChild!.querySelector('.highlight.h-new')
+					?.addEventListener('click', () => console.dir(group.newHiddenBy?.element));
+
+				container
+					.lastElementChild!.querySelectorAll('.highlight.old.duplicate')
 					.forEach((el, idx) =>
 						el.addEventListener('pointerenter', () =>
 							highlight(
@@ -209,12 +232,12 @@
 						)
 					);
 				container
-					.lastElementChild!.querySelectorAll('.highlight.old-duplicates')
+					.lastElementChild!.querySelectorAll('.highlight.old.duplicate')
 					?.forEach((el, idx) =>
 						el.addEventListener('click', () => console.dir(group.oldDuplicates?.[idx].element))
 					);
 				container
-					.lastElementChild!.querySelectorAll('.highlight.new-duplicates')
+					.lastElementChild!.querySelectorAll('.highlight.new.duplicate')
 					.forEach((el, idx) =>
 						el.addEventListener('pointerenter', () =>
 							highlight(
@@ -224,7 +247,7 @@
 						)
 					);
 				container
-					.lastElementChild!.querySelectorAll('.highlight.new-duplicates')
+					.lastElementChild!.querySelectorAll('.highlight.new.duplicate')
 					?.forEach((el, idx) =>
 						el.addEventListener('click', () => console.dir(group.newDuplicates?.[idx].element))
 					);
@@ -328,10 +351,10 @@
 			.highlight {
 				color: light-dark(#222222, #dddddd);
 				cursor: pointer;
-				&.old {
+				&.old, &.h-old {
 					color: light-dark(darkslateblue, slateblue);
 				}
-				&.new {
+				&.new,&.h-new {
 					color: darkolivegreen;
 				}
 				&.old-duplicates,

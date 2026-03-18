@@ -238,7 +238,8 @@
 
 			html:active-view-transition-type(test-1-8) {
 				#duplicate-a,
-				#duplicate-b {
+				#duplicate-b,
+				#duplicate-c {
 					view-transition-name: duplicate;
 				}
 				.state-b #duplicate-a,
@@ -268,66 +269,88 @@
 			<button id="trigger-test-1-3">Test 1.3</button>
 			<button id="trigger-test-1-4">Test 1.4</button>
 			<button id="trigger-test-1-5">Test 1.5</button>
-		<button id="trigger-test-1-6">Test 1.6</button>
-		<button id="trigger-test-1-7">Test 1.7</button>
-		<button id="trigger-test-1-8">Test 1.8</button>
-		<button id="trigger-test-4-5">Test 4.5</button>
-	</div>
+			<button id="trigger-test-1-6">Test 1.6</button>
+			<button id="trigger-test-1-7">Test 1.7</button>
+			<button id="trigger-test-1-8">Test 1.8</button>
+			<button id="trigger-test-4-5">Test 4.5</button>
+		</div>
 
-	<div id="old-only">
-		<p>This element only exists in the old state</p>
-	</div>
+		<div id="old-only">
+			<p>This element only exists in the old state</p>
+		</div>
 
-	<div id="new-only">
-		<p>This element is created in the new state</p>
-	</div>
+		<div id="new-only">
+			<p>This element is created in the new state</p>
+		</div>
 
-	<div id="persistent" data-test-element="same">
-		<p>Persistent Element (same across transition)</p>
-	</div>
+		<div id="persistent" data-test-element="same">
+			<p>Persistent Element (same across transition)</p>
+		</div>
 
-	<div id="elem-a" data-test-element="a">
-		<p>Element A (old state only)</p>
-	</div>
+		<div id="elem-a" data-test-element="a">
+			<p>Element A (old state only)</p>
+		</div>
 
-	<div id="elem-b" data-test-element="b">
-		<p>Element B (new state only)</p>
-	</div>
+		<div id="elem-b" data-test-element="b">
+			<p>Element B (new state only)</p>
+		</div>
 
-	<div id="pseudo-test">
-		<p>Pseudo Element Test</p>
-	</div>
+		<div id="pseudo-test">
+			<p>Pseudo Element Test</p>
+		</div>
 
-	<div id="duplicate-a">
-		<p>Duplicate A</p>
-	</div>
+		<div id="duplicate-a">
+			<p>Duplicate A</p>
+		</div>
 
-	<div id="duplicate-b">
-		<p>Duplicate B</p>
-	</div>
+		<div id="duplicate-b">
+			<p>Duplicate B</p>
+		</div>
 
-	<div id="escaped-name">
-		<p>Element with escaped characters in name (!important)</p>
-	</div>
+		<div id="duplicate-c">
+			<p>Duplicate C</p>
+		</div>
 
-	<script>
-		import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+		<div id="escaped-name">
+			<p>Element with escaped characters in name (!important)</p>
+		</div>
 
-		function triggerTransition(type: string) {
-			mayStartViewTransition(
-				{ update: () => document.body.classList.toggle('state-b'), types: [type] },
-				{ useTypesPolyfill: 'always' }
-			);
-		}
-		document.getElementById('trigger-test-1-1')?.addEventListener('click', () => triggerTransition('test-1-1'));
-		document.getElementById('trigger-test-1-2')?.addEventListener('click', () => triggerTransition('test-1-2'));
-		document.getElementById('trigger-test-1-3')?.addEventListener('click', () => triggerTransition('test-1-3'));
-		document.getElementById('trigger-test-1-4')?.addEventListener('click', () => triggerTransition('test-1-4'));
-		document.getElementById('trigger-test-1-5')?.addEventListener('click', () => triggerTransition('test-1-5'));
-		document.getElementById('trigger-test-1-6')?.addEventListener('click', () => triggerTransition('test-1-6'));
-		document.getElementById('trigger-test-1-7')?.addEventListener('click', () => triggerTransition('test-1-7'));
-		document.getElementById('trigger-test-1-8')?.addEventListener('click', () => triggerTransition('test-1-8'));
-		document.getElementById('trigger-test-4-5')?.addEventListener('click', () => triggerTransition('test-4-5'));
-	</script>
-</body>
+		<script>
+			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
+
+			function triggerTransition(type: string) {
+				mayStartViewTransition(
+					{ update: () => document.body.classList.toggle('state-b'), types: [type] },
+					{ useTypesPolyfill: 'always' }
+				);
+			}
+			document
+				.getElementById('trigger-test-1-1')
+				?.addEventListener('click', () => triggerTransition('test-1-1'));
+			document
+				.getElementById('trigger-test-1-2')
+				?.addEventListener('click', () => triggerTransition('test-1-2'));
+			document
+				.getElementById('trigger-test-1-3')
+				?.addEventListener('click', () => triggerTransition('test-1-3'));
+			document
+				.getElementById('trigger-test-1-4')
+				?.addEventListener('click', () => triggerTransition('test-1-4'));
+			document
+				.getElementById('trigger-test-1-5')
+				?.addEventListener('click', () => triggerTransition('test-1-5'));
+			document
+				.getElementById('trigger-test-1-6')
+				?.addEventListener('click', () => triggerTransition('test-1-6'));
+			document
+				.getElementById('trigger-test-1-7')
+				?.addEventListener('click', () => triggerTransition('test-1-7'));
+			document
+				.getElementById('trigger-test-1-8')
+				?.addEventListener('click', () => triggerTransition('test-1-8'));
+			document
+				.getElementById('trigger-test-4-5')
+				?.addEventListener('click', () => triggerTransition('test-4-5'));
+		</script>
+	</body>
 </html>

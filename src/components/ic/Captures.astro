@@ -108,7 +108,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 						{
 							update: () => {
 								if ('moveBefore' in Element.prototype)
-									items.forEach((s) => list.moveBefore(s, null));
+									items.forEach((s) => (list as any).moveBefore(s, null));
 								else items.forEach((s) => list.appendChild(s));
 							},
 							types: ['sort-captures'],
@@ -135,13 +135,14 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 			this.querySelector('.explainer')?.remove();
 
 			this.querySelectorAll('vtbag-ic-view-transition-capture').forEach((el) => el.remove());
-			const key = [...parent.__vtbag!.ic2!.vtMap?.keys()!][0];
-			this.insertAdjacentHTML(
-				'beforeend',
-				`<vtbag-ic-view-transition-capture></vtbag-ic-view-transition-capture>`
-			);
-			const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
-			captureElement.init(key);
+			parent.__vtbag!.ic2!.vtMap?.keys().forEach((key) => {
+				this.insertAdjacentHTML(
+					'beforeend',
+					`<vtbag-ic-view-transition-capture></vtbag-ic-view-transition-capture>`
+				);
+				const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
+				captureElement.init(key);
+			});
 			event.type !== 'ic-ready-error' && parent.__vtbag!.ic2!.vtMap?.clear();
 		};
 	}

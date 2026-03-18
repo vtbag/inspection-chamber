@@ -62,7 +62,11 @@ export function nestGroups(
 				group[`${oldOrNew}Duplicates`]!.push(node);
 				hasDuplicates = true;
 			} else {
-				if (!group.oldHiddenBy || oldOrNew === 'old') group = newGroup();
+				group[oldOrNew] = node;
+				group[oldOrNew === 'old' ? 'oldHiddenBy' : 'newHiddenBy'] = hidden;
+				console.log(
+					`Group ${group.name} has an additional ${oldOrNew} element hidden by view-transition-scope at ${deriveCSSSelector(hidden.element) + (hidden.pseudoElement ?? '')}`
+				);
 			}
 		} else {
 			group = newGroup();
@@ -97,7 +101,12 @@ export function nestGroups(
 			ancestor: true,
 		};
 		group[oldOrNew] = node;
-		group[oldOrNew === 'old' ? 'oldHiddenBy' : 'newHiddenBy'] = hidden;
+		if (hidden) {
+			group[oldOrNew === 'old' ? 'oldHiddenBy' : 'newHiddenBy'] = hidden;
+			console.log(
+				`Group ${group.name} is hidden by view-transition-scope at ${deriveCSSSelector(hidden.element) + (hidden.pseudoElement ?? '')}`
+			);
+		}
 
 		if (node.viewTransitionGroup === 'nearest' || hidden) {
 			parent.children.push(group);
