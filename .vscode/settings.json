@@ -67,5 +67,9 @@
 	"gitlens.codeLens.enabled": false,
 	"gitlens.blame.highlight.enabled": false,
 
-	"terminal.integrated.gpuAcceleration": "off"
+	"terminal.integrated.gpuAcceleration": "off",
+	"terminal.integrated.defaultProfile.windows": "PowerShell",
+	"terminal.integrated.automationProfile.windows": {
+		"path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+	}
 }

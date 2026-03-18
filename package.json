@@ -47,6 +47,7 @@
     "@playwright/test": "^1.58.2",
     "@types/css-tree": "^2.3.11",
     "@types/dom-view-transitions": "^1.0.6",
+    "@types/node": "^25.5.0",
     "@vtbag/utensil-drawer": "^1.2.16",
     "astro": "^5.18.0",
     "css-tree": "^3.2.1",
