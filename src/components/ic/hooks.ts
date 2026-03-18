@@ -282,6 +282,7 @@ function afterCaptureOld(root: HTMLElement, viewTransition: ViewTransition, feat
 }
 
 function beforeCaptureNew(root: HTMLElement, viewTransition: ViewTransition, features: Features) {
+	if (features.readyErrorOccurred) return;
 	console.log('[inspection chamber] beforeCaptureNew');
 	features.newTypes = new Set(viewTransition.types);
 	self.__vtbag.ic2!.chamberWindow!.dispatchEvent(
@@ -292,6 +293,7 @@ function beforeCaptureNew(root: HTMLElement, viewTransition: ViewTransition, fea
 }
 
 function afterCaptureNew(root: HTMLElement, viewTransition: ViewTransition, features: Features) {
+	if (features.readyErrorOccurred) return;
 	console.log('[inspection chamber] afterCaptureNew');
 	self.__vtbag.ic2!.chamberWindow!.dispatchEvent(
 		new CustomEvent('ic-after-capture-new', {
