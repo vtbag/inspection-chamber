@@ -45,7 +45,7 @@
 				transform: rotateZ(10deg);
 			}
 			#scope {
-				view-transition-scope: auto;
+				view-transition-scope: all;
 			}
 			header {
 				view-transition-group: contain;
@@ -195,15 +195,22 @@
 					view-transition-name: none;
 				}
 			}
+
 			section:nth-of-type(3) {
 				view-transition-name: section3;
 				view-transition-group: contain;
 				span {
 					view-transition-name: match-element;
 					view-transition-group: contain;
-					> * {
-						view-transition-name: cob;
-						view-transition-scope: auto;
+				}
+			}
+			@supports (view-transition-scope: all) {
+				section:nth-of-type(3) {
+					span {
+						> * {
+							view-transition-name: cob;
+							view-transition-scope: all;
+						}
 					}
 				}
 			}
@@ -224,9 +231,9 @@
 				<section style="--vtn: first-section;">
 					<a href="/realistic/">Click me</a><span id="scope">
 						Holla, Lorem <i>ipsum</i>
-						<b>dolor</b> sit <u>amet</u> consectetur adipisicing elit. Suscipit magni ex vero
-						commodi neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat
-						laudantium provident tenetur consectetur adipisci cumque!</span
+						<b>dolor</b> sit <u>amet</u> consectetur adipisicing elit. Suscipit magni ex vero commodi
+						neque et adipisci quod aperiam facere. Fuga dicta pariatur officiis repellat laudantium provident
+						tenetur consectetur adipisci cumque!</span
 					>
 				</section>
 				<p

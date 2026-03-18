@@ -29,4 +29,4 @@ if [ "$1" = "test" ]; then
   mkdir -p e2e/public/lib
   cp -a lib/* e2e/public/lib/
 fi
-#npx tsc
+ls -l lib

@@ -99,6 +99,7 @@ const { title, pageId, cardText, linkId, linkHref, linkLabel } = Astro.props;
 					event.viewTransition.types.add('cross-doc');
 					if (direction !== 'unknown') event.viewTransition.types.add(direction);
 					sessionStorage.setItem('e2e-cross-last-direction', direction);
+					console.log('pageswap types', [...event.viewTransition.types]);
 				});
 
 				window.addEventListener('pagereveal', (event) => {
@@ -117,6 +118,7 @@ const { title, pageId, cardText, linkId, linkHref, linkLabel } = Astro.props;
 						event.viewTransition.types.clear();
 						event.viewTransition.types.add('cross-doc');
 						if (direction !== 'unknown') event.viewTransition.types.add(direction);
+						console.log('pageswap types', event.viewTransition.types);
 					}
 
 					document.documentElement.dataset.vtDirection = direction;

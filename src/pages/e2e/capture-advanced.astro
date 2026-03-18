@@ -148,12 +148,11 @@
 				}
 			}
 
-			/* --- test-3-6: view-transition-scope: auto (hides descendants) --- */
+			/* --- test-3-6: view-transition-scope: all (hides descendants) --- */
 
 			html:active-view-transition-type(test-3-6) {
 				#scope-root-6 {
-					contain: view-transition;
-          view-transition-name: test;
+					view-transition-scope: all;
 					background: light-dark(#e0e7ff, #312e81);
 				}
 				#hidden-by-scope {
@@ -221,7 +220,7 @@
 			</div>
 		</div>
 
-		<!-- Test 3.6: view-transition-scope: auto (hides descendants) -->
+		<!-- Test 3.6: view-transition-scope: all (hides descendants) -->
 		<div id="scope-root-6" class="container">
 			<p>Scope Root (test 3.6)</p>
 			<div id="hidden-by-scope">

@@ -15,8 +15,8 @@
 		formerStyles?: { key: string; value: string; defaultValue: string; priority: string }[];
 		formerStyleMap?: Map<string, string> = new Map();
 		scope?: VtbagIcScopeElement;
-		twinTO?: NodeJS.Timeout;
-		tabTO?: NodeJS.Timeout;
+		twinTO?: number;
+		tabTO?: number;
 		animations: Animation[] = [];
 		maxEnd?: number;
 		lastTime?: number;

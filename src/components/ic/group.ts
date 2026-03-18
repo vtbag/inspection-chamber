@@ -14,8 +14,8 @@ export type Group = {
 	preOrder?: number;
 	postOrder?: number;
 	bfs?: number;
-	oldHidden?: boolean;
-	newHidden?: boolean;
+	oldHiddenBy?: SparseDOMNode;
+	newHiddenBy?: SparseDOMNode;
 };
 
 export function gid(group?: Group): number {
@@ -39,12 +39,14 @@ export function nestGroups(
 	groups: Map<string, Group>,
 	oldOrNew: 'old' | 'new',
 	capture: boolean,
-	hidden: boolean
+	hidden: SparseDOMNode | undefined
 ): boolean {
 	let hasDuplicates = false;
 	if (node.viewTransitionName === 'none') {
 		node.children.forEach((child) => {
-			let childHidden = hidden || child.viewTransitionScope === 'auto'; // && child.context! /* https://issues.chromium.org/issues/481934462*/;
+			let childHidden =
+				hidden ||
+				(!!child.viewTransitionScope && child.viewTransitionScope !== 'none' ? child : undefined);
 			hasDuplicates =
 				((!childHidden || capture) &&
 					nestGroups(child, parent, container, groups, oldOrNew, capture, childHidden)) ||
@@ -60,14 +62,16 @@ export function nestGroups(
 				group[`${oldOrNew}Duplicates`]!.push(node);
 				hasDuplicates = true;
 			} else {
-				if (!group.oldHidden || oldOrNew === 'old') group = newGroup();
+				if (!group.oldHiddenBy || oldOrNew === 'old') group = newGroup();
 			}
 		} else {
 			group = newGroup();
 			groups.set(node.viewTransitionName, group);
 		}
 		node.children.forEach((child) => {
-			let childHidden = hidden || child.viewTransitionScope === 'auto'; // && child.context! /* https://issues.chromium.org/issues/481934462 */;
+			let childHidden =
+				hidden ||
+				(!!child.viewTransitionScope && child.viewTransitionScope !== 'none' ? child : undefined);
 			hasDuplicates =
 				((!childHidden || capture) &&
 					nestGroups(
@@ -93,7 +97,7 @@ export function nestGroups(
 			ancestor: true,
 		};
 		group[oldOrNew] = node;
-		group[oldOrNew === 'old' ? 'oldHidden' : 'newHidden'] = hidden;
+		group[oldOrNew === 'old' ? 'oldHiddenBy' : 'newHiddenBy'] = hidden;
 
 		if (node.viewTransitionGroup === 'nearest' || hidden) {
 			parent.children.push(group);

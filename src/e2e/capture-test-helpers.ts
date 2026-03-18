@@ -28,7 +28,6 @@ type OpenCaptureViewOptions = {
 	beforeTriggerClicks?: (string | BeforeTriggerClick)[];
 };
 
-
 export async function clickCheck(targetFrame: FrameLocator, targetLocator: Locator, on = true) {
 	const target = targetLocator.first();
 	await expect(target).toBeVisible();

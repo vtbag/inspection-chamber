@@ -493,11 +493,11 @@ test.beforeEach(({ browserName }) => {
 - Child transform adjusted relative to border
 - Check `transformFromSnapshotContainingBlock` calculation
 
-### Test 5.6: view-transition-scope: auto (hides descendants)
+### Test 5.6: view-transition-scope: all (hides descendants)
 **Scenario:** Scope boundary hides nested names from outer transition
 
 ```astro
-<div style="view-transition-scope: auto">
+<div style="view-transition-scope: all">
   <div style="view-transition-name: hidden-by-scope">Hidden</div>
 </div>
 ```
@@ -512,9 +512,9 @@ test.beforeEach(({ browserName }) => {
 **Scenario:** Multiple scope boundaries
 
 ```astro
-<div style="view-transition-scope: auto">
+<div style="view-transition-scope: all">
   <div style="view-transition-name: outer-visible">Outer</div>
-  <div style="view-transition-scope: auto">
+  <div style="view-transition-scope: all">
     <div style="view-transition-name: inner-hidden">Inner</div>
   </div>
 </div>
@@ -546,7 +546,7 @@ test.beforeEach(({ browserName }) => {
 ### Test 5.9: Capture mode with scope enabled
 **Scenario:** Test capture checkbox behavior with scoped names
 
-**Setup:** Element with `view-transition-scope: auto` containing named children
+**Setup:** Element with `view-transition-scope: all` containing named children
 
 **Action:** Enable capture mode checkbox in inspection chamber
 

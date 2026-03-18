@@ -46,7 +46,7 @@ function pageswap(event: PageSwapEvent) {
 		features.readyErrorOccurred = true;
 		readyError(root, transition, features, e);
 	});
-	setTimeout(() => {
+	requestAnimationFrame(() => {
 		beforeCaptureOld(root, transition!, features);
 		parent.__vtbag.ic2!.captureOldOnly || afterCaptureOld(root, transition!, features);
 	});
@@ -104,10 +104,10 @@ async function pagereveal(event: PageRevealEvent) {
 	if (captureMode) fastForward(transition, root);
 
 	transition.ready.then(() => {
-		captureOldOnly || beforeCaptureNew(root, transition, features);
 		captureOldOnly || afterCaptureNew(root, transition, features);
 	});
 	transition.finished.finally(() => animationsWillFinish(root, transition, features));
+	setTimeout(() => captureOldOnly || beforeCaptureNew(root, transition, features));
 }
 
 function monkey<
@@ -155,22 +155,26 @@ function monkey<
 		if (!arg) {
 			arg = async () => {
 				afterCaptureOld(transitionRoot, transition, features);
+				captureOldOnly || beforeCaptureNew(transitionRoot, transition, features);
 			};
 		} else if (typeof arg === 'function') {
 			const originalArg = arg;
 			arg = async () => {
 				afterCaptureOld(transitionRoot, transition, features);
 				captureOldOnly || (await (originalArg as Function)());
+				captureOldOnly || beforeCaptureNew(transitionRoot, transition, features);
 			};
 		} else if ((arg as StartViewTransitionOptions).update) {
 			const originalUpdate = (arg as StartViewTransitionOptions).update;
 			arg.update = async () => {
 				afterCaptureOld(transitionRoot, transition, features);
 				captureOldOnly || (await originalUpdate!());
+				captureOldOnly || beforeCaptureNew(transitionRoot, transition, features);
 			};
 		} else {
 			(arg as StartViewTransitionOptions).update = () => {
 				afterCaptureOld(transitionRoot, transition, features);
+				captureOldOnly || beforeCaptureNew(transitionRoot, transition, features);
 			};
 		}
 		transition = original.apply(this, [arg]);
@@ -180,7 +184,6 @@ function monkey<
 		);
 		transition.ready.then(
 			() => {
-				captureOldOnly || beforeCaptureNew(transitionRoot, transition, features);
 				captureOldOnly || afterCaptureNew(transitionRoot, transition, features);
 			},
 			(e) => {

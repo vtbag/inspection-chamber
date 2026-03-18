@@ -81,7 +81,6 @@ function linkToParent(
 		newParent.children.push(me);
 		me.paintGroup = paintGroup(me, newParent.style.display);
 
-		//	if (parentStyle.contain.includes('view-transition')) return;
 		current = parentElement;
 		me = newParent;
 	}
@@ -91,7 +90,7 @@ export function sort(node: SparseDOMNode) {
 	for (let i = 0; i < node.children.length; ++i) {
 		const child = node.children[i];
 		sort(child);
-		if (!child.context && child.viewTransitionScope !== 'auto') {
+		if (!child.context && (!child.viewTransitionScope || child.viewTransitionScope === 'none')) {
 			node.children.splice(i, 0, ...child.children);
 			i += child.children.length;
 			child.children.length = 0;
@@ -123,7 +122,7 @@ export function print(root: SparseDOMNode, depth = 0) {
 	let what = deriveCSSSelector(root.element);
 	let pruned = '';
 	if (what.startsWith('#')) what = what + ' (' + (root.element.tagName || '') + ')';
-	if (root.viewTransitionScope === 'auto')
+	if (root.viewTransitionScope && root.viewTransitionScope !== 'none')
 		pruned = 'color: light-dark(orange, darkorange); font-weight: bold;';
 	console.log(
 		`%c${' '.repeat(depth * 2)} - ${what}${root.pseudoElement || ''}, name: ${root.viewTransitionName}, paint order modifier: ${root.paintGroup}.${root.zIndex}.${root.order}${pruned ? ', defines a new view transition scope that prunes this DOM subtree' : ''}`,
