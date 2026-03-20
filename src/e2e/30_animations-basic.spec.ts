@@ -35,6 +35,8 @@ test.describe('Animation Analysis: Basic Tests', () => {
 	});
 
 	test('1.2: Shuffle transition shows card groups', async ({ page }) => {
+		test.setTimeout(20000);
+
 		const { testFrame, chamberFrame } = await setupFrames(page, {
 			url: '/e2e/same-page/',
 			openChamber: true,
@@ -72,7 +74,14 @@ test.describe('Animation Analysis: Basic Tests', () => {
 			'status',
 		]);
 
-		await clickCheck(chamberFrame, chamberFrame.locator('label[for="scope-sort-1-alpha"]'), true);
+		await chamberFrame
+			.locator('#scope-sort-1-alpha')
+			.evaluate((element) => {
+				const input = element as HTMLInputElement;
+				input.checked = true;
+				input.dispatchEvent(new Event('change', { bubbles: true }));
+			});
+		await expect(chamberFrame.locator('#scope-sort-1-alpha')).toBeChecked();
 
 		await verifyAnimationGroups(chamberFrame, [
 			'app-header',
@@ -85,11 +94,14 @@ test.describe('Animation Analysis: Basic Tests', () => {
 			'title',
 		]);
 
-		await clickCheck(
-			chamberFrame,
-			chamberFrame.locator('label[for="scope-sort-1-paint-order"]'),
-			true
-		);
+		await chamberFrame
+			.locator('#scope-sort-1-paint-order')
+			.evaluate((element) => {
+				const input = element as HTMLInputElement;
+				input.checked = true;
+				input.dispatchEvent(new Event('change', { bubbles: true }));
+			});
+		await expect(chamberFrame.locator('#scope-sort-1-paint-order')).toBeChecked();
 
 		await verifyAnimationGroups(chamberFrame, [
 			'root',

@@ -31,6 +31,7 @@ type OpenCaptureViewOptions = {
 export async function clickCheck(targetFrame: FrameLocator, targetLocator: Locator, on = true) {
 	const target = targetLocator.first();
 	await expect(target).toBeVisible();
+	await target.scrollIntoViewIfNeeded();
 	await target.click();
 
 	const associatedControlId = await target.evaluate((element) => {

@@ -32,23 +32,13 @@ export async function verifyAnimationGroups(
 		await expect(groupsDetail).toHaveAttribute('open', '');
 	}
 
-	// Get all text nodes from the details element
-	const actualGroups = await groupsDetail.evaluate((detail) => {
-		const textNodes: string[] = [];
-		const walker = document.createTreeWalker(detail, NodeFilter.SHOW_TEXT, null);
-		let node;
-		while ((node = walker.nextNode())) {
-			const text = node.textContent?.trim();
-			// Filter out empty text and the "Group names" label, keep only group-like names
-			if (text && text !== 'Group names' && /^[a-z][a-z0-9-]*$/.test(text)) {
-				textNodes.push(text);
-			}
-		}
-		return textNodes;
-	});
+	const readGroups = async () => {
+		const buttons = groupsDetail.locator('.children:visible > button[data-group]');
+		const names = await buttons.allTextContents();
+		return names.map((name) => name.trim()).filter(Boolean);
+	};
 
-	// Verify the groups match in order
-	expect(actualGroups).toEqual(expectedGroups);
+	await expect.poll(readGroups, { timeout: 5000 }).toEqual(expectedGroups);
 }
 
 /**

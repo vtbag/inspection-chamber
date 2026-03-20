@@ -63,34 +63,8 @@ test.describe('Capture Mode: Properties Tests', () => {
 			'test-2-4',
 			'/e2e/capture-properties/'
 		);
-		// Wait a bit for transition to complete
-		await page.waitForTimeout(500);
 		await expect(captureView).toContainText('Group box');
-		const devtoolsButton = captureView.locator(CHAMBER_CONFIG.selectors.captureView.devtoolsButton);
-
-		const consolePromise = page.waitForEvent('console');
-		await devtoolsButton.click();
-		const consoleMsg = await consolePromise;
-		const args = consoleMsg.args();
-		for (const arg of args) {
-			try {
-				const className = await arg.evaluate((obj: any) => {
-					if (obj && typeof obj === 'object' && obj.box) {
-						return obj.box.classProperty || null;
-					}
-					return null;
-				});
-
-				if (className !== null) {
-					expect(className).toBe('card');
-					return;
-				}
-			} catch {
-				// This arg wasn't the captured groups object, continue
-			}
-		}
-
-		throw new Error('Could not find captured groups object with box group');
+		await expect(captureView).toContainText(/Group\s+box\s+\[classes:\s*card\]/i);
 	});
 
 	test('2.5: Multiple view-transition-class', async ({ page }) => {
@@ -99,33 +73,8 @@ test.describe('Capture Mode: Properties Tests', () => {
 			'test-2-5',
 			'/e2e/capture-properties/'
 		);
-		// Wait a bit for transition to complete
-		await page.waitForTimeout(500);
 		await expect(captureView).toContainText('Group box');
-		const devtoolsButton = captureView.locator(CHAMBER_CONFIG.selectors.captureView.devtoolsButton);
-		const consolePromise = page.waitForEvent('console');
-		await devtoolsButton.click();
-		const consoleMsg = await consolePromise;
-		const args = consoleMsg.args();
-		for (const arg of args) {
-			try {
-				const className = await arg.evaluate((obj: any) => {
-					if (obj && typeof obj === 'object' && obj.box) {
-						return obj.box.classProperty || null;
-					}
-					return null;
-				});
-
-				if (className !== null) {
-					expect(className).toBe('card primary featured');
-					return;
-				}
-			} catch {
-				// This arg wasn't the captured groups object, continue
-			}
-		}
-
-		throw new Error('Could not find captured groups object with box group');
+		await expect(captureView).toContainText(/Group\s+box\s+\[classes:\s*card primary featured\]/i);
 	});
 
 	test('2.6: view-transition-class Priority (New over Old)', async ({ page }) => {
@@ -134,33 +83,7 @@ test.describe('Capture Mode: Properties Tests', () => {
 			'test-2-6',
 			'/e2e/capture-properties/'
 		);
-		// Wait a bit for transition to complete
-		await page.waitForTimeout(500);
 		await expect(captureView).toContainText('Group elem');
-		const devtoolsButton = captureView.locator(CHAMBER_CONFIG.selectors.captureView.devtoolsButton);
-
-		const consolePromise = page.waitForEvent('console');
-		await devtoolsButton.click();
-		const consoleMsg = await consolePromise;
-		const args = consoleMsg.args();
-		for (const arg of args) {
-			try {
-				const className = await arg.evaluate((obj: any) => {
-					if (obj && typeof obj === 'object' && obj.elem) {
-						return obj.elem.classProperty || null;
-					}
-					return null;
-				});
-
-				if (className !== null) {
-					expect(className).toBe('new-class');
-					return;
-				}
-			} catch {
-				// This arg wasn't the captured groups object, continue
-			}
-		}
-
-		throw new Error('Could not find captured groups object with elem group');
+		await expect(captureView).toContainText(/Group\s+elem\s+\[classes:\s*new-class\]/i);
 	});
 });
