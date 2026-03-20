@@ -4,7 +4,7 @@
     {
       "label": "Playwright: Windows Chrome Canary",
       "type": "shell",
-      "command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\node.exe' '.\\node_modules\\playwright\\cli.js' test -c '.\\playwright.config.windows.ts' --project=chrome-canary",
+      "command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\node.exe' '.\\node_modules\\playwright\\cli.js' test --project=chrome-canary",
       "options": {
         "shell": {
           "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
@@ -22,7 +22,7 @@
     {
       "label": "Playwright: Windows Chrome Canary (headed)",
       "type": "shell",
-      "command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\node.exe' '.\\node_modules\\playwright\\cli.js' test -c '.\\playwright.config.windows.ts' --project=chrome-canary --headed",
+      "command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\node.exe' '.\\node_modules\\playwright\\cli.js' test --project=chrome-canary --headed",
       "options": {
         "shell": {
           "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
@@ -39,7 +39,7 @@
     {
       "label": "Playwright: Windows config smoke check",
       "type": "shell",
-      "command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\node.exe' '.\\node_modules\\playwright\\cli.js' test -c '.\\playwright.config.windows.ts' --project=chrome-canary --list",
+      "command": "$env:Path = 'C:\\Program Files\\nodejs;' + $env:Path; & 'C:\\Program Files\\nodejs\\node.exe' '.\\node_modules\\playwright\\cli.js' test --project=chrome-canary --list",
       "options": {
         "shell": {
           "executable": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",

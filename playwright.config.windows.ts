@@ -1,21 +1,29 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 declare const process: {
   env: Record<string, string | undefined>;
 };
 
 const isCI = !!process.env.CI;
-const wslDistro = process.env.PW_WSL_DISTRO ?? 'Ubuntu-24.04';
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const wslMatch = currentDir.match(/^\\\\wsl\$\\([^\\]+)(\\.*)?$/i);
+const wslDistro = process.env.PW_WSL_DISTRO ?? (wslMatch?.[1] ?? 'Ubuntu-24.04');
 const wslProjectDir =
-  process.env.PW_WSL_PROJECT_DIR ?? '/home/martrapp/public/inspection-chamber';
+  process.env.PW_WSL_PROJECT_DIR ??
+  (wslMatch?.[2]?.replace(/\\/g, '/') ?? '/home/user/public/inspection-chamber');
 
-const fallbackCanary = 'C:\\Users\\martrapp\\AppData\\Local';
+const fallbackCanary = `${process.env.USERPROFILE ?? 'C:\\Users\\Public'}\\AppData\\Local`;
 const localAppData = process.env.LOCALAPPDATA ?? fallbackCanary;
 const canaryExecutable =
   process.env.PW_CHROME_CANARY_PATH ??
   `${localAppData}\\Google\\Chrome SxS\\Application\\chrome.exe`;
 
-const wslWebServerCommand = `wsl.exe -d ${wslDistro} bash -lc \"cd ${wslProjectDir} && npm run start\"`;
+const webServerCwd = process.env.PW_WEBSERVER_CWD ?? process.env.USERPROFILE ?? 'C:\\';
+const wslWebServerCommand = `wsl.exe -d ${wslDistro} bash -lc "cd ${wslProjectDir} && npm run start"`;
+
+console.log('Canary executable path:', canaryExecutable);
 
 export default defineConfig({
   testDir: './src/e2e',
@@ -45,6 +53,7 @@ export default defineConfig({
   },
   webServer: {
     command: wslWebServerCommand,
+    cwd: webServerCwd,
     port: 4321,
     timeout: 120 * 1000,
     reuseExistingServer: !isCI,

@@ -20,6 +20,7 @@ const localAppData =
 const canaryExecutable =
   process.env.PW_CHROME_CANARY_PATH ??
   `${localAppData}\\Google\\Chrome SxS\\Application\\chrome.exe`;
+const webServerCwd = process.env.PW_WEBSERVER_CWD ?? process.env.USERPROFILE ?? 'C:\\';
 const wslWebServerCommand = `wsl.exe -d ${wslDistro} bash -lc "cd ${wslProjectDir} && npm run start"`;
 
 export default defineConfig({
@@ -28,7 +29,7 @@ export default defineConfig({
   fullyParallel: false,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : 1,
+  workers: 1,
   timeout: 10_000,
   expect: {
     timeout: 7_000,
@@ -50,6 +51,7 @@ export default defineConfig({
   },
   webServer: {
     command: isWindows ? wslWebServerCommand : 'npm run start',
+    cwd: isWindows ? webServerCwd : undefined,
     port: 4321,
     timeout: 120 * 1000,
     reuseExistingServer: !isCI,
