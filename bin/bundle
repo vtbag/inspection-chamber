@@ -13,8 +13,6 @@ else
   OPTS="--minify"
 fi
 rm -rf lib/*
-npx esbuild src/index.ts --bundle $OPTS --target=ESnext --outfile=lib/index.js
-
 cd dist
 npx vite --config ../IC-vite.config.ts build 
 cd -
