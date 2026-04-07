@@ -1,5 +1,7 @@
 #! /bin/sh
 
+mkdir lib
+touch lib/attach.js
 astro build
 if [ "$1" = "dev" ]; then
   OPTS="--sourcemap --watch"
