@@ -74,13 +74,11 @@ test.describe('Animation Analysis: Basic Tests', () => {
 			'status',
 		]);
 
-		await chamberFrame
-			.locator('#scope-sort-1-alpha')
-			.evaluate((element) => {
-				const input = element as HTMLInputElement;
-				input.checked = true;
-				input.dispatchEvent(new Event('change', { bubbles: true }));
-			});
+		await chamberFrame.locator('#scope-sort-1-alpha').evaluate((element) => {
+			const input = element as HTMLInputElement;
+			input.checked = true;
+			input.dispatchEvent(new Event('change', { bubbles: true }));
+		});
 		await expect(chamberFrame.locator('#scope-sort-1-alpha')).toBeChecked();
 
 		await verifyAnimationGroups(chamberFrame, [
@@ -94,13 +92,11 @@ test.describe('Animation Analysis: Basic Tests', () => {
 			'title',
 		]);
 
-		await chamberFrame
-			.locator('#scope-sort-1-paint-order')
-			.evaluate((element) => {
-				const input = element as HTMLInputElement;
-				input.checked = true;
-				input.dispatchEvent(new Event('change', { bubbles: true }));
-			});
+		await chamberFrame.locator('#scope-sort-1-paint-order').evaluate((element) => {
+			const input = element as HTMLInputElement;
+			input.checked = true;
+			input.dispatchEvent(new Event('change', { bubbles: true }));
+		});
 		await expect(chamberFrame.locator('#scope-sort-1-paint-order')).toBeChecked();
 
 		await verifyAnimationGroups(chamberFrame, [

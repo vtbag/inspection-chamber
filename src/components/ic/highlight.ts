@@ -4,9 +4,9 @@ export function highlight(element?: Element | null, pseudoElement?: string) {
 		pseudoElement && (options.pseudoElement = pseudoElement);
 		element.animate(
 			[
-				{ outline: '4px solid lightblue', opacity: 1, borderRadius: '4px', offset: 0 },
-				{ outline: '4px solid lightblue', opacity: 0, borderRadius: '4px', offset: 0.7 },
-				{ outline: '0 solid gray', opacity: 1, offset: 1 },
+				{ outline: '0px solid lightblue', borderRadius: '4px', outlineOffset: '-2px' },
+				{ outline: '4px solid lightblue', borderRadius: '4px', outlineOffset: '-4px', offset: 0.5 },
+				{ outline: '0px solid lightblue', borderRadius: '4px', outlineOffset: '-2px', offset: 1 },
 			],
 			options
 		);

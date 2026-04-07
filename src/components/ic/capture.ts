@@ -1,7 +1,7 @@
 import { namedElements, allRoots } from '@/css';
 import { deriveCSSSelector } from './element-selector';
 import { gid, nestGroups, numberGroupsDFS, type Group } from './group';
-import { addParentLinks, print, sort, type SparseDOMNode } from './sparse-dom';
+import { addParentLinks, sort, type SparseDOMNode } from './sparse-dom';
 import { message } from './message';
 
 let idCount = 0;

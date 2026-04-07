@@ -21,7 +21,14 @@ const canaryExecutable =
   process.env.PW_CHROME_CANARY_PATH ??
   `${localAppData}\\Google\\Chrome SxS\\Application\\chrome.exe`;
 const webServerCwd = process.env.PW_WEBSERVER_CWD ?? process.env.USERPROFILE ?? 'C:\\';
-const wslWebServerCommand = `wsl.exe -d ${wslDistro} bash -lc "cd ${wslProjectDir} && npm run start"`;
+const windowsNodeExecutable =
+  process.env.PW_WINDOWS_NODE_EXE ?? 'C:\\Program Files\\nodejs\\node.exe';
+const windowsWebServerCommand =
+  process.env.PW_WINDOWS_WEBSERVER_COMMAND ??
+  `"${windowsNodeExecutable}" "${currentDir}\\node_modules\\astro\\astro.js" dev --root "${currentDir}"`;
+const wslNode20WebServerCommand =
+  process.env.PW_WSL_WEBSERVER_COMMAND ??
+  `wsl.exe -d ${wslDistro} bash -lc "cd ${wslProjectDir} && npx -y node@20 ./node_modules/astro/astro.js dev --root ."`;
 
 export default defineConfig({
   testDir: './src/e2e',
@@ -50,7 +57,11 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: isWindows ? wslWebServerCommand : 'npm run start',
+    command: isWindows
+      ? process.env.PW_USE_WINDOWS_WEBSERVER === '1'
+        ? windowsWebServerCommand
+        : wslNode20WebServerCommand
+      : 'npm run start',
     cwd: isWindows ? webServerCwd : undefined,
     port: 4321,
     timeout: 120 * 1000,

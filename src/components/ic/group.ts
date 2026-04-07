@@ -165,8 +165,6 @@ export function isSorted(group: Group): boolean {
 	);
 }
 
-/* ---------------------------------------------------------------- */
-
 export function relocate(group: Group, newDocument: Document) {
 	group.children.forEach((child) => relocate(child, newDocument));
 	if (group.old && group.old.element.ownerDocument !== newDocument)
@@ -174,7 +172,6 @@ export function relocate(group: Group, newDocument: Document) {
 	if (group.new && group.new.element.ownerDocument !== newDocument)
 		group.new.element = newDocument.querySelector(deriveCSSSelector(group.new.element))!;
 }
-/* ---------------------------------------------------------------- */
 
 export type SerializedGroupNode = {
 	name: string;

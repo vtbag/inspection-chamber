@@ -5,9 +5,10 @@ if [ "$1" = "dev" ]; then
   OPTS="--sourcemap --watch"
 elif [ "$1" = "test" ]; then
   OPTS="--sourcemap"
+elif [ "$1" = "nice" ]; then
+  OPTS="--sourcemap"
 else
   OPTS="--minify"
-  (cd lib && rm *.js.map) >> /dev/null 2>&1
 fi
 rm -rf lib/*
 npx esbuild src/index.ts --bundle $OPTS --target=ESnext --outfile=lib/index.js

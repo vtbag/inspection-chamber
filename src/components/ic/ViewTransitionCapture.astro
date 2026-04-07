@@ -2,8 +2,7 @@
 	import { moduleGroupMaps } from './capture';
 	import { printToDevtools } from './devtool-bridge';
 	import { deriveCSSSelector } from './element-selector';
-	import { displayName, type Group, relocate } from './group';
-	import GroupList from './GroupList.astro';
+	import { displayName, type Group, linear } from './group';
 	import { highlight } from './highlight';
 	import { ICElement } from './ic-element';
 	import type { SparseDOMNode } from './sparse-dom';
@@ -72,7 +71,6 @@
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
 			const group: Group | undefined = moduleGroupMaps.get(this.featuresKey!)?.get('@')!;
-			if (features?.crossDocument) relocate(group, specimenDoc!);
 
 			this.insertAdjacentHTML(
 				'beforeend',
@@ -87,8 +85,31 @@
 									[...(features?.newTypes ?? [])].join(', ') || 'none'
 								}</strong></p>`
 					}
-				<details open><summary>Named elements <span class="devtools" title="Show in browser console">[🖶]</span></summary><div class=content></div></details>`
+				<details open><summary>Named elements <span class="devtools" title="Show in browser console">[🖶]</span></summary><div class=content></div></details>
+				<details id="flat-capture-list"><summary>Flat, alphabetic list</summary>${linear(group)
+					.splice(1)
+					.sort((a, b) => displayName(a).localeCompare(displayName(b)))
+					.map(
+						(g) =>
+							`<span data-link="#id${g.preOrder}" style="view-transition-name: span${g.preOrder}" >${displayName(g)}</span>`
+					)
+					.join(',<wbr/>')}</details>`
 			);
+			this.querySelector('#flat-capture-list')!.addEventListener('click', (e) => {
+				const link = (e.target as HTMLElement).closest('[data-link]')?.getAttribute('data-link');
+				if (link) {
+					const target = this.querySelector(link) as HTMLElement;
+					let parent: HTMLDetailsElement = target.parentElement
+						?.parentElement as HTMLDetailsElement;
+					let delay = false;
+					while (parent?.tagName === 'DETAILS') {
+						delay ||= !parent.open;
+						parent.open = true;
+						parent = parent.parentElement as HTMLDetailsElement;
+					}
+					setTimeout(() => highlight(target), delay ? 100 : 0);
+				}
+			});
 			const content = this.querySelector('.content') as HTMLElement;
 
 			this.querySelector('.devtools')?.addEventListener('click', (e) => {
@@ -143,9 +164,9 @@
 				groupP?: string
 			) {
 				function label(element: Element, name: string, pseudoElement?: string) {
-					return `<div>${name}: <span class="highlight ${name}">${deriveCSSSelector(element) + (pseudoElement ? pseudoElement : '')}</span></div>`;
+					return `<div>${name}: <span class="highlight ${name}">${deriveCSSSelector(element) + (pseudoElement ? pseudoElement : '')}</span>${element.ownerDocument !== specimenDoc ? ` (gone)` : ''}</div>`;
 				}
-				function printNode(node: SparseDOMNode | undefined, oldNew:string): string {
+				function printNode(node: SparseDOMNode | undefined, oldNew: string): string {
 					if (!node || !node.element) return 'unknown element';
 					return `<span class="highlight ${oldNew}">${deriveCSSSelector(node.element) + (node.pseudoElement ?? '')}</span>`;
 				}
@@ -162,7 +183,7 @@
 				container.insertAdjacentHTML(
 					'beforeend',
 					`<details data-paint-order="${group.preOrder}" style="view-transition-name: G${group.preOrder}; view-transition-class: sorted-item">
-							<summary>Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <b>${groupP}</b>${hiddenText ? ' (ignored)' : ''}]` : ''}${hiddenText}</summary> 
+							<summary id="id${group.preOrder}">Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <b>${groupP}</b>${hiddenText ? ' (ignored)' : ''}]` : ''}${hiddenText}</summary> 
 							${group.old ? label(group.old.element, 'old image element', group.old.pseudoElement) : ''}
 							${group.new ? label(group.new.element, 'new image element', group.new.pseudoElement) : ''}
 							${group.oldDuplicates?.map((d) => label(d.element, 'duplicate old image element', d.pseudoElement)).join('') || ''}
@@ -179,7 +200,7 @@
 
 				// todo: combine listeners
 				container
-					.lastElementChild!.querySelector('summary')
+					.lastElementChild!.querySelector('summary strong')
 					?.addEventListener('pointerenter', () =>
 						highlight(
 							group[group.new ? 'new' : 'old']?.element,
@@ -203,20 +224,15 @@
 					.lastElementChild!.querySelector('.highlight.new')
 					?.addEventListener('click', () => console.dir(group.new?.element));
 
-
 				container
 					.lastElementChild!.querySelector('.highlight.h-old')
-					?.addEventListener('pointerenter', () =>
-						highlight(group.oldHiddenBy?.element, "")
-					);
+					?.addEventListener('pointerenter', () => highlight(group.oldHiddenBy?.element, ''));
 				container
 					.lastElementChild!.querySelector('.highlight.h-old')
 					?.addEventListener('click', () => console.dir(group.oldHiddenBy?.element));
 				container
 					.lastElementChild!.querySelector('.highlight.h-new')
-					?.addEventListener('pointerenter', () =>
-						highlight(group.newHiddenBy?.element, "")
-					);
+					?.addEventListener('pointerenter', () => highlight(group.newHiddenBy?.element, ''));
 				container
 					.lastElementChild!.querySelector('.highlight.h-new')
 					?.addEventListener('click', () => console.dir(group.newHiddenBy?.element));
@@ -351,10 +367,12 @@
 			.highlight {
 				color: light-dark(#222222, #dddddd);
 				cursor: pointer;
-				&.old, &.h-old {
+				&.old,
+				&.h-old {
 					color: light-dark(darkslateblue, slateblue);
 				}
-				&.new,&.h-new {
+				&.new,
+				&.h-new {
 					color: darkolivegreen;
 				}
 				&.old-duplicates,
@@ -367,6 +385,23 @@
 			}
 			details:has(*.old-duplicates, *.new-duplicates) > summary strong {
 				color: light-dark(darkred, red);
+			}
+
+			#flat-capture-list {
+				margin-top: 0.5rem;
+				font-family: monospace;
+				font-size: 0.9rem;
+				hyphens: none;
+				overflow-wrap: normal;
+				white-space: nowrap;
+				word-break: normal;
+				span {
+					cursor: pointer;
+					color: light-dark(#333, #ccc);
+					:hover {
+						color: light-dark(darkslateblue, slateblue);
+					}
+				}
 			}
 		}
 	}
