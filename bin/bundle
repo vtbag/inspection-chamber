@@ -1,5 +1,6 @@
 #! /bin/sh
 
+rm -rf lib
 mkdir lib
 touch lib/attach.js
 astro build
