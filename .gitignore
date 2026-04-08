@@ -3,3 +3,4 @@ lib
 .astro
 dist
 playwright-report
+test-results
