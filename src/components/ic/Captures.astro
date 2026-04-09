@@ -89,7 +89,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 				const alpha = (event.target as HTMLInputElement).value === 'alpha';
 				sessionStorage.setItem('vtbag-ic-capture-sort', alpha ? 'alpha' : 'paint-order');
 				this.querySelectorAll(
-					'vtbag-ic-view-transition-capture > details *:has(> details)'
+					'vtbag-ic-view-transition-capture details *:has(> details)'
 				).forEach((list) => {
 					const items = Array.from(list.children);
 					if (alpha)
@@ -190,7 +190,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 		@keyframes arc {
 			50% {
 				transform: translateX(
-					calc(var(--vtbag-vector-from-y) / 20 - var(--vtbag-vector-to-y) / 20)
+					calc(sign(var(--vtbag-vector-from-y) - var(--vtbag-vector-to-y)) * 16px)
 				);
 			}
 		}

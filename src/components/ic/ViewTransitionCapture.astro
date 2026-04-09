@@ -1,4 +1,5 @@
 <script>
+	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { moduleGroupMaps } from './capture';
 	import { printToDevtools } from './devtool-bridge';
 	import { deriveCSSSelector } from './element-selector';
@@ -6,6 +7,7 @@
 	import { highlight } from './highlight';
 	import { ICElement } from './ic-element';
 	import type { SparseDOMNode } from './sparse-dom';
+	import { HOW_IC_CALLS_MSVT_CATCH_ERRORS } from './debug';
 
 	type ElementInfo = {
 		element: Element;
@@ -36,16 +38,17 @@
 			const specimenDoc =
 				parent.document.querySelector<HTMLIFrameElement>('#test-jig')?.contentDocument;
 
-			const hideHidden = sessionStorage.getItem('ic-hide-hidden') !== 'false';
+			const hideUndiscoverable = sessionStorage.getItem('ic-hide-undiscoverable') !== 'false';
+			this.classList.toggle('hide-undiscoverable', hideUndiscoverable);
 
 			const captures: CaptureRecord = Object.create(null);
 			let current: CaptureRecord[] = [];
-
+			const sortOrder = sessionStorage.getItem('vtbag-ic-capture-sort') || 'paint-order';
 			const dump = (elem: HTMLElement, group?: Group, level = 0) => {
 				if (!group) return;
 				let record: CaptureRecord;
 				let entry: CaptureEntry = undefined!;
-				if (group.parent && (!hideHidden || (!group.oldHiddenBy && !group.newHiddenBy))) {
+				if (group.parent) {
 					entry = entryForDevtools(group);
 					record = current.at(-1)!;
 					record[group.name] = entry;
@@ -53,7 +56,11 @@
 				}
 				const childRecord = entry?.children || captures;
 				current.push(childRecord);
-				group.children.forEach((child: Group) => {
+				const children = [...group.children];
+				if (sortOrder !== 'paint-order') {
+					children.sort((a, b) => displayName(a).localeCompare(displayName(b)));
+				}
+				children.forEach((child: Group) => {
 					dump(group.parent ? (elem.lastElementChild as HTMLElement) : elem, child, level + 1);
 				});
 				current.pop();
@@ -73,10 +80,11 @@
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
 			const group: Group | undefined = moduleGroupMaps.get(this.featuresKey!)?.get('@')![0]!;
+			const hasUndiscoverables = linear(group).some((g) => g.oldHiddenBy || g.newHiddenBy);
 
 			this.insertAdjacentHTML(
 				'beforeend',
-				`<h3>${this.featuresKey ? 'Same-document call on ' + deriveCSSSelector(this.featuresKey).replaceAll('>', ' > ') : 'Cross-document navigation'}, started at ${localeTime} <span class="weak">(<input id="hide-hidden" type="checkbox" ${hideHidden ? 'checked' : ''}></input><label for="hide-hidden">hide undiscoverable elements</label>)</span></h3>
+				`<h3>${this.featuresKey ? 'Same-document call on ' + deriveCSSSelector(this.featuresKey).replaceAll('>', ' > ') : 'Cross-document navigation'}, started at ${localeTime} ${hasUndiscoverables ? `<span class="weak">(<input id="hide-undiscoverable" type="checkbox" ${hideUndiscoverable ? 'checked' : ''}></input><label for="hide-undiscoverable">hide undiscoverable elements</label>)</span>` : ''}</h3>
 				<p>Active view transition types during capture of <strong>old</strong> images: <strong>${
 					[...(features?.oldTypes ?? [])].join(', ') || 'none'
 				}</strong></p>				
@@ -87,19 +95,31 @@
 									[...(features?.newTypes ?? [])].join(', ') || 'none'
 								}</strong></p>`
 					}
-				<details open><summary>Tree of named elements <span class="devtools" title="Show in browser console">[🖶]</span></summary><div class=content></div></details>
+				<div id="animation-scope"><details open><summary>Tree of named elements <span class="devtools" title="Show in browser console">[🖶]</span></summary><div class=content></div></details>
 				<details id="flat-capture-list"><summary>Flat, alphabetic list</summary>${linear(group)
 					.splice(1)
 					.sort((a, b) => displayName(a).localeCompare(displayName(b)))
-					.filter((g) => !(hideHidden && (g.oldHiddenBy || g.newHiddenBy)))
 					.map(
 						(g) =>
 							`<span style="view-transition-name: span${g.preOrder}"><span data-link="#id${g.preOrder}" class="${g.old ? 'old' : ''} ${g.new ? 'new' : ''} ${g.oldHiddenBy || g.newHiddenBy ? 'hidden' : ''} ${g.oldDuplicates || g.newDuplicates ? 'duplicates' : ''}"  >${displayName(g)}</span>`
 					)
-					.join(',</span><wbr/>')}</span></details>`
+					.join(',</span><wbr/>')}</span></details><div>`
 			);
-			this.querySelector('#hide-hidden')?.addEventListener('change', (e) => {
-				sessionStorage.setItem('ic-hide-hidden', '' + (e.target as HTMLInputElement).checked);
+			this.querySelector('#hide-undiscoverable')?.addEventListener('change', (e) => {
+				const hideUndiscoverable = (e.target as HTMLInputElement).checked;
+				sessionStorage.setItem('ic-hide-undiscoverable', '' + hideUndiscoverable);
+				mayStartViewTransition(
+					{
+						update: () => this.classList.toggle('hide-undiscoverable', hideUndiscoverable),
+						types: ['toggle-hide-undiscoverable'],
+					},
+					{
+						collisionBehavior: 'chaining',
+						useTypesPolyfill: 'always',
+						catchErrors: HOW_IC_CALLS_MSVT_CATCH_ERRORS,
+						//	scope: this.ownerDocument.getElementById('animation-scope')!,
+					}
+				);
 			});
 			this.querySelector('#flat-capture-list')!.addEventListener('click', (e) => {
 				const link = (e.target as HTMLElement).closest('[data-link]')?.getAttribute('data-link');
@@ -458,6 +478,22 @@
 						text-decoration: line-through;
 					}
 				}
+			}
+			&.hide-undiscoverable {
+				details:has(> summary strong.hidden) {
+					display: none;
+				}
+				#flat-capture-list span:has(span.hidden) {
+					display: none;
+				}
+			}
+		}
+		:active-view-transition-type(toggle-hide-undiscoverable) {
+			:root {
+				view-transition-name: none;
+			}
+			&::view-transition {
+				pointer-events: none;
 			}
 		}
 	}
