@@ -21,7 +21,7 @@ declare global {
 		hide(): void;
 	}
 	interface VtbagIcScopeElement extends HTMLElement {
-		init(element: HTMLElement, root: Group, animations: Animation[]): void;
+		initScope(element: HTMLElement, root: Group, animations: Animation[]): void;
 		get element(): HTMLElement;
 		get path(): string;
 		get scopeId(): number;
@@ -59,7 +59,7 @@ declare global {
 	}
 	interface VtbagIcViewTransitionCaptureElement extends HTMLElement {
 		calledOn: HTMLElement | Document;
-		init(featuresKey: HTMLElement): void;
+		initVTCapture(featuresKey: HTMLElement): void;
 	}
 	interface HTMLElementTagNameMap {
 		'vtbag-ic-animations': VtbagIcAnimationsElement;

@@ -232,9 +232,9 @@ test.describe('Capture Mode: Basic Tests', () => {
 		const { captureView, chamberFrame } = await openCaptureView(page, 'test-1-8');
 		await expect(captureView).toContainText(/Same-document call/i);
 		await expect(captureView).toContainText('Group duplicate');
-		await expect(captureView).toContainText('old image element: #duplicate-a');
-		await expect(captureView).toContainText('duplicate old image element: #duplicate-b');
-		await expect(captureView).toContainText('duplicate old image element: #duplicate-c');
+		await expect(captureView).toContainText('Old image element: #duplicate-a');
+		await expect(captureView).toContainText('Duplicate old image element: #duplicate-b');
+		await expect(captureView).toContainText('Duplicate old image element: #duplicate-c');
 		const messageComponent = chamberFrame.locator('vtbag-ic-message');
 		await expect(messageComponent).toBeVisible();
 		const messages = messageComponent.locator('.message');

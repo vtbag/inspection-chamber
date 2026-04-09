@@ -25,7 +25,7 @@
 	class ICViewTransitionCapture extends ICElement {
 		featuresKey: HTMLElement | undefined | null = null;
 
-		init(featuresKey: HTMLElement) {
+		initVTCapture(featuresKey: HTMLElement) {
 			this.featuresKey = featuresKey;
 			this.render();
 		}
@@ -36,6 +36,8 @@
 			const specimenDoc =
 				parent.document.querySelector<HTMLIFrameElement>('#test-jig')?.contentDocument;
 
+			const hideHidden = sessionStorage.getItem('ic-hide-hidden') !== 'false';
+
 			const captures: CaptureRecord = Object.create(null);
 			let current: CaptureRecord[] = [];
 
@@ -43,7 +45,7 @@
 				if (!group) return;
 				let record: CaptureRecord;
 				let entry: CaptureEntry = undefined!;
-				if (group.parent) {
+				if (group.parent && (!hideHidden || (!group.oldHiddenBy && !group.newHiddenBy))) {
 					entry = entryForDevtools(group);
 					record = current.at(-1)!;
 					record[group.name] = entry;
@@ -70,11 +72,11 @@
 			});
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
-			const group: Group | undefined = moduleGroupMaps.get(this.featuresKey!)?.get('@')!;
+			const group: Group | undefined = moduleGroupMaps.get(this.featuresKey!)?.get('@')![0]!;
 
 			this.insertAdjacentHTML(
 				'beforeend',
-				`<h3>${this.featuresKey ? 'Same-document call on ' + deriveCSSSelector(this.featuresKey) : 'Cross-document navigation'}, started at ${localeTime}</h3>
+				`<h3>${this.featuresKey ? 'Same-document call on ' + deriveCSSSelector(this.featuresKey).replaceAll('>', ' > ') : 'Cross-document navigation'}, started at ${localeTime} <span class="weak">(<input id="hide-hidden" type="checkbox" ${hideHidden ? 'checked' : ''}></input><label for="hide-hidden">hide undiscoverable elements</label>)</span></h3>
 				<p>Active view transition types during capture of <strong>old</strong> images: <strong>${
 					[...(features?.oldTypes ?? [])].join(', ') || 'none'
 				}</strong></p>				
@@ -85,23 +87,30 @@
 									[...(features?.newTypes ?? [])].join(', ') || 'none'
 								}</strong></p>`
 					}
-				<details open><summary>Named elements <span class="devtools" title="Show in browser console">[🖶]</span></summary><div class=content></div></details>
+				<details open><summary>Tree of named elements <span class="devtools" title="Show in browser console">[🖶]</span></summary><div class=content></div></details>
 				<details id="flat-capture-list"><summary>Flat, alphabetic list</summary>${linear(group)
 					.splice(1)
 					.sort((a, b) => displayName(a).localeCompare(displayName(b)))
+					.filter((g) => !(hideHidden && (g.oldHiddenBy || g.newHiddenBy)))
 					.map(
 						(g) =>
-							`<span data-link="#id${g.preOrder}" style="view-transition-name: span${g.preOrder}" >${displayName(g)}</span>`
+							`<span style="view-transition-name: span${g.preOrder}"><span data-link="#id${g.preOrder}" class="${g.old ? 'old' : ''} ${g.new ? 'new' : ''} ${g.oldHiddenBy || g.newHiddenBy ? 'hidden' : ''} ${g.oldDuplicates || g.newDuplicates ? 'duplicates' : ''}"  >${displayName(g)}</span>`
 					)
-					.join(',<wbr/>')}</details>`
+					.join(',</span><wbr/>')}</span></details>`
 			);
+			this.querySelector('#hide-hidden')?.addEventListener('change', (e) => {
+				sessionStorage.setItem('ic-hide-hidden', '' + (e.target as HTMLInputElement).checked);
+			});
 			this.querySelector('#flat-capture-list')!.addEventListener('click', (e) => {
 				const link = (e.target as HTMLElement).closest('[data-link]')?.getAttribute('data-link');
 				if (link) {
+					const topLevel = this.querySelector('details')!;
+					let delay = !topLevel.open;
+					topLevel.open = true;
 					const target = this.querySelector(link) as HTMLElement;
 					let parent: HTMLDetailsElement = target.parentElement
 						?.parentElement as HTMLDetailsElement;
-					let delay = false;
+
 					while (parent?.tagName === 'DETAILS') {
 						delay ||= !parent.open;
 						parent.open = true;
@@ -131,7 +140,8 @@
 				e.preventDefault();
 			});
 			dump(content, group);
-			//highlightNamedElements(content);
+
+			/*highlightNamedElements(content);
 
 			function highlightNamedElements(elem: HTMLElement) {
 				const css: string[] = [];
@@ -156,7 +166,7 @@
 				</style>`
 				);
 			}
-
+*/
 			function groupDetails(
 				container: HTMLElement,
 				group: Group,
@@ -164,30 +174,30 @@
 				groupP?: string
 			) {
 				function label(element: Element, name: string, pseudoElement?: string) {
-					return `<div>${name}: <span class="highlight ${name}">${deriveCSSSelector(element) + (pseudoElement ? pseudoElement : '')}</span>${element.ownerDocument !== specimenDoc ? ` (gone)` : ''}</div>`;
+					return `<div>${name}: <span class="highlight ${name.toLowerCase()}">${deriveCSSSelector(element).replaceAll('>', ' > ') + (pseudoElement ? pseudoElement : '')}</span>${element.ownerDocument !== specimenDoc ? ` (gone)` : ''}</div>`;
 				}
 				function printNode(node: SparseDOMNode | undefined, oldNew: string): string {
 					if (!node || !node.element) return 'unknown element';
-					return `<span class="highlight ${oldNew}">${deriveCSSSelector(node.element) + (node.pseudoElement ?? '')}</span>`;
+					return `<span class="highlight ${oldNew}">${deriveCSSSelector(node.element).replaceAll('>', ' > ') + (node.pseudoElement ?? '')}</span>`;
 				}
 				function hidden(group: Group): string {
 					if (!group.oldHiddenBy && !group.newHiddenBy) return '';
 					const both = group.oldHiddenBy && group.newHiddenBy;
 					let res = ', hidden by view-transition-scope at ';
-					if (group.oldHiddenBy) res += printNode(group.oldHiddenBy, 'h-old');
+					res += group.oldHiddenBy?.map((n) => printNode(n, 'h-old')).join(', ') ?? '';
 					if (both) res += ' and ';
-					if (group.newHiddenBy) res += printNode(group.newHiddenBy, 'h-new');
+					res += group.newHiddenBy?.map((n) => printNode(n, 'h-new')).join(', ') ?? '';
 					return res;
 				}
 				const hiddenText = hidden(group);
 				container.insertAdjacentHTML(
 					'beforeend',
 					`<details data-paint-order="${group.preOrder}" style="view-transition-name: G${group.preOrder}; view-transition-class: sorted-item">
-							<summary id="id${group.preOrder}">Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <b>${groupP}</b>${hiddenText ? ' (ignored)' : ''}]` : ''}${hiddenText}</summary> 
-							${group.old ? label(group.old.element, 'old image element', group.old.pseudoElement) : ''}
-							${group.new ? label(group.new.element, 'new image element', group.new.pseudoElement) : ''}
-							${group.oldDuplicates?.map((d) => label(d.element, 'duplicate old image element', d.pseudoElement)).join('') || ''}
-							${group.newDuplicates?.map((d) => label(d.element, 'duplicate new image element', d.pseudoElement)).join('') || ''}
+							<summary id="id${group.preOrder}">Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <i>${groupP}</i>${hiddenText ? ' (ignored)' : ''}]` : ''}${hiddenText}</summary> 
+							${group.old ? label(group.old.element, 'Old image element', group.old.pseudoElement) : ''}
+							${group.new ? label(group.new.element, 'New image element', group.new.pseudoElement) : ''}
+							${group.oldDuplicates?.map((d) => label(d.element, 'Duplicate old image element', d.pseudoElement)).join('') || ''}
+							${group.newDuplicates?.map((d) => label(d.element, 'Duplicate new image element', d.pseudoElement)).join('') || ''}
 						</details>`
 				);
 				const classList = container.lastElementChild!.querySelector('summary strong')?.classList;
@@ -225,17 +235,29 @@
 					?.addEventListener('click', () => console.dir(group.new?.element));
 
 				container
-					.lastElementChild!.querySelector('.highlight.h-old')
-					?.addEventListener('pointerenter', () => highlight(group.oldHiddenBy?.element, ''));
+					.lastElementChild!.querySelectorAll('.highlight.h-old')
+					.forEach((el, idx) =>
+						el.addEventListener('pointerenter', () =>
+							highlight(group.oldHiddenBy?.[idx].element, '')
+						)
+					);
 				container
-					.lastElementChild!.querySelector('.highlight.h-old')
-					?.addEventListener('click', () => console.dir(group.oldHiddenBy?.element));
+					.lastElementChild!.querySelectorAll('.highlight.h-old')
+					.forEach((el, idx) =>
+						el.addEventListener('click', () => console.dir(group.oldHiddenBy?.[idx].element))
+					);
 				container
-					.lastElementChild!.querySelector('.highlight.h-new')
-					?.addEventListener('pointerenter', () => highlight(group.newHiddenBy?.element, ''));
+					.lastElementChild!.querySelectorAll('.highlight.h-new')
+					.forEach((el, idx) =>
+						el.addEventListener('pointerenter', () =>
+							highlight(group.newHiddenBy?.[idx].element, '')
+						)
+					);
 				container
-					.lastElementChild!.querySelector('.highlight.h-new')
-					?.addEventListener('click', () => console.dir(group.newHiddenBy?.element));
+					.lastElementChild!.querySelectorAll('.highlight.h-new')
+					.forEach((el, idx) =>
+						el.addEventListener('click', () => console.dir(group.newHiddenBy?.[idx].element))
+					);
 
 				container
 					.lastElementChild!.querySelectorAll('.highlight.old.duplicate')
@@ -335,9 +357,12 @@
 				color: light-dark(darkgreen, yellowgreen);
 			}
 			summary {
-				color: #888;
+				color: light-dark(#777, #999);
 				b {
 					color: light-dark(black, white);
+				}
+				i {
+					color: light-dark(#333, #ccc);
 				}
 				strong {
 					cursor: pointer;
@@ -350,8 +375,10 @@
 					&.old.new {
 						color: darkgoldenrod;
 					}
-					&.old-duplicates,
-					&.new-duplicates {
+					&.old.old-duplicates,
+					&.old.new-duplicates,
+					&.new.old-duplicates,
+					&.new.new-duplicates {
 						color: light-dark(darkred, red) !important;
 					}
 					&.with-children::after {
@@ -364,6 +391,13 @@
 				}
 			}
 
+			h3 span.weak {
+				color: light-dark(#555, #aaa);
+				font-size: 0.8rem;
+				input {
+					transform: translateY(2px);
+				}
+			}
 			.highlight {
 				color: light-dark(#222222, #dddddd);
 				cursor: pointer;
@@ -383,7 +417,14 @@
 			details > :not(summary) {
 				margin-left: 1.34rem;
 			}
-			details:has(*.old-duplicates, *.new-duplicates) > summary strong {
+			details:has(
+					*.old.old-duplicates,
+					*.old.new-duplicates,
+					*.new.old-duplicates,
+					*.new.new-duplicates
+				)
+				> summary
+				strong {
 				color: light-dark(darkred, red);
 			}
 
@@ -391,15 +432,30 @@
 				margin-top: 0.5rem;
 				font-family: monospace;
 				font-size: 0.9rem;
-				hyphens: none;
-				overflow-wrap: normal;
-				white-space: nowrap;
-				word-break: normal;
 				span {
+					white-space: nowrap;
 					cursor: pointer;
 					color: light-dark(#333, #ccc);
-					:hover {
+
+					&.old {
 						color: light-dark(darkslateblue, slateblue);
+					}
+					&.new {
+						color: darkolivegreen;
+					}
+					&.old.new {
+						color: darkgoldenrod;
+					}
+					&.old.duplicates,
+					&.new.duplicates {
+						color: light-dark(darkred, red);
+					}
+					&:hover.old,
+					&:hover.new {
+						color: light-dark(black, white);
+					}
+					&.hidden {
+						text-decoration: line-through;
 					}
 				}
 			}

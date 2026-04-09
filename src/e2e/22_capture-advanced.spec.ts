@@ -31,11 +31,7 @@ test.describe('Capture Mode: Advanced Tests (Chrome-only)', () => {
 	});
 
 	test('3.1: view-transition-group: contain', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(
-			page,
-			'test-3-1',
-			'/e2e/capture-advanced/'
-		);
+		const { captureView } = await openCaptureView(page, 'test-3-1', '/e2e/capture-advanced/');
 
 		// Verify basic capture happened
 		await expect(captureView).toContainText(/Same-document call/i);
@@ -63,11 +59,7 @@ test.describe('Capture Mode: Advanced Tests (Chrome-only)', () => {
 	});
 
 	test('3.2: view-transition-group: nearest', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(
-			page,
-			'test-3-2',
-			'/e2e/capture-advanced/'
-		);
+		const { captureView } = await openCaptureView(page, 'test-3-2', '/e2e/capture-advanced/');
 
 		await expect(captureView).toContainText(/Same-document call/i);
 
@@ -95,11 +87,7 @@ test.describe('Capture Mode: Advanced Tests (Chrome-only)', () => {
 	});
 
 	test('3.3: view-transition-group: <custom-ident>', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(
-			page,
-			'test-3-3',
-			'/e2e/capture-advanced/'
-		);
+		const { captureView } = await openCaptureView(page, 'test-3-3', '/e2e/capture-advanced/');
 
 		await expect(captureView).toContainText(/Same-document call/i);
 
@@ -128,11 +116,7 @@ test.describe('Capture Mode: Advanced Tests (Chrome-only)', () => {
 	});
 
 	test('3.4: Multiple nesting levels (3+ deep)', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(
-			page,
-			'test-3-4',
-			'/e2e/capture-advanced/'
-		);
+		const { captureView } = await openCaptureView(page, 'test-3-4', '/e2e/capture-advanced/');
 
 		await expect(captureView).toContainText(/Same-document call/i);
 
@@ -167,11 +151,7 @@ test.describe('Capture Mode: Advanced Tests (Chrome-only)', () => {
 		page.on('console', (msg) => {
 			console.log('Console message:', msg.text());
 		});
-		const { captureView, chamberFrame } = await openCaptureView(
-			page,
-			'test-3-6',
-			'/e2e/capture-advanced/'
-		);
+		const { captureView } = await openCaptureView(page, 'test-3-6', '/e2e/capture-advanced/');
 
 		await expect(captureView).toContainText(/Same-document call/i);
 

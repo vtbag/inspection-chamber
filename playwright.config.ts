@@ -53,7 +53,7 @@ export default defineConfig({
     timezoneId: 'UTC',
     colorScheme: 'light',
     trace: 'on-first-retry',
-    video: 'retain-on-failure',
+    video: 'on',
     screenshot: 'only-on-failure',
   },
   webServer: {
@@ -64,7 +64,7 @@ export default defineConfig({
       : 'npm run start',
     cwd: isWindows ? webServerCwd : undefined,
     port: 4321,
-    timeout: 120 * 1000,
+    timeout: 40 * 1000,
     reuseExistingServer: !isCI,
   },
   projects: isWindows

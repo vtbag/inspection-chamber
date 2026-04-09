@@ -18,11 +18,20 @@ export function deriveCSSSelector(element?: Element, short = true) {
 		}
 
 		let sibling = element;
+		let more = 0;
+
+		while ((sibling = sibling.nextElementSibling as Element)) {
+			if (sibling.tagName.toLowerCase() === tag) more++;
+		}
+		sibling = element;
 		let nth = 1;
+
 		while ((sibling = sibling.previousElementSibling as Element)) {
 			if (sibling.tagName.toLowerCase() === tag) nth++;
 		}
-		selector += ':nth-of-type(' + nth + ')';
+		if (nth !== 1 || more !== 0) {
+			selector += ':nth-of-type(' + nth + ')';
+		}
 		test = path ? selector + '>' + path : selector;
 		if (short && unique(test)) {
 			return test;

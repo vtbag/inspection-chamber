@@ -137,26 +137,7 @@
 			i {
 				view-transition-group: first-section;
 			}
-			u {
-				view-transition-name: strike;
-			}
-			:active-view-transition-type(capture-old) {
-				i {
-					view-transition-name: coi;
-				}
-				b {
-					view-transition-name: cob;
-				}
-			}
 
-			:active-view-transition-type(capture-new) {
-				i {
-					view-transition-name: cni;
-				}
-				b {
-					view-transition-name: cnb;
-				}
-			}
 			:active-view-transition-type(shuffle-old) {
 				aside {
 					view-transition-name: oaside;
@@ -189,13 +170,6 @@
 				view-transition-name: var(--vtn);
 			}
 
-			section:nth-of-type(2) {
-				view-transition-name: none;
-				* {
-					view-transition-name: none;
-				}
-			}
-
 			section:nth-of-type(3) {
 				view-transition-name: section3;
 				view-transition-group: contain;
@@ -204,13 +178,38 @@
 					view-transition-group: contain;
 				}
 			}
+			section:nth-of-type(2) {
+				view-transition-name: none;
+				* {
+					view-transition-name: none;
+				}
+			}
 			@supports (view-transition-scope: all) {
 				section:nth-of-type(3) {
 					span {
 						> * {
-							view-transition-name: cob;
 							view-transition-scope: all;
 						}
+					}
+				}
+				u {
+					view-transition-name: strike;
+				}
+				:active-view-transition-type(capture-old) {
+					i {
+						view-transition-name: coi;
+					}
+					b {
+						view-transition-name: cob;
+					}
+				}
+
+				:active-view-transition-type(capture-new) {
+					i {
+						view-transition-name: cni;
+					}
+					b {
+						view-transition-name: cnb;
 					}
 				}
 			}
@@ -363,7 +362,7 @@
 			</section>
 			<section>
 				<p>
-					<span></span><span><b>Lots</b> of <u>DOM</u> <i>nodes</i></span>
+					<span><b>Lots</b> of <u>DOM</u> <i>nodes</i></span>
 					<span>that</span> are <span>removed</span> from <span>the sparse tree</span>
 				</p>
 			</section>

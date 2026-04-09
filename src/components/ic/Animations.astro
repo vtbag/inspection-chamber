@@ -430,7 +430,7 @@ import Scope from './Scope.astro';
 					let scope = this.#scopes.get(element)!;
 					if (!scope) {
 						scope = document.createElement('vtbag-ic-scope');
-						scope.init(element, moduleGroupMaps.get(element)!.get('@')!, animations);
+						scope.initScope(element, moduleGroupMaps.get(element)!.get('@')![0]!, animations);
 						this.#scopes.set(element, scope);
 						this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
 					}
@@ -482,7 +482,7 @@ import Scope from './Scope.astro';
 			const movePseudosCallback = () => {
 				const showPseudos = parent.document.documentElement.classList.contains('show-pseudos');
 
-				if (true || showPseudos) {
+				if (showPseudos) {
 					if (this.#retriggerPseudosToMove && this.#pseudosToMove.length === 0) {
 						this.querySelectorAll('vtbag-ic-pseudo').forEach((p) => this.#pseudosToMove.push(p));
 						this.#retriggerPseudosToMove = false;

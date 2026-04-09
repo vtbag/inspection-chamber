@@ -1,9 +1,9 @@
-import { test, expect, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import {
+	ensureCaptureModeEnabled,
 	longTap,
 	setupFrames,
 	waitForCondition,
-	ensureCaptureModeEnabled,
 } from './fixtures/capture-harness';
 
 const PLAYBACK_RATE_TIMEOUT_MS = 8000;
@@ -122,7 +122,7 @@ test('same-page demo supports layout/shuffle/theme transitions', async ({ page }
 	await page.goto('/e2e/same-page/');
 	const frameLocator = page.locator('iframe').first();
 	await expect(frameLocator).toBeVisible();
-	const mainFrame = await frameLocator.contentFrame();
+	const mainFrame = frameLocator.contentFrame();
 	expect(mainFrame).not.toBeNull();
 	const frame = mainFrame!;
 
@@ -144,7 +144,7 @@ test('same-page demo supports layout/shuffle/theme transitions', async ({ page }
 
 	const afterOrder = await getOrder();
 	const rotatedOrder = [...beforeOrder.slice(1), beforeOrder[0]];
-	await expect(afterOrder).toEqual(rotatedOrder);
+	expect(afterOrder).toEqual(rotatedOrder);
 
 	await frame.locator('#toggle-theme').click();
 	await expect(frame.locator('#status')).toHaveText(/same-page-theme/);

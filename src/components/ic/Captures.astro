@@ -141,7 +141,7 @@ import ViewTransitionCapture from './ViewTransitionCapture.astro';
 					`<vtbag-ic-view-transition-capture></vtbag-ic-view-transition-capture>`
 				);
 				const captureElement = this.lastElementChild as VtbagIcViewTransitionCaptureElement;
-				captureElement.init(key);
+				captureElement.initVTCapture(key);
 			});
 			event.type !== 'ic-ready-error' && parent.__vtbag!.ic2!.vtMap?.clear();
 		};

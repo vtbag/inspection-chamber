@@ -38,7 +38,7 @@ export type IC2 = {
 	captureOldOnly?: boolean;
 	captureFreezeTypes?: boolean;
 	crossDocumentBackNavigation: boolean;
-	crossDocumentGroups?: Map<string, Group>;
+	crossDocumentGroups?: Map<string, Group[]>;
 };
 
 declare global {

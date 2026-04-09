@@ -6,11 +6,11 @@ import { message } from './message';
 
 let idCount = 0;
 
-export const moduleGroupMaps = new Map<Element, Map<string, Group>>();
+export const moduleGroupMaps = new Map<Element, Map<string, Group[]>>();
 
 function capture(
 	transitionRoot: HTMLElement,
-	groups: Map<string, Group>,
+	groups: Map<string, Group[]>,
 	oldOrNew: 'old' | 'new'
 ): string {
 	let sheet = '';
@@ -91,14 +91,14 @@ function capture(
 	addParentLinks(sparseDOM, elementMap, transitionRoot);
 	sort(rootNode);
 
-	const groupRoot = groups.get('@')!;
+	const groupRoot = groups.get('@')![0];
 	groupRoot[oldOrNew] = rootNode;
 	const capture = !!document.querySelector<HTMLInputElement>('#capture')?.checked;
 
 	if (nestGroups(rootNode, groupRoot, groupRoot, groups, oldOrNew, capture, undefined)) {
 		message(
 			'error',
-			`<b>Duplicate</b> view transition <b>names</b> detected <b>during capture of ${oldOrNew} images</b>. ` +
+			`<b>Duplicate</b> view transition <b>names</b> detected during capture of <b>${oldOrNew}</b> images. ` +
 				(capture
 					? `Check capture results below for details.`
 					: `Enable <b>Analyze capturing</b> mode below to see details.`)
@@ -118,8 +118,8 @@ function capture(
 		let sheet;
 
 		if (eventName === 'ic-before-capture-old') {
-			groups = new Map<string, Group>([
-				['@', { name: '' + moduleGroupMaps.size, className: '', children: [], ancestor: false }],
+			groups = new Map<string, Group[]>([
+				['@', [{ name: '' + moduleGroupMaps.size, className: '', children: [], ancestor: false }]],
 			]);
 			moduleGroupMaps.set(transitionRoot, groups);
 			sheet = capture(transitionRoot, groups, 'old');
@@ -139,7 +139,7 @@ function capture(
 		const head = transitionRoot.ownerDocument.head;
 		head.insertAdjacentHTML(
 			'beforeend',
-			`<style id="vtbag-ic-temp-style-${gid(groups.get('@'))}">${sheet}</style>`
+			`<style id="vtbag-ic-temp-style-${gid(groups.get('@')![0])}">${sheet}</style>`
 		);
 	})
 );
@@ -149,7 +149,7 @@ function capture(
 		const detail = (event as CustomEvent).detail;
 		const root = detail.root;
 		root.ownerDocument.head
-			.querySelector(`#vtbag-ic-temp-style-${gid(moduleGroupMaps.get(root)?.get('@'))}`)
+			.querySelector(`#vtbag-ic-temp-style-${gid(moduleGroupMaps.get(root)?.get('@')![0])}`)
 			?.remove();
 	})
 );

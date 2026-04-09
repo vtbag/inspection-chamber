@@ -20,7 +20,7 @@ test('cross-document demo navigates forward and back with view transition types'
 	await page.goto('/e2e/cross-a/');
 	const frameLocator = page.locator('iframe').first();
 	await expect(frameLocator).toBeVisible();
-	const mainFrame = await frameLocator.contentFrame();
+	const mainFrame = frameLocator.contentFrame();
 	expect(mainFrame).not.toBeNull();
 	const frame = mainFrame!;
 	await expect(frame.locator('#page-id')).toHaveText('Page A');

@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "bin/bundle dev",
-    "build": "npm run format; bin/bundle",
+    "build": "npm run format; astro check && bin/bundle",
     "start": "astro dev",
     "test": "npx playwright test",
     "format": "prettier --write src | grep -v 'unchanged)$'",
@@ -55,5 +55,8 @@
     "prettier": "^3.8.1",
     "typescript": "^6.0.2",
     "vite-plugin-singlefile": "^2.3.2"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.8"
   }
 }

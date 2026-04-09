@@ -120,8 +120,6 @@ function namedElementsOfRule(rule: CSSRule, keyframeName?: string) {
 		return;
 	}
 
-	return;
-
 	console.error('[inspection-chamber] Unknown CSSRule', rule);
 }
 
