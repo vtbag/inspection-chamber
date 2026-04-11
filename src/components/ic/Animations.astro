@@ -430,7 +430,7 @@ import Scope from './Scope.astro';
 					let scope = this.#scopes.get(element)!;
 					if (!scope) {
 						scope = document.createElement('vtbag-ic-scope');
-						scope.initScope(element, moduleGroupMaps.get(element)!.get('@')![0]!, animations);
+						scope.initScope(element, moduleGroupMaps.get(element)!.get('@')!, animations);
 						this.#scopes.set(element, scope);
 						this.querySelector<HTMLDivElement>('div.scope-container')!.appendChild(scope);
 					}

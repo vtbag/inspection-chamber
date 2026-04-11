@@ -22,7 +22,7 @@
 		classProperty?: string;
 		children?: CaptureRecord;
 	};
-	type CaptureRecord = Record<string, CaptureEntry>;
+	type CaptureRecord = CaptureEntry[];
 
 	class ICViewTransitionCapture extends ICElement {
 		featuresKey: HTMLElement | undefined | null = null;
@@ -41,7 +41,7 @@
 			const hideUndiscoverable = sessionStorage.getItem('ic-hide-undiscoverable') !== 'false';
 			this.classList.toggle('hide-undiscoverable', hideUndiscoverable);
 
-			const captures: CaptureRecord = Object.create(null);
+			const captures: CaptureRecord = [];
 			let current: CaptureRecord[] = [];
 			const sortOrder = sessionStorage.getItem('vtbag-ic-capture-sort') || 'paint-order';
 			const dump = (elem: HTMLElement, group?: Group, level = 0) => {
@@ -51,7 +51,7 @@
 				if (group.parent) {
 					entry = entryForDevtools(group);
 					record = current.at(-1)!;
-					record[group.name] = entry;
+					record.push(entry);
 					groupDetails(elem, group, entry.classProperty, entry.groupProperty);
 				}
 				const childRecord = entry?.children || captures;
@@ -79,12 +79,12 @@
 			});
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
-			const group: Group | undefined = moduleGroupMaps.get(this.featuresKey!)?.get('@')![0]!;
+			const group: Group | undefined = moduleGroupMaps.get(this.featuresKey!)?.get('@')!;
 			const hasUndiscoverables = linear(group).some((g) => g.oldHiddenBy || g.newHiddenBy);
 
 			this.insertAdjacentHTML(
 				'beforeend',
-				`<h3>${this.featuresKey ? 'Same-document call on ' + deriveCSSSelector(this.featuresKey).replaceAll('>', ' > ') : 'Cross-document navigation'}, started at ${localeTime} ${hasUndiscoverables ? `<span class="weak">(<input id="hide-undiscoverable" type="checkbox" ${hideUndiscoverable ? 'checked' : ''}></input><label for="hide-undiscoverable">hide undiscoverable elements</label>)</span>` : ''}</h3>
+				`<h3>${this.featuresKey ? 'Same-document call on ' + deriveCSSSelector(this.featuresKey).replaceAll('>', ' > ') : 'Cross-document navigation'}, started at ${localeTime} ${hasUndiscoverables ? `<span class="weak">(<input id="hide-undiscoverable" type="checkbox" ${hideUndiscoverable ? 'checked' : ''}></input><label for="hide-undiscoverable">hide skipped elements</label>)</span>` : ''}</h3>
 				<p>Active view transition types during capture of <strong>old</strong> images: <strong>${
 					[...(features?.oldTypes ?? [])].join(', ') || 'none'
 				}</strong></p>				
@@ -196,18 +196,23 @@
 				function label(element: Element, name: string, pseudoElement?: string) {
 					return `<div>${name}: <span class="highlight ${name.toLowerCase()}">${deriveCSSSelector(element).replaceAll('>', ' > ') + (pseudoElement ? pseudoElement : '')}</span>${element.ownerDocument !== specimenDoc ? ` (gone)` : ''}</div>`;
 				}
-				function printNode(node: SparseDOMNode | undefined, oldNew: string): string {
+				function printNode(
+					node: SparseDOMNode | undefined,
+					oldNew: string,
+					below?: Element | undefined
+				): string {
 					if (!node || !node.element) return 'unknown element';
-					return `<span class="highlight ${oldNew}">${deriveCSSSelector(node.element).replaceAll('>', ' > ') + (node.pseudoElement ?? '')}</span>`;
+					return `<span class="highlight ${oldNew}">${deriveCSSSelector(node.element, true, below).replaceAll('>', ' > ') + (node.pseudoElement ?? '')}</span>`;
 				}
 				function hidden(group: Group): string {
-					if (!group.oldHiddenBy && !group.newHiddenBy) return '';
-					const both = group.oldHiddenBy && group.newHiddenBy;
-					let res = ', hidden by view-transition-scope at ';
-					res += group.oldHiddenBy?.map((n) => printNode(n, 'h-old')).join(', ') ?? '';
-					if (both) res += ' and ';
-					res += group.newHiddenBy?.map((n) => printNode(n, 'h-new')).join(', ') ?? '';
-					return res;
+					let oldOrNew: 'old' | 'new' | 'neither' = group.oldHiddenBy
+						? 'old'
+						: group.newHiddenBy
+							? 'new'
+							: 'neither';
+					if (oldOrNew === 'neither') return '';
+
+					return ` skipped as ${printNode(group[`${oldOrNew}HiddenBy`], oldOrNew)} hides ${printNode(group[oldOrNew], `h-${oldOrNew}`, group[`${oldOrNew}HiddenBy`]?.element)}`;
 				}
 				const hiddenText = hidden(group);
 				container.insertAdjacentHTML(
@@ -222,6 +227,11 @@
 				);
 				const classList = container.lastElementChild!.querySelector('summary strong')?.classList;
 				classList?.toggle('with-children', group.children.length > 0);
+				classList?.toggle(
+					'only-hidden-children',
+					group.children.filter((g) => !g.oldHiddenBy && !g.newHiddenBy).length === 0
+				);
+
 				classList?.toggle('new', !!group.new);
 				classList?.toggle('old', !!group.old);
 				classList?.toggle('new-duplicates', !!group.newDuplicates);
@@ -255,29 +265,19 @@
 					?.addEventListener('click', () => console.dir(group.new?.element));
 
 				container
-					.lastElementChild!.querySelectorAll('.highlight.h-old')
-					.forEach((el, idx) =>
-						el.addEventListener('pointerenter', () =>
-							highlight(group.oldHiddenBy?.[idx].element, '')
-						)
-					);
+					.lastElementChild!.querySelector('.highlight.h-old')
+					?.addEventListener('pointerenter', () => highlight(group.oldHiddenBy?.element, ''));
+
 				container
-					.lastElementChild!.querySelectorAll('.highlight.h-old')
-					.forEach((el, idx) =>
-						el.addEventListener('click', () => console.dir(group.oldHiddenBy?.[idx].element))
-					);
+					.lastElementChild!.querySelector('.highlight.h-old')
+					?.addEventListener('click', () => console.dir(group.oldHiddenBy?.element));
+
 				container
-					.lastElementChild!.querySelectorAll('.highlight.h-new')
-					.forEach((el, idx) =>
-						el.addEventListener('pointerenter', () =>
-							highlight(group.newHiddenBy?.[idx].element, '')
-						)
-					);
+					.lastElementChild!.querySelector('.highlight.h-new')
+					?.addEventListener('pointerenter', () => highlight(group.newHiddenBy?.element, ''));
 				container
-					.lastElementChild!.querySelectorAll('.highlight.h-new')
-					.forEach((el, idx) =>
-						el.addEventListener('click', () => console.dir(group.newHiddenBy?.[idx].element))
-					);
+					.lastElementChild!.querySelector('.highlight.h-new')
+					?.addEventListener('click', () => console.dir(group.newHiddenBy?.element));
 
 				container
 					.lastElementChild!.querySelectorAll('.highlight.old.duplicate')
@@ -314,7 +314,7 @@
 			function entryForDevtools(group: Group) {
 				const entry = Object.create(null);
 				entry.children = Object.create(null);
-
+				entry.name = group.name;
 				if (group.old)
 					entry.oldNamedElement = {
 						element: group.old.element,
@@ -404,13 +404,13 @@
 					&.with-children::after {
 						content: ' (with children)';
 						color: #888;
+						view-transition-name: match-element;
 					}
 					&.hidden {
 						text-decoration: line-through;
 					}
 				}
 			}
-
 			h3 span.weak {
 				color: light-dark(#555, #aaa);
 				font-size: 0.8rem;
@@ -449,6 +449,7 @@
 			}
 
 			#flat-capture-list {
+				view-transition-name: match-element;
 				margin-top: 0.5rem;
 				font-family: monospace;
 				font-size: 0.9rem;
@@ -480,10 +481,9 @@
 				}
 			}
 			&.hide-undiscoverable {
-				details:has(> summary strong.hidden) {
-					display: none;
-				}
-				#flat-capture-list span:has(span.hidden) {
+				details:has(> summary strong.hidden),
+				#flat-capture-list span:has(span.hidden),
+				summary strong.with-children.only-hidden-children::after {
 					display: none;
 				}
 			}

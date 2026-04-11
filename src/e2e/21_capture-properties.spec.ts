@@ -4,7 +4,7 @@ import { CHAMBER_CONFIG } from './chamber-config';
 
 test.describe('Capture Mode: Properties Tests', () => {
 	test('2.1: view-transition-name: auto (with ID)', async ({ page, browserName }) => {
-		test.skip(browserName !== 'webkit', 'Only runs on webkit');
+		test.skip(browserName !== 'webkit', '"vtn: auto" is only supported on webkit');
 		const { captureView } = await openCaptureView(page, 'test-2-1', '/e2e/capture-properties/');
 		const summaries = await captureView
 			.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer)
@@ -16,7 +16,7 @@ test.describe('Capture Mode: Properties Tests', () => {
 	});
 
 	test('2.2: view-transition-name: auto (without ID)', async ({ page, browserName }) => {
-		test.skip(browserName !== 'webkit', 'Only runs on webkit');
+		test.skip(browserName !== 'webkit', '"vtn: auto" is only supported on webkit');
 		const { captureView } = await openCaptureView(page, 'test-2-2', '/e2e/capture-properties/');
 		const summaries = await captureView
 			.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer)
@@ -61,5 +61,24 @@ test.describe('Capture Mode: Properties Tests', () => {
 		const { captureView } = await openCaptureView(page, 'test-2-6', '/e2e/capture-properties/');
 		await expect(captureView).toContainText('Group elem');
 		await expect(captureView).toContainText(/Group\s+elem\s+\[classes:\s*new-class\]/i);
+	});
+
+	test('2.7: Shared name across two elements with visibility swap has no duplicate violation', async ({
+		page,
+	}) => {
+		const { captureView, chamberFrame } = await openCaptureView(
+			page,
+			'test-2-7',
+			'/e2e/capture-properties/'
+		);
+
+		await expect(captureView).toContainText('Group swap-shared');
+		await expect(captureView).toContainText(/old image element: #swap-first/i);
+		await expect(captureView).toContainText(/new image element: #swap-second/i);
+		await expect(captureView).not.toContainText(/duplicate (old|new) image element/i);
+
+		const messageComponent = chamberFrame.locator('vtbag-ic-message');
+		const messages = messageComponent.locator('.message');
+		await expect(messages).toHaveCount(0);
 	});
 });

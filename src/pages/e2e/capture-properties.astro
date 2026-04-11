@@ -126,6 +126,29 @@
 					padding: 1.5rem;
 				}
 			}
+
+			/* --- test-2-7: same name on two elements, one visible at a time --- */
+
+			html:active-view-transition-type(test-2-7) {
+				#swap-first p,
+				#swap-second p {
+					view-transition-name: swap-shared;
+				}
+
+				#swap-second {
+					display: none;
+				}
+
+				.state-b #swap-first {
+					display: none;
+				}
+
+				.state-b #swap-second {
+					display: block;
+					background: light-dark(#ecfccb, #365314);
+					padding: 1.5rem;
+				}
+			}
 		</style>
 	</head>
 	<body>
@@ -137,6 +160,7 @@
 			<button id="trigger-test-2-4">Test 2.4</button>
 			<button id="trigger-test-2-5">Test 2.5</button>
 			<button id="trigger-test-2-6">Test 2.6</button>
+			<button id="trigger-test-2-7">Test 2.7</button>
 		</div>
 
 		<div id="my-element" class="test-element">
@@ -163,6 +187,14 @@
 			<p>Class Priority</p>
 		</div>
 
+		<div id="swap-first" class="test-element">
+			<p>Swap Shared Name (First)</p>
+		</div>
+
+		<div id="swap-second" class="test-element">
+			<p>Swap Shared Name (Second)</p>
+		</div>
+
 		<script>
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
@@ -178,6 +210,7 @@
 			document.getElementById('trigger-test-2-4')?.addEventListener('click', () => triggerTransition('test-2-4'));
 			document.getElementById('trigger-test-2-5')?.addEventListener('click', () => triggerTransition('test-2-5'));
 			document.getElementById('trigger-test-2-6')?.addEventListener('click', () => triggerTransition('test-2-6'));
+			document.getElementById('trigger-test-2-7')?.addEventListener('click', () => triggerTransition('test-2-7'));
 		</script>
 	</body>
 </html>

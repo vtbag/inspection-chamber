@@ -1,4 +1,8 @@
-export function deriveCSSSelector(element?: Element, short = true) {
+export function deriveCSSSelector(
+	element?: Element,
+	short = true,
+	below: Element | undefined = undefined
+): string {
 	let path = '';
 	if (!element) return '';
 
@@ -7,6 +11,9 @@ export function deriveCSSSelector(element?: Element, short = true) {
 	if (element?.constructor.name === HTMLHtmlElement.name) return ':root';
 
 	while (element?.nodeType === Node.ELEMENT_NODE) {
+		if (element === below) {
+			return path ? '&>' + path : '&';
+		}
 		const tag = element.tagName.toLowerCase();
 		let selector = tag;
 		if (element.id) {

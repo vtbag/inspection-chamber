@@ -13,6 +13,7 @@ export type SparseDOMNode = {
 	zIndex?: number;
 	order?: any;
 	children: SparseDOMNode[];
+	hidden?: SparseDOMNode;
 };
 
 export function addParentLinks(
@@ -43,7 +44,17 @@ function linkToParent(
 				element: node.element,
 				viewTransitionName: 'none',
 				style: parentStyle,
-			};
+			} as SparseDOMNode;
+
+			if (
+				parentStyle.display === 'none' ||
+				parentStyle.display === 'contents' ||
+				parentStyle.visibility === 'hidden'
+			)
+				parent.hidden = parent;
+			console.log(
+				`Created synthetic parent for ${deriveCSSSelector(node.element)}, hidden: ${deriveCSSSelector(parent.hidden?.element)} (display: ${parentStyle.display}, visibility: ${parentStyle.visibility})`
+			);
 			elementMap.set(node.element, parent);
 			parent.children.push(node);
 			node.paintGroup = paintGroup(node, parent.style.display);
@@ -71,12 +82,18 @@ function linkToParent(
 		}
 		const parentElement = current.parentElement!;
 		const parentStyle = getComputedStyle(parentElement);
-		const newParent: SparseDOMNode = {
+		const newParent = {
 			children: [],
 			element: parentElement,
 			style: parentStyle,
 			viewTransitionName: 'none',
-		};
+		} as SparseDOMNode;
+		if (
+			parentStyle.display === 'none' ||
+			parentStyle.display === 'contents' ||
+			parentStyle.visibility === 'hidden'
+		)
+			newParent.hidden = newParent;
 		elementMap.set(parentElement, newParent);
 		newParent.children.push(me);
 		me.paintGroup = paintGroup(me, newParent.style.display);
@@ -86,10 +103,11 @@ function linkToParent(
 	}
 }
 
-export function sort(node: SparseDOMNode) {
+export function sort(node: SparseDOMNode, hidden: SparseDOMNode | undefined = undefined) {
+	node.hidden ??= hidden;
 	for (let i = 0; i < node.children.length; ++i) {
 		const child = node.children[i];
-		sort(child);
+		sort(child, node.hidden);
 		if (!child.context && (!child.viewTransitionScope || child.viewTransitionScope === 'none')) {
 			node.children.splice(i, 0, ...child.children);
 			i += child.children.length;
@@ -122,10 +140,9 @@ export function print(root: SparseDOMNode, depth = 0) {
 	let what = deriveCSSSelector(root.element);
 	let pruned = '';
 	if (what.startsWith('#')) what = what + ' (' + (root.element.tagName || '') + ')';
-	if (root.viewTransitionScope && root.viewTransitionScope !== 'none')
-		pruned = 'color: light-dark(orange, darkorange); font-weight: bold;';
+	if (!!root.hidden) pruned = 'color: light-dark(orange, darkorange); font-weight: bold;';
 	console.log(
-		`%c${' '.repeat(depth * 2)} - ${what}${root.pseudoElement || ''}, name: ${root.viewTransitionName}, paint order modifier: ${root.paintGroup}.${root.zIndex}.${root.order}${pruned ? ', defines a new view transition scope that prunes this DOM subtree' : ''}`,
+		`%c${' '.repeat(depth * 2)} - ${what}${root.pseudoElement || ''}, name: ${root.viewTransitionName}, paint order modifier: ${root.paintGroup}.${root.zIndex}.${root.order}${pruned ? `, hidden by ${deriveCSSSelector(root.hidden?.element)}` : ''}`,
 		pruned
 	);
 	root.children.forEach((child) => print(child, depth + 1));

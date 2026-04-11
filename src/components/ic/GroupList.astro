@@ -73,7 +73,7 @@ import Group from './Group.astro';
 						groupAnimations.push(animation);
 					}
 				});
-				const root = groups.get('@')![0]!;
+				const root = groups.get('@')!;
 				linear(root).forEach((group) => {
 					group.parent && this.refreshGroup(group, newGroupAnimations.get(group.name) || []);
 				});
