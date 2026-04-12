@@ -1,4 +1,5 @@
 ---
+
 ---
 
 <html lang="en">
@@ -10,6 +11,7 @@
 		<style>
 			:root {
 				color-scheme: light dark;
+				view-transition-name: none;
 			}
 
 			* {
@@ -40,7 +42,6 @@
 				padding: 2rem;
 				background: light-dark(#dbeafe, #1e3a8a);
 				border-radius: 0.5rem;
-				view-transition-name: hero;
 			}
 
 			#old-only {
@@ -108,62 +109,42 @@
 				/* no view-transition-name by default */
 			}
 
-			/* --- test-1-1: basic capture with hero --- */
+			/* --- test-1-1: captures group root with old and new element --- */
 
 			html:active-view-transition-type(test-1-1) {
-				.state-b #hero {
-					background: light-dark(#dcfce7, #14532d);
-				}
+				view-transition-name: root;
+
 				.state-b h1 {
 					font-size: 3rem;
 				}
 			}
 
-			/* --- test-1-2: old-only element (removed in new state) --- */
+			/* --- test-1-2: captures group old-only, which has an old but no new element --- */
 
 			html:active-view-transition-type(test-1-2) {
 				#old-only {
-					view-transition-name: old-only-element;
-				}
-				.state-b #hero {
-					background: light-dark(#dcfce7, #14532d);
+					view-transition-name: old-only;
 				}
 				.state-b #old-only {
 					display: none;
 				}
 			}
 
-			/* --- test-1-3: new-only element (created in new state) --- */
+			/* --- test-1-3: captures group new-only, which has a new but no old element --- */
 
 			html:active-view-transition-type(test-1-3) {
 				#new-only {
-					view-transition-name: new-only-element;
+					view-transition-name: new-only;
 					display: none;
-				}
-				.state-b #hero {
-					background: light-dark(#dcfce7, #14532d);
 				}
 				.state-b #new-only {
 					display: block;
 				}
 			}
 
-			/* --- test-1-4: same element old and new (style changes only) --- */
+			/* --- test-1-4: different elements with same name --- */
 
 			html:active-view-transition-type(test-1-4) {
-				#persistent {
-					view-transition-name: persistent-element;
-				}
-				.state-b #persistent {
-					background: light-dark(#fef9c3, #854d0e);
-					padding: 2rem;
-					font-size: 1.5rem;
-				}
-			}
-
-			/* --- test-1-5: different elements with same name --- */
-
-			html:active-view-transition-type(test-1-5) {
 				/* elem-a has the name in old state, visible */
 				#elem-a {
 					view-transition-name: shared-element;
@@ -182,9 +163,9 @@
 				}
 			}
 
-			/* --- test-1-6: pseudo-element ::before with view-transition-name --- */
+			/* --- test-1-5: pseudo-element ::before with view-transition-name --- */
 
-			html:active-view-transition-type(test-1-6) {
+			html:active-view-transition-type(test-1-5) {
 				#pseudo-test::before {
 					content: 'Before';
 					display: block;
@@ -202,9 +183,9 @@
 				}
 			}
 
-			/* --- test-1-7: pseudo-element ::before and ::after with view-transition-name --- */
+			/* --- test-1-6: pseudo-element ::before and ::after with view-transition-name --- */
 
-			html:active-view-transition-type(test-1-7) {
+			html:active-view-transition-type(test-1-6) {
 				#pseudo-test::before {
 					content: 'Before';
 					display: block;
@@ -234,9 +215,9 @@
 				}
 			}
 
-			/* --- test-1-8: duplicate view-transition-name detection --- */
+			/* --- test-1-7: duplicate view-transition-name detection --- */
 
-			html:active-view-transition-type(test-1-8) {
+			html:active-view-transition-type(test-1-7) {
 				#duplicate-a,
 				#duplicate-b,
 				#duplicate-c {
@@ -248,9 +229,9 @@
 				}
 			}
 
-			/* --- test-4-5: CSS escape sequences in view-transition-name --- */
+			/* --- test-1-8: CSS escape sequences in view-transition-name --- */
 
-			html:active-view-transition-type(test-4-5) {
+			html:active-view-transition-type(test-1-8) {
 				#escaped-name {
 					view-transition-name: \!important;
 				}
@@ -272,7 +253,6 @@
 			<button id="trigger-test-1-6">Test 1.6</button>
 			<button id="trigger-test-1-7">Test 1.7</button>
 			<button id="trigger-test-1-8">Test 1.8</button>
-			<button id="trigger-test-4-5">Test 4.5</button>
 		</div>
 
 		<div id="old-only">
@@ -281,10 +261,6 @@
 
 		<div id="new-only">
 			<p>This element is created in the new state</p>
-		</div>
-
-		<div id="persistent" data-test-element="same">
-			<p>Persistent Element (same across transition)</p>
 		</div>
 
 		<div id="elem-a" data-test-element="a">
