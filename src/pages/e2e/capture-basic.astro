@@ -44,31 +44,7 @@
 				border-radius: 0.5rem;
 			}
 
-			#old-only {
-				margin-top: 1rem;
-				padding: 1rem;
-				background: light-dark(#fee2e2, #7f1d1d);
-				border-radius: 0.5rem;
-				/* no view-transition-name by default */
-			}
-
-			#new-only {
-				margin-top: 1rem;
-				padding: 1rem;
-				background: light-dark(#fef3c7, #92400e);
-				border-radius: 0.5rem;
-				/* no view-transition-name by default */
-			}
-
-			#persistent {
-				margin-top: 1rem;
-				padding: 1rem;
-				background: light-dark(#e0e7ff, #312e81);
-				border-radius: 0.5rem;
-				/* no view-transition-name by default */
-			}
-
-			#elem-a {
+			#element-a {
 				margin-top: 1rem;
 				padding: 1rem;
 				background: light-dark(#fce7f3, #831843);
@@ -76,168 +52,86 @@
 				/* no view-transition-name by default */
 			}
 
-			#elem-b {
+			#element-b {
 				margin-top: 1rem;
 				padding: 1rem;
 				background: light-dark(#e0f2fe, #0c4a6e);
 				border-radius: 0.5rem;
-				/* no view-transition-name by default */
 			}
 
-			#pseudo-test {
-				margin-top: 1rem;
-				padding: 1rem;
-				background: light-dark(#f3e8ff, #4c1d95);
-				border-radius: 0.5rem;
-				/* no view-transition-name by default */
-			}
+			/* --- root: captures group root with old and new element --- */
 
-			#duplicate-a,
-			#duplicate-b {
-				margin-top: 1rem;
-				padding: 1rem;
-				background: light-dark(#fecdd3, #7f2d2d);
-				border-radius: 0.5rem;
-				/* no view-transition-name by default */
-			}
-
-			#escaped-name {
-				margin-top: 1rem;
-				padding: 1rem;
-				background: light-dark(#e0e7ff, #312e81);
-				border-radius: 0.5rem;
-				/* no view-transition-name by default */
-			}
-
-			/* --- test-1-1: captures group root with old and new element --- */
-
-			html:active-view-transition-type(test-1-1) {
+			html:active-view-transition-type(root) {
 				view-transition-name: root;
-
-				.state-b h1 {
-					font-size: 3rem;
-				}
 			}
 
-			/* --- test-1-2: captures group old-only, which has an old but no new element --- */
+			/* --- old-only: captures group old-only, which has an old but no new element --- */
 
-			html:active-view-transition-type(test-1-2) {
-				#old-only {
+			html:active-view-transition-type(old-only) {
+				body.old #element-a {
 					view-transition-name: old-only;
-				}
-				.state-b #old-only {
-					display: none;
 				}
 			}
 
 			/* --- test-1-3: captures group new-only, which has a new but no old element --- */
 
 			html:active-view-transition-type(test-1-3) {
-				#new-only {
+				body.new #element-b {
 					view-transition-name: new-only;
-					display: none;
-				}
-				.state-b #new-only {
-					display: block;
 				}
 			}
 
 			/* --- test-1-4: different elements with same name --- */
 
 			html:active-view-transition-type(test-1-4) {
-				/* elem-a has the name in old state, visible */
-				#elem-a {
+				body.old #element-a {
 					view-transition-name: shared-element;
 				}
-				/* elem-b is hidden in old state */
-				#elem-b {
-					visibility: hidden;
-				}
-				/* in new state: elem-a hidden, elem-b visible with the name */
-				.state-b #elem-a {
-					display: contents;
-				}
-				.state-b #elem-b {
+				body.new #element-b {
 					view-transition-name: shared-element;
-					visibility: visible;
 				}
 			}
 
 			/* --- test-1-5: pseudo-element ::before with view-transition-name --- */
 
 			html:active-view-transition-type(test-1-5) {
-				#pseudo-test::before {
+				body.old #element-a::before {
 					content: 'Before';
-					display: block;
-					margin-bottom: 1rem;
-					padding: 0.5rem;
-					background: light-dark(#fbbf24, #f59e0b);
-					border-radius: 0.25rem;
 					view-transition-name: before-pseudo;
 				}
-				.state-b #pseudo-test {
-					background: light-dark(#dbeafe, #1e3a8a);
-				}
-				.state-b #pseudo-test::before {
-					background: light-dark(#c7d2fe, #818cf8);
+				body.new #element-b:before {
+					view-transition-name: before-pseudo;
 				}
 			}
 
 			/* --- test-1-6: pseudo-element ::before and ::after with view-transition-name --- */
 
 			html:active-view-transition-type(test-1-6) {
-				#pseudo-test::before {
-					content: 'Before';
-					display: block;
-					margin-bottom: 1rem;
-					padding: 0.5rem;
-					background: light-dark(#fbbf24, #f59e0b);
-					border-radius: 0.25rem;
-					view-transition-name: before-pseudo;
-				}
-				#pseudo-test::after {
+				#element-b::after {
 					content: 'After';
-					display: block;
-					margin-top: 1rem;
-					padding: 0.5rem;
-					background: light-dark(#86efac, #22c55e);
-					border-radius: 0.25rem;
 					view-transition-name: after-pseudo;
 				}
-				.state-b #pseudo-test {
-					background: light-dark(#dbeafe, #1e3a8a);
-				}
-				.state-b #pseudo-test::before {
-					background: light-dark(#c7d2fe, #818cf8);
-				}
-				.state-b #pseudo-test::after {
-					background: light-dark(#c7d2fe, #818cf8);
+				#element-b::before {
+					content: 'Before';
+					view-transition-name: before-pseudo;
 				}
 			}
 
 			/* --- test-1-7: duplicate view-transition-name detection --- */
 
 			html:active-view-transition-type(test-1-7) {
-				#duplicate-a,
-				#duplicate-b,
-				#duplicate-c {
+				#hero,
+				#element-a,
+				#element-b {
 					view-transition-name: duplicate;
-				}
-				.state-b #duplicate-a,
-				.state-b #duplicate-b {
-					background: light-dark(#fed7aa, #b45309);
 				}
 			}
 
 			/* --- test-1-8: CSS escape sequences in view-transition-name --- */
 
 			html:active-view-transition-type(test-1-8) {
-				#escaped-name {
+				#element-a {
 					view-transition-name: \!important;
-				}
-				.state-b #escaped-name {
-					background: light-dark(#dcfce7, #14532d);
-					padding: 2rem;
 				}
 			}
 		</style>
@@ -245,8 +139,9 @@
 	<body>
 		<div id="hero">
 			<h1>Hero Element</h1>
-			<button id="trigger-test-1-1">Test 1.1</button>
-			<button id="trigger-test-1-2">Test 1.2</button>
+			<button id="trigger-test-1-0">Test 1.0</button>
+			<button id="trigger-root">Root</button>
+			<button id="trigger-old-only">Old Only</button>
 			<button id="trigger-test-1-3">Test 1.3</button>
 			<button id="trigger-test-1-4">Test 1.4</button>
 			<button id="trigger-test-1-5">Test 1.5</button>
@@ -255,78 +150,59 @@
 			<button id="trigger-test-1-8">Test 1.8</button>
 		</div>
 
-		<div id="old-only">
-			<p>This element only exists in the old state</p>
+		<div id="element-a" data-test-element="a">
+			<p>Element A</p>
 		</div>
 
-		<div id="new-only">
-			<p>This element is created in the new state</p>
-		</div>
-
-		<div id="elem-a" data-test-element="a">
-			<p>Element A (old state only)</p>
-		</div>
-
-		<div id="elem-b" data-test-element="b">
-			<p>Element B (new state only)</p>
-		</div>
-
-		<div id="pseudo-test">
-			<p>Pseudo Element Test</p>
-		</div>
-
-		<div id="duplicate-a">
-			<p>Duplicate A</p>
-		</div>
-
-		<div id="duplicate-b">
-			<p>Duplicate B</p>
-		</div>
-
-		<div id="duplicate-c">
-			<p>Duplicate C</p>
-		</div>
-
-		<div id="escaped-name">
-			<p>Element with escaped characters in name (!important)</p>
+		<div id="element-b" data-test-element="b">
+			<p>Element B</p>
 		</div>
 
 		<script>
 			import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 
-			function triggerTransition(type: string) {
+			function triggerTransition(types: string[]) {
+				const classList = document.body.classList;
+				classList.toggle('new', false);
+				classList.toggle('old', true);
 				mayStartViewTransition(
-					{ update: () => document.body.classList.toggle('state-b'), types: [type] },
+					{
+						update: () => {
+							classList.toggle('old', false);
+							classList.toggle('new', true);
+						},
+						types: types,
+					},
 					{ useTypesPolyfill: 'always' }
 				);
 			}
 			document
-				.getElementById('trigger-test-1-1')
-				?.addEventListener('click', () => triggerTransition('test-1-1'));
+				.getElementById('trigger-test-1-0')
+				?.addEventListener('click', () => triggerTransition(['test-1-0']));
 			document
-				.getElementById('trigger-test-1-2')
-				?.addEventListener('click', () => triggerTransition('test-1-2'));
+				.getElementById('trigger-root')
+				?.addEventListener('click', () => triggerTransition(['root']));
+			document
+				.getElementById('trigger-old-only')
+				?.addEventListener('click', () => triggerTransition(['old-only']));
 			document
 				.getElementById('trigger-test-1-3')
-				?.addEventListener('click', () => triggerTransition('test-1-3'));
+				?.addEventListener('click', () => triggerTransition(['test-1-3']));
 			document
 				.getElementById('trigger-test-1-4')
-				?.addEventListener('click', () => triggerTransition('test-1-4'));
+				?.addEventListener('click', () => triggerTransition(['test-1-4']));
 			document
 				.getElementById('trigger-test-1-5')
-				?.addEventListener('click', () => triggerTransition('test-1-5'));
+				?.addEventListener('click', () => triggerTransition(['test-1-5']));
 			document
 				.getElementById('trigger-test-1-6')
-				?.addEventListener('click', () => triggerTransition('test-1-6'));
+				?.addEventListener('click', () => triggerTransition(['test-1-6']));
 			document
 				.getElementById('trigger-test-1-7')
-				?.addEventListener('click', () => triggerTransition('test-1-7'));
+				?.addEventListener('click', () => triggerTransition(['test-1-7']));
 			document
 				.getElementById('trigger-test-1-8')
-				?.addEventListener('click', () => triggerTransition('test-1-8'));
-			document
-				.getElementById('trigger-test-4-5')
-				?.addEventListener('click', () => triggerTransition('test-4-5'));
+				?.addEventListener('click', () => triggerTransition(['test-1-8']));
 		</script>
 	</body>
 </html>

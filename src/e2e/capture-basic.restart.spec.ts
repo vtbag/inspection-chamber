@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Capture Basic Restart', () => {
-    test('1-1: shows expected named-element capture details in UI', async ({ page }) => {
+    test('root: captures group root with old and new element', async ({ page }) => {
         await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
 
         const southResizeHandle = page.locator('div.resize-handle.edge.s').first();
@@ -24,7 +24,7 @@ test.describe('Capture Basic Restart', () => {
             (await chamberFrame.locator('label[for="capture"]').first().click());
         await expect(captureToggle).toBeChecked();
 
-        await testFrame.locator('#trigger-test-1-1').click();
+        await testFrame.locator('#trigger-root').click();
 
         // Check capture view header
         const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
@@ -33,10 +33,10 @@ test.describe('Capture Basic Restart', () => {
         expect(headerText).toMatch(/Same-document call on :root, started at \d{2}:\d{2}:\d{2}\.\d{3}/);
 
         const oldTypesText = await captureView.locator('p').first().innerText();
-        expect(oldTypesText).toMatch(/Active view transition types during capture of old images: test-1-1/i);
+        expect(oldTypesText).toMatch(/Active view transition types during capture of old images: root/i);
 
         const newTypesText = await captureView.locator('p').nth(1).innerText();
-        expect(newTypesText).toMatch(/Active view transition types during capture of new images: test-1-1/i);
+        expect(newTypesText).toMatch(/Active view transition types during capture of new images: root/i);
 
         const nestedDetails = chamberFrame.locator(
             'vtbag-ic-view-transition-capture .content > details'
