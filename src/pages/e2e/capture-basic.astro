@@ -59,6 +59,12 @@
 				border-radius: 0.5rem;
 			}
 
+			/* --- none: nothing to capture because no view transition names are defined --- */
+
+			html:active-view-transition-type(none) {
+				view-transition-name: none;
+			}
+
 			/* --- root: captures group root with old and new element --- */
 
 			html:active-view-transition-type(root) {
@@ -150,7 +156,7 @@
 	<body>
 		<div id="hero">
 			<h1>Hero Element</h1>
-			<button id="trigger-test-1-0">Test 1.0</button>
+			<button id="trigger-none">none</button>
 			<button id="trigger-root">root</button>
 			<button id="trigger-old-only">old-only</button>
 			<button id="trigger-new-only">new-only</button>
@@ -188,8 +194,8 @@
 				);
 			}
 			document
-				.getElementById('trigger-test-1-0')
-				?.addEventListener('click', () => triggerTransition(['test-1-0']));
+				.getElementById('trigger-none')
+				?.addEventListener('click', () => triggerTransition(['none']));
 			document
 				.getElementById('trigger-root')
 				?.addEventListener('click', () => triggerTransition(['root']));
