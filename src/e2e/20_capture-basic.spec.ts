@@ -1,277 +1,410 @@
-import { test, expect } from '@playwright/test';
-import { runCaptureTest, openCaptureView, clickCheck } from './capture-test-helpers';
-import { captureTestConfig } from './capture-test-config';
-import { CHAMBER_CONFIG } from './chamber-config';
+import { expect, test } from '@playwright/test';
 
-test.describe('Capture Mode: Basic Tests', () => {
-	test('1.1: Basic capture with single named element', async ({ page }) => {
-		await runCaptureTest(page, {
-			testType: 'test-1-1',
-			header: { selector: ':root' },
-			imageSelectors: [':root', '#hero'],
-			config: captureTestConfig().group('root').done().group('hero').done().build(),
-		});
+test.describe('Capture Basic Restart', () => {
+	test('root: captures group root with old and new element', async ({ page }) => {
+		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
+
+		const southResizeHandle = page.locator('div.resize-handle.edge.s').first();
+		await expect(southResizeHandle).toBeVisible();
+		const box = (await southResizeHandle.boundingBox())!;
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		await page.waitForTimeout(700);
+		await page.mouse.up();
+
+		const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
+		const testFrame = page.locator('iframe').nth(1).contentFrame()!;
+
+		const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
+		(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
+
+		const captureToggle = chamberFrame.locator('#capture').first();
+		await expect(captureToggle).toBeVisible();
+		(await captureToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="capture"]').first().click());
+		await expect(captureToggle).toBeChecked();
+
+		await testFrame.locator('#trigger-root').click();
+
+		const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+		await expect(captureView).toBeVisible();
+		const headerText = await captureView.locator('h3').innerText();
+		expect(headerText).toMatch(/Same-document call on :root, started at \d{2}:\d{2}:\d{2}\.\d{3}/);
+
+		const oldTypesText = await captureView.locator('p').first().innerText();
+		expect(oldTypesText).toMatch(
+			/Active view transition types during capture of old images: root/i
+		);
+
+		const newTypesText = await captureView.locator('p').nth(1).innerText();
+		expect(newTypesText).toMatch(
+			/Active view transition types during capture of new images: root/i
+		);
+
+		const nestedDetails = chamberFrame.locator(
+			'vtbag-ic-view-transition-capture .content > details'
+		);
+		await expect(nestedDetails.first()).toBeVisible();
+		await nestedDetails.first().locator('summary').click();
+
+		const nestedDetailsText = (await nestedDetails.allInnerTexts()).join('\n');
+		expect(nestedDetailsText).toMatch(/Group\s+root/i);
+		expect(nestedDetailsText).toMatch(/Old image element:\s*:root/i);
+		expect(nestedDetailsText).toMatch(/New image element:\s*:root/i);
+
+		const flatList = chamberFrame.locator('vtbag-ic-view-transition-capture #flat-capture-list');
+		await expect(flatList).toBeVisible();
+		await expect(flatList.locator('summary')).toContainText('Flat, alphabetic list');
+		await flatList.locator('summary').click();
+		await page.waitForTimeout(300); 
+		const flatListText = await flatList.innerText();
+		expect(flatListText).toMatch(/root/i);
+
+		let capturedData: any = null;
+		const consoleHandler = (msg: any) => {
+			if (msg.type() === 'log' && msg.args().length > 0) {
+				msg
+					.args()
+					.at(-1)
+					?.jsonValue()
+					.then((value: any) => {
+						if (Array.isArray(value)) {
+							capturedData = value;
+						}
+					})
+					.catch(() => {});
+			}
+		};
+
+		page.on('console', consoleHandler);
+		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
+		await expect(devtoolsBtn).toBeVisible();
+		await devtoolsBtn.click();
+
+		await page.waitForTimeout(500);
+		page.off('console', consoleHandler);
+
+		expect(capturedData).toBeTruthy();
+		expect(Array.isArray(capturedData)).toBe(true);
+		expect(capturedData.length).toBe(1);
+
+		const rootEntry = capturedData[0];
+		expect(rootEntry.name).toBe('root');
+		expect(rootEntry.oldNamedElement).toBeTruthy();
+		expect(rootEntry.newNamedElement).toBeTruthy();
+		expect(rootEntry.oldNamedElement.element).toBeTruthy();
+		expect(rootEntry.newNamedElement.element).toBeTruthy();
 	});
-	test('1.1 Freeze: Basic capture with single named element', async ({ page }) => {
-		const { chamberFrame, testFrame } = await runCaptureTest(page, {
-			testType: 'test-1-1',
-			beforeTriggerClicks: ['label[for="freeze-types"]'],
-			header: { selector: ':root' },
-			imageSelectors: [':root', '#hero'],
-			config: captureTestConfig().group('root').done().group('hero').done().build(),
-		});
 
-		const messageComponent = chamberFrame.locator('vtbag-ic-message');
-		await expect(messageComponent).toBeVisible();
-		const messages = messageComponent.locator('.message');
-		await expect(messages).toHaveCount(1);
-		const firstMessage = messages.nth(0);
-		await expect(firstMessage).toContainText(/Don't forget to resume them when done/i);
+	test('old-only: captures group with old but no new element', async ({ page }) => {
+		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
 
-		const clearButton = firstMessage.locator('button.clear');
-		await expect(clearButton).toBeVisible();
-		await clearButton.click();
-		await expect(messages).toHaveCount(0);
+		const southResizeHandle = page.locator('div.resize-handle.edge.s').first();
+		await expect(southResizeHandle).toBeVisible();
+		const box = (await southResizeHandle.boundingBox())!;
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		await page.waitForTimeout(700);
+		await page.mouse.up();
 
-		const viewTransition = await testFrame
-			.locator(':root')
-			.evaluate((element) => !!element.ownerDocument.activeViewTransition);
-		expect(viewTransition).not.toBeNull();
+		const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
+		const testFrame = page.locator('iframe').nth(1).contentFrame()!;
 
-		await clickCheck(chamberFrame, chamberFrame.locator('label[for="freeze-types"]'), false);
+		const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
+		(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
+
+		const captureToggle = chamberFrame.locator('#capture').first();
+		await expect(captureToggle).toBeVisible();
+		(await captureToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="capture"]').first().click());
+		await expect(captureToggle).toBeChecked();
+
+		await testFrame.locator('#trigger-old-only').click();
+
+		const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+		await expect(captureView).toBeVisible();
+		const headerText = await captureView.locator('h3').innerText();
+		expect(headerText).toMatch(/Same-document call on :root, started at \d{2}:\d{2}:\d{2}\.\d{3}/);
+
+		const oldTypesText = await captureView.locator('p').first().innerText();
+		expect(oldTypesText).toMatch(
+			/Active view transition types during capture of old images: old-only/i
+		);
+
+		const newTypesText = await captureView.locator('p').nth(1).innerText();
+		expect(newTypesText).toMatch(
+			/Active view transition types during capture of new images: old-only/i
+		);
+
+		const nestedDetails = chamberFrame.locator(
+			'vtbag-ic-view-transition-capture .content > details'
+		);
+		await expect(nestedDetails.first()).toBeVisible();
+		await nestedDetails.first().locator('summary').click();
+
+		const nestedDetailsText = (await nestedDetails.allInnerTexts()).join('\n');
+		expect(nestedDetailsText).toMatch(/Group\s+old-only/i);
+		expect(nestedDetailsText).toMatch(/Old image element:\s*#element-a/i);
+		expect(nestedDetailsText).not.toMatch(/New image element:/i);
+
+		const flatList = chamberFrame.locator('vtbag-ic-view-transition-capture #flat-capture-list');
+		await expect(flatList).toBeVisible();
+		await expect(flatList.locator('summary')).toContainText('Flat, alphabetic list');
+		await flatList.locator('summary').click();
+		await page.waitForTimeout(300);
+		
+		const flatListText = await flatList.innerText();
+		expect(flatListText).toMatch(/old-only/i);
+
+		let capturedData: any = null;
+		const consoleHandler = (msg: any) => {
+			if (msg.type() === 'log' && msg.args().length > 0) {
+				msg
+					.args()
+					.at(-1)
+					?.jsonValue()
+					.then((value: any) => {
+						if (Array.isArray(value)) {
+							capturedData = value;
+						}
+					})
+					.catch(() => {});
+			}
+		};
+
+		page.on('console', consoleHandler);
+		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
+		await expect(devtoolsBtn).toBeVisible();
+		await devtoolsBtn.click();
+
+		await page.waitForTimeout(500);
+		page.off('console', consoleHandler);
+
+		expect(capturedData).toBeTruthy();
+		expect(Array.isArray(capturedData)).toBe(true);
+		expect(capturedData.length).toBe(1);
+
+		const oldOnlyEntry = capturedData[0];
+		expect(oldOnlyEntry.name).toBe('old-only');
+		expect(oldOnlyEntry.oldNamedElement).toBeTruthy();
+		expect(oldOnlyEntry.newNamedElement).toBeFalsy();
+		expect(oldOnlyEntry.oldNamedElement.element).toBeTruthy();
 	});
 
-	test('1.2: Old-only element (hidden in new state)', async ({ page }) => {
-		await runCaptureTest(page, {
-			testType: 'test-1-2',
-			header: { selector: ':root' },
-			imageSelectors: [':root', '#hero'],
-			textAssertions: [
-				{ pattern: /old image element: #old-only/i, present: true },
-				{ pattern: /new image element: #old-only/i, present: false },
-			],
-			config: captureTestConfig()
-				.group('root')
-				.done()
-				.group('hero')
-				.done()
-				.group('old-only-element')
-				.oldOnly()
-				.done()
-				.build(),
-		});
-	});
-
-	test('1.2 old-only: Old-only element (click old-only before transition)', async ({ page }) => {
-		await runCaptureTest(page, {
-			testType: 'test-1-2',
-			beforeTriggerClicks: [{ selector: 'label[for="old-only"]', frame: 'chamber' }],
-			header: { selector: ':root' },
-			textAssertions: [
-				{ pattern: /old image element: #old-only/i, present: true },
-				{ pattern: /new image element:/i, present: false },
-			],
-			config: captureTestConfig()
-				.group('root')
-				.oldOnly()
-				.done()
-				.group('hero')
-				.oldOnly()
-				.done()
-				.group('old-only-element')
-				.oldOnly()
-				.done()
-				.build(),
-		});
-	});
-
-	test('1.2 old-only + freeze: Old-only element (click old-only before transition)', async ({
+	test('hidden: captures old element, reports hidden new element, and toggles skipped visibility', async ({
 		page,
 	}) => {
-		const { chamberFrame, testFrame } = await runCaptureTest(page, {
-			testType: 'test-1-2',
-			beforeTriggerClicks: ['label[for="old-only"]', 'label[for="freeze-types"]'],
-			header: { selector: ':root' },
-			textAssertions: [
-				{ pattern: /old image element: #old-only/i, present: true },
-				{ pattern: /new image element:/i, present: false },
-			],
-			config: captureTestConfig()
-				.group('root')
-				.oldOnly()
-				.done()
-				.group('hero')
-				.oldOnly()
-				.done()
-				.group('old-only-element')
-				.oldOnly()
-				.done()
-				.build(),
-		});
+		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
 
-		const messageComponent = chamberFrame.locator('vtbag-ic-message');
-		const messages = messageComponent.locator('.message');
-		const firstMessage = messages.nth(0);
-		const clearButton = firstMessage.locator('button.clear');
-		await clearButton.click();
-		await expect(messages).toHaveCount(0);
+		const southResizeHandle = page.locator('div.resize-handle.edge.s').first();
+		await expect(southResizeHandle).toBeVisible();
+		const box = (await southResizeHandle.boundingBox())!;
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		await page.waitForTimeout(700);
+		await page.mouse.up();
 
-		const viewTransition = await testFrame
-			.locator(':root')
-			.evaluate((element) => !!element.ownerDocument.activeViewTransition);
-		expect(viewTransition).not.toBeNull();
+		const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
+		const testFrame = page.locator('iframe').nth(1).contentFrame()!;
 
-		await clickCheck(chamberFrame, chamberFrame.locator('label[for="freeze-types"]'), false);
+		const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
+		(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
+
+		const captureToggle = chamberFrame.locator('#capture').first();
+		await expect(captureToggle).toBeVisible();
+		(await captureToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="capture"]').first().click());
+		await expect(captureToggle).toBeChecked();
+
+		await testFrame.locator('#trigger-hidden').click();
+
+		const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+		await expect(captureView).toBeVisible();
+		const headerText = await captureView.locator('h3').innerText();
+		expect(headerText).toMatch(/Same-document call on :root, started at \d{2}:\d{2}:\d{2}\.\d{3}/);
+
+		const oldTypesText = await captureView.locator('p').first().innerText();
+		expect(oldTypesText).toMatch(
+			/Active view transition types during capture of old images: hidden/i
+		);
+
+		const newTypesText = await captureView.locator('p').nth(1).innerText();
+		expect(newTypesText).toMatch(
+			/Active view transition types during capture of new images: hidden/i
+		);
+
+		const hideUndiscoverable = captureView.locator('#hide-undiscoverable');
+		await expect(hideUndiscoverable).toBeVisible();
+		await expect(hideUndiscoverable).toBeChecked();
+
+		const contentDetails = chamberFrame.locator('.content');
+		const nestedDetails = chamberFrame.locator('.content > details');
+
+		await expect(nestedDetails.first()).toBeVisible();
+		await nestedDetails.first().locator('summary').click();
+		await chamberFrame.locator('#flat-capture-list summary').click();
+
+		const hiddenText = (await contentDetails.allInnerTexts()).join('\n');
+		expect(hiddenText).toMatch(/Group\s+hidden/i);
+		expect(hiddenText).toMatch(/Old image element:\s*#element-a/i);
+		expect(hiddenText).not.toMatch(/New image element:/i);
+		await expect(chamberFrame.locator('#flat-capture-list span.hidden')).not.toBeVisible();
+
+		await chamberFrame.locator('label[for="hide-undiscoverable"]').click();
+		await expect(hideUndiscoverable).not.toBeChecked();
+		await page.waitForTimeout(100);
+		chamberFrame.locator('.content > details').nth(1).locator('summary').click();
+		await expect(chamberFrame.locator('#flat-capture-list span.hidden')).toBeVisible();
+		await page.waitForTimeout(900);
+
+		const revealedText = (await chamberFrame.locator('.content').allInnerTexts()).join('\n');
+		expect(revealedText).toMatch(/Group\s+hidden/i);
+		expect(revealedText).toMatch(/Old image element:\s*#element-a/i);
+		expect(revealedText).toMatch(/Group\s+hidden skipped as #element-a hides &/i);
+		expect(revealedText).toMatch(/New image element:\s*#element-a/i);
+
+		const flatList = chamberFrame.locator('vtbag-ic-view-transition-capture #flat-capture-list');
+		await expect(flatList).toBeVisible();
+		await expect(flatList.locator('summary')).toContainText('Flat, alphabetic list');
+
+		const flatListText = await flatList.innerText();
+		expect(flatListText).toMatch(/hidden/i);
+
+		let capturedData: any = null;
+		const consoleHandler = (msg: any) => {
+			if (msg.type() === 'log' && msg.args().length > 0) {
+				msg
+					.args()
+					.at(-1)
+					?.jsonValue()
+					.then((value: any) => {
+						if (Array.isArray(value)) {
+							capturedData = value;
+						}
+					})
+					.catch(() => {});
+			}
+		};
+
+		page.on('console', consoleHandler);
+		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
+		await expect(devtoolsBtn).toBeVisible();
+		await devtoolsBtn.click();
+
+		await page.waitForTimeout(500);
+		page.off('console', consoleHandler);
+
+		expect(capturedData).toBeTruthy();
+		expect(Array.isArray(capturedData)).toBe(true);
+		expect(capturedData.length).toBe(2);
+
+		let entry: any = capturedData[0];
+		expect(entry.name).toBe('hidden');
+		expect(entry.oldNamedElement).toBeTruthy();
+		expect(entry.newNamedElement).toBeFalsy();
+		expect(entry.oldNamedElement.element).toBeTruthy();
+		expect(entry.newHiddenBy).toBeFalsy();
+
+		entry = capturedData[1];
+		expect(entry.name).toBe('hidden');
+		expect(entry.oldNamedElement).toBeFalsy();
+		expect(entry.newNamedElement).toBeTruthy();
+		expect(entry.newNamedElement.element).toBeTruthy();
+		expect(entry.newHiddenBy.element).toBeTruthy();
 	});
 
-	test('1.3: New-only element (created in new state)', async ({ page }) => {
-		await runCaptureTest(page, {
-			testType: 'test-1-3',
-			header: { selector: ':root' },
-			imageSelectors: [':root', '#hero'],
-			textAssertions: [
-				{ pattern: /old image element: #new-only/i, present: false },
-				{ pattern: /new image element: #new-only/i, present: true },
-			],
-			config: captureTestConfig()
-				.group('root')
-				.done()
-				.group('hero')
-				.done()
-				.group('new-only-element')
-				.newOnly()
-				.done()
-				.build(),
-		});
-	});
+	test('new-only: captures group with new but no old element', async ({ page }) => {
+		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
 
-	test('1.3 old-only: New-only element (created in new state)', async ({ page }) => {
-		await runCaptureTest(page, {
-			testType: 'test-1-3',
-			beforeTriggerClicks: [{ selector: 'label[for="old-only"]', frame: 'chamber' }],
-			header: { selector: ':root' },
-			textAssertions: [
-				{ pattern: /old image element: #new-only/i, present: false },
-				{ pattern: /new image element: #new-only/i, present: false },
-			],
-			config: captureTestConfig()
-				.group('root')
-				.oldOnly()
-				.done()
-				.group('hero')
-				.oldOnly()
-				.done()
-				.build(),
-		});
-	});
+		const southResizeHandle = page.locator('div.resize-handle.edge.s').first();
+		await expect(southResizeHandle).toBeVisible();
+		const box = (await southResizeHandle.boundingBox())!;
+		await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+		await page.mouse.down();
+		await page.waitForTimeout(700);
+		await page.mouse.up();
 
-	test('1.4: Same element old and new', async ({ page }) => {
-		await runCaptureTest(page, {
-			testType: 'test-1-4',
-			config: captureTestConfig()
-				.group('root')
-				.done()
-				.group('hero')
-				.done()
-				.group('persistent-element')
-				.identitySame('data-test-element', 'same')
-				.done()
-				.build(),
-		});
-	});
+		const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
+		const testFrame = page.locator('iframe').nth(1).contentFrame()!;
 
-	test('1.5: Different elements with same name', async ({ page }) => {
-		await runCaptureTest(page, {
-			testType: 'test-1-5',
-			config: captureTestConfig()
-				.group('root')
-				.done()
-				.group('hero')
-				.done()
-				.group('shared-element')
-				.identityDifferent('data-test-element', 'a', 'b')
-				.done()
-				.build(),
-		});
-	});
+		const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
+		(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
 
-	test('1.6: Pseudo-element ::before with view-transition-name', async ({ page }) => {
-		await runCaptureTest(page, {
-			testType: 'test-1-6',
-			config: captureTestConfig()
-				.group('root')
-				.done()
-				.group('hero')
-				.done()
-				.group('before-pseudo')
-				.pseudoElement('::before')
-				.done()
-				.build(),
-		});
-	});
+		const captureToggle = chamberFrame.locator('#capture').first();
+		await expect(captureToggle).toBeVisible();
+		(await captureToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="capture"]').first().click());
+		await expect(captureToggle).toBeChecked();
 
-	test('1.7: Pseudo-elements ::before and ::after with view-transition-name', async ({ page }) => {
-		const { captureView } = await openCaptureView(page, 'test-1-7');
+		await testFrame.locator('#trigger-new-only').click();
 
-		const summaries = await captureView
-			.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer)
-			.locator(CHAMBER_CONFIG.selectors.captureView.summary)
-			.allTextContents();
+		const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+		await expect(captureView).toBeVisible();
+		const headerText = await captureView.locator('h3').innerText();
+		expect(headerText).toMatch(/Same-document call on :root, started at \d{2}:\d{2}:\d{2}\.\d{3}/);
 
-		expect(summaries).toContain('Group before-pseudo');
-		expect(summaries).toContain('Group after-pseudo');
-		const beforeIndex = summaries.findIndex((s) => s.includes('before-pseudo'));
-		const afterIndex = summaries.findIndex((s) => s.includes('after-pseudo'));
-		expect(beforeIndex).toBeLessThan(afterIndex);
+		const oldTypesText = await captureView.locator('p').first().innerText();
+		expect(oldTypesText).toMatch(
+			/Active view transition types during capture of old images: new-only/i
+		);
 
-		expect(summaries).toContain('Group root');
-		expect(summaries).toContain('Group hero');
-	});
+		const newTypesText = await captureView.locator('p').nth(1).innerText();
+		expect(newTypesText).toMatch(
+			/Active view transition types during capture of new images: new-only/i
+		);
 
-	test('1.8: Duplicate view-transition-name Detection', async ({ page }) => {
-		const { captureView, chamberFrame } = await openCaptureView(page, 'test-1-8');
-		await expect(captureView).toContainText(/Same-document call/i);
-		await expect(captureView).toContainText('Group duplicate');
-		await expect(captureView).toContainText('Old image element: #duplicate-a');
-		await expect(captureView).toContainText('Duplicate old image element: #duplicate-b');
-		await expect(captureView).toContainText('Duplicate old image element: #duplicate-c');
-		const messageComponent = chamberFrame.locator('vtbag-ic-message');
-		await expect(messageComponent).toBeVisible();
-		const messages = messageComponent.locator('.message');
-		await expect(messages).toHaveCount(2);
-		const firstMessage = messages.nth(0);
-		await expect(firstMessage).toContainText(/InvalidStateError/i);
-		const secondMessage = messages.nth(1);
-		await expect(secondMessage).toContainText(/duplicate.*name/i);
+		const nestedDetails = chamberFrame.locator(
+			'vtbag-ic-view-transition-capture .content > details'
+		);
+		await expect(nestedDetails.first()).toBeVisible();
+		await nestedDetails.first().locator('summary').click();
 
-		const clearButton = firstMessage.locator('button.clear');
-		await expect(clearButton).toBeVisible();
-		await clearButton.click();
-		await expect(messages).toHaveCount(1);
+		const nestedDetailsText = (await nestedDetails.allInnerTexts()).join('\n');
+		expect(nestedDetailsText).toMatch(/Group\s+new-only/i);
+		expect(nestedDetailsText).not.toMatch(/Old image element:/i);
+		expect(nestedDetailsText).toMatch(/New image element:\s*#element-b/i);
 
-		const clearAllButton = messageComponent.locator('button.clear-all');
-		await expect(clearAllButton).toBeVisible();
-		await clearAllButton.click();
-		await expect(messages).toHaveCount(0);
-		await expect(messageComponent).toHaveCSS('display', 'none');
-	});
+		const flatList = chamberFrame.locator('vtbag-ic-view-transition-capture #flat-capture-list');
+		await expect(flatList).toBeVisible();
+		await expect(flatList.locator('summary')).toContainText('Flat, alphabetic list');
+		await flatList.locator('summary').click();
+		await page.waitForTimeout(300);
+		
+		const flatListText = await flatList.innerText();
+		expect(flatListText).toMatch(/new-only/i);
 
-	test('4.5: CSS escape sequences in view-transition-name', async ({ page }) => {
-		const { captureView } = await openCaptureView(page, 'test-4-5');
+		let capturedData: any = null;
+		const consoleHandler = (msg: any) => {
+			if (msg.type() === 'log' && msg.args().length > 0) {
+				msg
+					.args()
+					.at(-1)
+					?.jsonValue()
+					.then((value: any) => {
+						if (Array.isArray(value)) {
+							capturedData = value;
+						}
+					})
+					.catch(() => {});
+			}
+		};
 
-		await expect(captureView).toContainText(/Same-document call/i);
+		page.on('console', consoleHandler);
+		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
+		await expect(devtoolsBtn).toBeVisible();
+		await devtoolsBtn.click();
 
-		// Get all group summaries
-		const summaries = await captureView
-			.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer)
-			.locator(CHAMBER_CONFIG.selectors.captureView.summary)
-			.allTextContents();
+		await page.waitForTimeout(500);
+		page.off('console', consoleHandler);
 
-		// Verify root and hero groups exist
-		expect(summaries.some((s) => s.includes('root'))).toBe(true);
-		expect(summaries.some((s) => s.includes('hero'))).toBe(true);
+		expect(capturedData).toBeTruthy();
+		expect(Array.isArray(capturedData)).toBe(true);
+		expect(capturedData.length).toBe(1);
 
-		// Verify the escaped name is unescaped correctly and displays as "!important"
-		expect(summaries.some((s) => s.includes('!important'))).toBe(true);
+		const newOnlyEntry = capturedData[0];
+		expect(newOnlyEntry.name).toBe('new-only');
+		expect(newOnlyEntry.oldNamedElement).toBeFalsy();
+		expect(newOnlyEntry.newNamedElement).toBeTruthy();
+		expect(newOnlyEntry.newNamedElement.element).toBeTruthy();
 	});
 });
