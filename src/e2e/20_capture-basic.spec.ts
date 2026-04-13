@@ -1,5 +1,24 @@
 import { expect, test } from '@playwright/test';
 
+function createConsoleHandler() {
+	let capturedData: any = null;
+	const consoleHandler = (msg: any) => {
+		if (msg.type() === 'log' && msg.args().length > 0) {
+			msg
+				.args()
+				.at(-1)
+				?.jsonValue()
+				.then((value: any) => {
+					if (Array.isArray(value)) {
+						capturedData = value;
+					}
+				})
+				.catch(() => {});
+		}
+	};
+	return { consoleHandler, getCapturedData: () => capturedData };
+}
+
 test.describe('Capture Basic Restart', () => {
 
 	test('none: captures no groups when no view-transition-name is set', async ({ page }) => {
@@ -54,22 +73,7 @@ test.describe('Capture Basic Restart', () => {
 		await page.waitForTimeout(300);
 		await expect(flatList.locator('span[data-link]')).toHaveCount(0);
 
-		let capturedData: any = null;
-		const consoleHandler = (msg: any) => {
-			if (msg.type() === 'log' && msg.args().length > 0) {
-				msg
-					.args()
-					.at(-1)
-					?.jsonValue()
-					.then((value: any) => {
-						if (Array.isArray(value)) {
-							capturedData = value;
-						}
-					})
-					.catch(() => {});
-			}
-		};
-
+		const { consoleHandler, getCapturedData } = createConsoleHandler();
 		page.on('console', consoleHandler);
 		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
 		await expect(devtoolsBtn).toBeVisible();
@@ -78,12 +82,13 @@ test.describe('Capture Basic Restart', () => {
 		await page.waitForTimeout(500);
 		page.off('console', consoleHandler);
 
+		const capturedData = getCapturedData();
 		expect(capturedData).toBeTruthy();
 		expect(Array.isArray(capturedData)).toBe(true);
 		expect(capturedData.length).toBe(0);
 	});
 
-	
+
 	test('root: captures group root with old and new element', async ({ page }) => {
 		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
 
@@ -143,22 +148,7 @@ test.describe('Capture Basic Restart', () => {
 		const flatListText = await flatList.innerText();
 		expect(flatListText).toMatch(/root/i);
 
-		let capturedData: any = null;
-		const consoleHandler = (msg: any) => {
-			if (msg.type() === 'log' && msg.args().length > 0) {
-				msg
-					.args()
-					.at(-1)
-					?.jsonValue()
-					.then((value: any) => {
-						if (Array.isArray(value)) {
-							capturedData = value;
-						}
-					})
-					.catch(() => {});
-			}
-		};
-
+		const { consoleHandler, getCapturedData } = createConsoleHandler();
 		page.on('console', consoleHandler);
 		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
 		await expect(devtoolsBtn).toBeVisible();
@@ -167,6 +157,7 @@ test.describe('Capture Basic Restart', () => {
 		await page.waitForTimeout(500);
 		page.off('console', consoleHandler);
 
+		const capturedData = getCapturedData();
 		expect(capturedData).toBeTruthy();
 		expect(Array.isArray(capturedData)).toBe(true);
 		expect(capturedData.length).toBe(1);
@@ -239,22 +230,7 @@ test.describe('Capture Basic Restart', () => {
 		const flatListText = await flatList.innerText();
 		expect(flatListText).toMatch(/old-only/i);
 
-		let capturedData: any = null;
-		const consoleHandler = (msg: any) => {
-			if (msg.type() === 'log' && msg.args().length > 0) {
-				msg
-					.args()
-					.at(-1)
-					?.jsonValue()
-					.then((value: any) => {
-						if (Array.isArray(value)) {
-							capturedData = value;
-						}
-					})
-					.catch(() => {});
-			}
-		};
-
+		const { consoleHandler, getCapturedData } = createConsoleHandler();
 		page.on('console', consoleHandler);
 		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
 		await expect(devtoolsBtn).toBeVisible();
@@ -263,6 +239,7 @@ test.describe('Capture Basic Restart', () => {
 		await page.waitForTimeout(500);
 		page.off('console', consoleHandler);
 
+		const capturedData = getCapturedData();
 		expect(capturedData).toBeTruthy();
 		expect(Array.isArray(capturedData)).toBe(true);
 		expect(capturedData.length).toBe(1);
@@ -353,22 +330,7 @@ test.describe('Capture Basic Restart', () => {
 		const flatListText = await flatList.innerText();
 		expect(flatListText).toMatch(/hidden/i);
 
-		let capturedData: any = null;
-		const consoleHandler = (msg: any) => {
-			if (msg.type() === 'log' && msg.args().length > 0) {
-				msg
-					.args()
-					.at(-1)
-					?.jsonValue()
-					.then((value: any) => {
-						if (Array.isArray(value)) {
-							capturedData = value;
-						}
-					})
-					.catch(() => {});
-			}
-		};
-
+		const { consoleHandler, getCapturedData } = createConsoleHandler();
 		page.on('console', consoleHandler);
 		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
 		await expect(devtoolsBtn).toBeVisible();
@@ -377,6 +339,7 @@ test.describe('Capture Basic Restart', () => {
 		await page.waitForTimeout(500);
 		page.off('console', consoleHandler);
 
+		const capturedData = getCapturedData();
 		expect(capturedData).toBeTruthy();
 		expect(Array.isArray(capturedData)).toBe(true);
 		expect(capturedData.length).toBe(2);
@@ -456,22 +419,7 @@ test.describe('Capture Basic Restart', () => {
 		const flatListText = await flatList.innerText();
 		expect(flatListText).toMatch(/new-only/i);
 
-		let capturedData: any = null;
-		const consoleHandler = (msg: any) => {
-			if (msg.type() === 'log' && msg.args().length > 0) {
-				msg
-					.args()
-					.at(-1)
-					?.jsonValue()
-					.then((value: any) => {
-						if (Array.isArray(value)) {
-							capturedData = value;
-						}
-					})
-					.catch(() => {});
-			}
-		};
-
+		const { consoleHandler, getCapturedData } = createConsoleHandler();
 		page.on('console', consoleHandler);
 		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
 		await expect(devtoolsBtn).toBeVisible();
@@ -480,6 +428,7 @@ test.describe('Capture Basic Restart', () => {
 		await page.waitForTimeout(500);
 		page.off('console', consoleHandler);
 
+		const capturedData = getCapturedData();
 		expect(capturedData).toBeTruthy();
 		expect(Array.isArray(capturedData)).toBe(true);
 		expect(capturedData.length).toBe(1);
