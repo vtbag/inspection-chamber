@@ -1,6 +1,6 @@
 ---
 name: capture-basic-tests
-description: 'Create and extend simple Playwright tests. Use for extending  capture-basic.astro. Focus on one case per test, direct setup, and validating both UI and devtools payload.'
+description: 'Create and extend simple Playwright tests. Use for extending  src/e2e/20_capture-basic.spec.ts. Focus on one case per test, direct setup, and validating both UI and devtools payload.'
 ---
 
 # Capture Basic Tests
