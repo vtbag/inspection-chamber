@@ -51,7 +51,7 @@ function capture(
 			style.display === 'none' ||
 			style.display === 'contents' ||
 			style.visibility === 'hidden' ||
-			style.viewTransitionScope !== 'none'
+			(style.viewTransitionScope && style.viewTransitionScope !== 'none')
 		) {
 			hidden = true;
 			console.log(
