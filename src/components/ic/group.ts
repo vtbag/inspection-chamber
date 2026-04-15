@@ -64,6 +64,7 @@ export function nestGroups(
 				hasDuplicates;
 		});
 	} else {
+		hidden ||= node.style.display === 'contents' ? node : undefined;
 		let group = hidden ? undefined : groups.get(node.viewTransitionName);
 		if (group) {
 			if (group[oldOrNew] === undefined) {

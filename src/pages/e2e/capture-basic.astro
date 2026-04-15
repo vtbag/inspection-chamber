@@ -98,9 +98,61 @@
 				}
 			}
 
-			/* --- test-1-4: different elements with same name --- */
+			/* --- more-hidden: more ways to hide elements --- */
 
-			html:active-view-transition-type(test-1-4) {
+			html:active-view-transition-type(more-hidden) {
+				body.old #element-a {
+					view-transition-name: old-a;
+					p {
+						view-transition-name: old-a;
+					}
+					@supports (view-transition-scope: all) {
+						view-transition-scope: all;
+					}
+					@supports not (view-transition-scope: all) {
+						display: none;
+					}
+				}
+				body.old #element-b {
+					view-transition-name: old-b-1;
+					p {
+						view-transition-name: old-b-2;
+					}
+					content-visibility: hidden;
+				}
+				body.old #trigger-more-hidden {
+					display: contents;
+					span {
+						view-transition-name: old-hidden; /* not hidden */
+					}
+				}
+				body.new #element-a {
+					view-transition-name: new-a;
+					p {
+						view-transition-name: new-a;
+					}
+					@supports (view-transition-scope: all) {
+						view-transition-scope: all;
+					}
+					@supports not (view-transition-scope: all) {
+						display: none;
+					}
+				}
+				body.new #element-b {
+					view-transition-name: new-b;
+					display: contents;
+				}
+				body.new #trigger-hidden {
+					view-transition-name: new-hidden;
+					span {
+						view-transition-name: new-hidden;
+					}
+				}
+			}
+
+			/* --- different: different elements with same name --- */
+
+			html:active-view-transition-type(different) {
 				body.old #element-a {
 					view-transition-name: shared-element;
 				}
@@ -159,8 +211,10 @@
 			<button id="trigger-none">none</button>
 			<button id="trigger-root">root</button>
 			<button id="trigger-old-only">old-only</button>
+			<button id="trigger-hidden"><span>hidden</span></button>
+			<button id="trigger-more-hidden"><span>more-hidden</span></button>
 			<button id="trigger-new-only">new-only</button>
-			<button id="trigger-hidden">hidden</button>
+			<button id="trigger-different">different</button>
 			<button id="trigger-test-1-5">Test 1.5</button>
 			<button id="trigger-test-1-6">Test 1.6</button>
 			<button id="trigger-test-1-7">Test 1.7</button>
@@ -182,7 +236,7 @@
 				const classList = document.body.classList;
 				classList.toggle('new', false);
 				classList.toggle('old', true);
-				mayStartViewTransition(
+				return mayStartViewTransition(
 					{
 						update: () => {
 							classList.toggle('old', false);
@@ -208,9 +262,15 @@
 			document
 				.getElementById('trigger-hidden')
 				?.addEventListener('click', () => triggerTransition(['hidden']));
+			document.getElementById('trigger-more-hidden')?.addEventListener('click', (e) => {
+				(document.querySelector('#trigger-hidden ') as HTMLElement).setAttribute('hidden', '');
+				triggerTransition(['more-hidden']).ready.then(() => {
+					(document.querySelector('#trigger-hidden ') as HTMLElement).removeAttribute('hidden');
+				});
+			});
 			document
-				.getElementById('trigger-test-1-4')
-				?.addEventListener('click', () => triggerTransition(['test-1-4']));
+				.getElementById('trigger-different')
+				?.addEventListener('click', () => triggerTransition(['different']));
 			document
 				.getElementById('trigger-test-1-5')
 				?.addEventListener('click', () => triggerTransition(['test-1-5']));

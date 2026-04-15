@@ -212,7 +212,7 @@
 							: 'neither';
 					if (oldOrNew === 'neither') return '';
 
-					return ` skipped as ${printNode(group[`${oldOrNew}HiddenBy`], oldOrNew)} hides ${printNode(group[oldOrNew], `h-${oldOrNew}`, group[`${oldOrNew}HiddenBy`]?.element)}`;
+					return `, discovery blocked by ${printNode(group[`${oldOrNew}HiddenBy`], oldOrNew)}`;
 				}
 				const hiddenText = hidden(group);
 				container.insertAdjacentHTML(

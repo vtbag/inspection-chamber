@@ -39,6 +39,7 @@ function linkToParent(
 			return;
 		} else {
 			const parentStyle = getComputedStyle(node.element);
+			// #new
 			parent = {
 				children: [],
 				element: node.element,
@@ -46,15 +47,9 @@ function linkToParent(
 				style: parentStyle,
 			} as SparseDOMNode;
 
-			if (
-				parentStyle.display === 'none' ||
-				parentStyle.display === 'contents' ||
-				parentStyle.visibility === 'hidden'
-			)
+			if (parentStyle.display === 'none' || parentStyle.contentVisibility === 'hidden')
 				parent.hidden = parent;
-			console.log(
-				`Created synthetic parent for ${deriveCSSSelector(node.element)}, hidden: ${deriveCSSSelector(parent.hidden?.element)} (display: ${parentStyle.display}, visibility: ${parentStyle.visibility})`
-			);
+			
 			elementMap.set(node.element, parent);
 			parent.children.push(node);
 			node.paintGroup = paintGroup(node, parent.style.display);
@@ -82,17 +77,14 @@ function linkToParent(
 		}
 		const parentElement = current.parentElement!;
 		const parentStyle = getComputedStyle(parentElement);
+		// #new
 		const newParent = {
 			children: [],
 			element: parentElement,
 			style: parentStyle,
 			viewTransitionName: 'none',
 		} as SparseDOMNode;
-		if (
-			parentStyle.display === 'none' ||
-			parentStyle.display === 'contents' ||
-			parentStyle.visibility === 'hidden'
-		)
+		if (parentStyle.display === 'none' || parentStyle.contentVisibility === 'hidden')
 			newParent.hidden = newParent;
 		elementMap.set(parentElement, newParent);
 		newParent.children.push(me);
