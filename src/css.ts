@@ -106,6 +106,7 @@ function namedElementsOfRule(rule: CSSRule, keyframeName?: string) {
 
 	if ('style' in rule) {
 		declNamedElements((rule as CSSStyleRule).style);
+		if (name === 'CSSNestedDeclarations') return;
 		// fall through to grouping rule to check nested rules
 	}
 	if ('cssRules' in rule) {
