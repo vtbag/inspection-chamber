@@ -13,8 +13,85 @@ export type SparseDOMNode = {
 	zIndex?: number;
 	order?: any;
 	children: SparseDOMNode[];
-	hidden?: SparseDOMNode;
+	hiddenBy?: SparseDOMNode;
+	hiddenBecause?: Set<string>;
 };
+
+export function sparseDomNode(element: Element, style?: CSSStyleDeclaration): SparseDOMNode {
+	style ??= getComputedStyle(element);
+	const node = {
+		children: [],
+		element: element,
+		style,
+		viewTransitionName: 'none',
+	} as SparseDOMNode;
+
+	// hard to do correctly cross-browser: check visibility using the size of the bounding rect, which should be zero for elements that are effectively hidden
+
+	const hiddenBecause = new Set<string>();
+	style.display === 'none' && hiddenBecause.add('displayNone');
+	style.display === 'contents' && hiddenBecause.add('displayContents');
+	style.contentVisibility === 'hidden' && hiddenBecause.add('contentVisibilityHidden');
+	style.viewTransitionScope &&
+		style.viewTransitionScope !== 'none' &&
+		hiddenBecause.add('viewTransitionScope');
+
+	if (hiddenBecause.size) {
+		node.hiddenBy = node;
+		node.hiddenBecause = hiddenBecause;
+	}
+	console.log(
+		'new',
+		node.hiddenBecause,
+		deriveCSSSelector(node.element),
+		deriveCSSSelector(node.hiddenBy?.element)
+	);
+	return node;
+}
+
+export function hiddenChild(child: SparseDOMNode, hiddenBy: SparseDOMNode | undefined) {
+	console.log(
+		`Checking if ${deriveCSSSelector(child.element) + (child.pseudoElement ?? '')} is hidden by ${deriveCSSSelector(hiddenBy?.element) + (hiddenBy?.pseudoElement ?? '')}`
+	);
+	console.log(
+		'from',
+		'child.hiddenBy',
+		child?.hiddenBy,
+		'because',
+		child?.hiddenBecause,
+		'hiddenBy',
+		hiddenBy,
+		'because',
+		hiddenBy?.hiddenBecause
+	);
+	const computed = new Set([
+		...(hiddenBy?.hiddenBecause || []),
+		...(child.hiddenBy?.hiddenBecause || []),
+	]);
+	let inherit = child.hiddenBy || hiddenBy;
+
+	let childHidden = inherit;
+	if (inherit) {
+		inherit.hiddenBecause = new Set(computed);
+		if (child !== inherit && computed?.has('displayContents')) computed.delete('displayContents'); // hides the element itself, but not its children
+		if (child === inherit && computed?.has('contentVisibilityHidden')) {
+			computed.delete('contentVisibilityHidden'); // hides the children, but not the element itself
+		}
+		computed.size === 0 && (childHidden = undefined);
+		console.log(
+			'to',
+			'childHidden',
+			childHidden,
+			'because',
+			childHidden?.hiddenBecause,
+			'inherit',
+			inherit,
+			'because',
+			inherit?.hiddenBecause
+		);
+	}
+	return { childHidden, inherit };
+}
 
 export function addParentLinks(
 	sparseDOM: SparseDOMNode[],
@@ -25,6 +102,7 @@ export function addParentLinks(
 	root.paintGroup = paintGroup(root, '');
 	sparseDOM.forEach((n) => linkToParent(elementMap, transitionRoot, n));
 }
+
 function linkToParent(
 	elementMap: Map<Element, SparseDOMNode>,
 	transitionRoot: HTMLElement,
@@ -38,18 +116,7 @@ function linkToParent(
 			node.paintGroup = paintGroup(node, parent.style.display);
 			return;
 		} else {
-			const parentStyle = getComputedStyle(node.element);
-			// #new
-			parent = {
-				children: [],
-				element: node.element,
-				viewTransitionName: 'none',
-				style: parentStyle,
-			} as SparseDOMNode;
-
-			if (parentStyle.display === 'none' || parentStyle.contentVisibility === 'hidden')
-				parent.hidden = parent;
-			
+			parent = sparseDomNode(node.element);
 			elementMap.set(node.element, parent);
 			parent.children.push(node);
 			node.paintGroup = paintGroup(node, parent.style.display);
@@ -76,16 +143,7 @@ function linkToParent(
 			return;
 		}
 		const parentElement = current.parentElement!;
-		const parentStyle = getComputedStyle(parentElement);
-		// #new
-		const newParent = {
-			children: [],
-			element: parentElement,
-			style: parentStyle,
-			viewTransitionName: 'none',
-		} as SparseDOMNode;
-		if (parentStyle.display === 'none' || parentStyle.contentVisibility === 'hidden')
-			newParent.hidden = newParent;
+		const newParent = sparseDomNode(parentElement);
 		elementMap.set(parentElement, newParent);
 		newParent.children.push(me);
 		me.paintGroup = paintGroup(me, newParent.style.display);
@@ -96,10 +154,10 @@ function linkToParent(
 }
 
 export function sort(node: SparseDOMNode, hidden: SparseDOMNode | undefined = undefined) {
-	node.hidden ??= hidden;
+	node.hiddenBy ??= hidden;
 	for (let i = 0; i < node.children.length; ++i) {
 		const child = node.children[i];
-		sort(child, node.hidden);
+		sort(child, node.hiddenBy);
 		if (!child.context && (!child.viewTransitionScope || child.viewTransitionScope === 'none')) {
 			node.children.splice(i, 0, ...child.children);
 			i += child.children.length;
@@ -132,10 +190,11 @@ export function print(root: SparseDOMNode, depth = 0) {
 	let what = deriveCSSSelector(root.element);
 	let pruned = '';
 	if (what.startsWith('#')) what = what + ' (' + (root.element.tagName || '') + ')';
-	if (!!root.hidden) pruned = 'color: light-dark(orange, darkorange); font-weight: bold;';
+	if (!!root.hiddenBy) pruned = 'color: light-dark(orange, darkorange); font-weight: bold;';
 	console.log(
-		`%c${' '.repeat(depth * 2)} - ${what}${root.pseudoElement || ''}, name: ${root.viewTransitionName}, paint order modifier: ${root.paintGroup}.${root.zIndex}.${root.order}${pruned ? `, hidden by ${deriveCSSSelector(root.hidden?.element)}` : ''}`,
-		pruned
+		`%c${' '.repeat(depth * 2)} - ${what}${root.pseudoElement || ''}, name: ${root.viewTransitionName}, paint order modifier: ${root.paintGroup}.${root.zIndex}.${root.order}${pruned ? `, hidden by ${deriveCSSSelector(root.hiddenBy?.element)}` : ''},`,
+		pruned,
+		root.hiddenBy?.hiddenBecause
 	);
 	root.children.forEach((child) => print(child, depth + 1));
 }

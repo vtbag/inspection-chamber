@@ -80,7 +80,7 @@
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
 			const group: Group | undefined = moduleGroupMaps.get(this.featuresKey!)?.get('@')!;
-			const hasUndiscoverables = linear(group).some((g) => g.oldHiddenBy || g.newHiddenBy);
+			const hasUndiscoverables = linear(group).some((g) => g.hiddenBy);
 
 			this.insertAdjacentHTML(
 				'beforeend',
@@ -101,7 +101,7 @@
 					.sort((a, b) => displayName(a).localeCompare(displayName(b)))
 					.map(
 						(g) =>
-							`<span style="view-transition-name: span${g.preOrder}"><span data-link="#id${g.preOrder}" class="${g.old ? 'old' : ''} ${g.new ? 'new' : ''} ${g.oldHiddenBy || g.newHiddenBy ? 'hidden' : ''} ${g.oldDuplicates || g.newDuplicates ? 'duplicates' : ''}"  >${displayName(g)}</span>`
+							`<span style="view-transition-name: span${g.preOrder}"><span data-link="#id${g.preOrder}" class="${g.old ? 'old' : ''} ${g.new ? 'new' : ''} ${g.hiddenBy ? 'hidden' : ''} ${g.oldDuplicates || g.newDuplicates ? 'duplicates' : ''}"  >${displayName(g)}</span>`
 					)
 					.join(',</span><wbr/>')}</span></details><div>`
 			);
@@ -205,14 +205,10 @@
 					return `<span class="highlight ${oldNew}">${deriveCSSSelector(node.element, true, below).replaceAll('>', ' > ') + (node.pseudoElement ?? '')}</span>`;
 				}
 				function hidden(group: Group): string {
-					let oldOrNew: 'old' | 'new' | 'neither' = group.oldHiddenBy
-						? 'old'
-						: group.newHiddenBy
-							? 'new'
-							: 'neither';
-					if (oldOrNew === 'neither') return '';
+					let oldOrNew = group.old ? 'old hiddenBy' : 'new hiddenBy';
+					if (!group.hiddenBy) return '';
 
-					return `, discovery blocked by ${printNode(group[`${oldOrNew}HiddenBy`], oldOrNew)}`;
+					return `, discovery blocked by ${printNode(group.hiddenBy, oldOrNew)}`;
 				}
 				const hiddenText = hidden(group);
 				container.insertAdjacentHTML(
@@ -229,14 +225,14 @@
 				classList?.toggle('with-children', group.children.length > 0);
 				classList?.toggle(
 					'only-hidden-children',
-					group.children.filter((g) => !g.oldHiddenBy && !g.newHiddenBy).length === 0
+					group.children.filter((g) => !g.hiddenBy).length === 0
 				);
 
 				classList?.toggle('new', !!group.new);
 				classList?.toggle('old', !!group.old);
 				classList?.toggle('new-duplicates', !!group.newDuplicates);
 				classList?.toggle('old-duplicates', !!group.oldDuplicates);
-				classList?.toggle('hidden', !!group.oldHiddenBy || !!group.newHiddenBy);
+				classList?.toggle('hidden', !!group.hiddenBy);
 
 				// todo: combine listeners
 				container
@@ -265,19 +261,12 @@
 					?.addEventListener('click', () => console.dir(group.new?.element));
 
 				container
-					.lastElementChild!.querySelector('.highlight.h-old')
-					?.addEventListener('pointerenter', () => highlight(group.oldHiddenBy?.element, ''));
+					.lastElementChild!.querySelector('.highlight.hiddenBy')
+					?.addEventListener('pointerenter', () => highlight(group.hiddenBy?.element, ''));
 
 				container
-					.lastElementChild!.querySelector('.highlight.h-old')
-					?.addEventListener('click', () => console.dir(group.oldHiddenBy?.element));
-
-				container
-					.lastElementChild!.querySelector('.highlight.h-new')
-					?.addEventListener('pointerenter', () => highlight(group.newHiddenBy?.element, ''));
-				container
-					.lastElementChild!.querySelector('.highlight.h-new')
-					?.addEventListener('click', () => console.dir(group.newHiddenBy?.element));
+					.lastElementChild!.querySelector('.highlight.hiddenBy')
+					?.addEventListener('click', () => console.dir(group.hiddenBy?.element));
 
 				container
 					.lastElementChild!.querySelectorAll('.highlight.old.duplicate')
@@ -335,8 +324,7 @@
 						element: d.element,
 						pseudoElement: d.pseudoElement,
 					}));
-				group.oldHiddenBy && (entry.oldHiddenBy = group.oldHiddenBy);
-				group.newHiddenBy && (entry.newHiddenBy = group.newHiddenBy);
+				group.hiddenBy && (entry.hiddenBy = group.hiddenBy);
 				// if there is a new element, its view-transition-class property dominates
 				if (group.old && group.old.viewTransitionClass !== 'none')
 					entry.classProperty = group.old.viewTransitionClass;
@@ -421,12 +409,10 @@
 			.highlight {
 				color: light-dark(#222222, #dddddd);
 				cursor: pointer;
-				&.old,
-				&.h-old {
+				&.old {
 					color: light-dark(darkslateblue, slateblue);
 				}
-				&.new,
-				&.h-new {
+				&.new {
 					color: darkolivegreen;
 				}
 				&.old-duplicates,

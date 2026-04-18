@@ -1,5 +1,5 @@
 import { deriveCSSSelector } from './element-selector';
-import { type SparseDOMNode } from './sparse-dom';
+import { hiddenChild, type SparseDOMNode } from './sparse-dom';
 
 export type Group = {
 	parent?: Group;
@@ -14,8 +14,7 @@ export type Group = {
 	preOrder?: number;
 	postOrder?: number;
 	bfs?: number;
-	oldHiddenBy?: SparseDOMNode;
-	newHiddenBy?: SparseDOMNode;
+	hiddenBy?: SparseDOMNode;
 };
 
 export function gid(group?: Group): number {
@@ -39,16 +38,14 @@ export function nestGroups(
 	groups: Map<string, Group>,
 	oldOrNew: 'old' | 'new',
 	capture: boolean,
-	hidden: SparseDOMNode | undefined,
+	hiddenBy?: SparseDOMNode | undefined,
+	originalHiddenBy?: SparseDOMNode | undefined,
 	depth = 0
 ): boolean {
-	console.log(
-		`${depth} Processing ${oldOrNew} node ${deriveCSSSelector(node.element) + (node.pseudoElement ?? '')} with view-transition-name: ${node.viewTransitionName}, hidden: ${deriveCSSSelector(hidden?.element)}, capture: ${capture}`
-	);
 	let hasDuplicates = false;
 	if (node.viewTransitionName === 'none') {
 		node.children.forEach((child) => {
-			let childHidden = hidden || child.hidden;
+			let { childHidden, inherit } = hiddenChild(child, originalHiddenBy);
 			hasDuplicates =
 				((!childHidden || capture) &&
 					nestGroups(
@@ -59,13 +56,13 @@ export function nestGroups(
 						oldOrNew,
 						capture,
 						childHidden,
+						inherit,
 						depth + 1
 					)) ||
 				hasDuplicates;
 		});
 	} else {
-		hidden ||= node.style.display === 'contents' ? node : undefined;
-		let group = hidden ? undefined : groups.get(node.viewTransitionName);
+		let group = hiddenBy ? undefined : groups.get(node.viewTransitionName);
 		if (group) {
 			if (group[oldOrNew] === undefined) {
 				group[oldOrNew] = node;
@@ -76,10 +73,10 @@ export function nestGroups(
 			}
 		} else {
 			group = newGroup();
-			hidden || groups.set(node.viewTransitionName, group);
+			hiddenBy || groups.set(node.viewTransitionName, group);
 		}
 		node.children.forEach((child) => {
-			let childHidden = hidden || child.hidden;
+			let { childHidden, inherit } = hiddenChild(child, originalHiddenBy);
 			hasDuplicates =
 				((!childHidden || capture) &&
 					nestGroups(
@@ -90,6 +87,7 @@ export function nestGroups(
 						oldOrNew,
 						capture,
 						childHidden,
+						inherit,
 						depth + 1
 					)) ||
 				hasDuplicates;
@@ -106,9 +104,9 @@ export function nestGroups(
 			ancestor: true,
 		};
 		group[oldOrNew] = node;
-		hidden && (group[`${oldOrNew}HiddenBy`] = hidden);
+		hiddenBy && (group.hiddenBy = hiddenBy);
 
-		if (hidden) {
+		if (hiddenBy) {
 			const root = groups.get('@')!;
 			root.children.push(group);
 			group.parent = root;

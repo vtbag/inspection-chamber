@@ -1,5 +1,4 @@
 import { expect, test, type Page } from '@playwright/test';
-import { exec } from 'node:child_process';
 
 function createConsoleHandler() {
 	let capturedData: any = null;
@@ -14,7 +13,7 @@ function createConsoleHandler() {
 						capturedData = value;
 					}
 				})
-				.catch(() => { });
+				.catch(() => {});
 		}
 	};
 	return { consoleHandler, getCapturedData: () => capturedData };
@@ -333,14 +332,14 @@ test.describe('Capture Basic', () => {
 		expect(entry.oldNamedElement).toBeTruthy();
 		expect(entry.newNamedElement).toBeFalsy();
 		expect(entry.oldNamedElement.element).toBeTruthy();
-		expect(entry.newHiddenBy).toBeFalsy();
+		expect(entry.hiddenBy).toBeFalsy();
 
 		entry = capturedData[1];
 		expect(entry.name).toBe('hidden');
 		expect(entry.oldNamedElement).toBeFalsy();
 		expect(entry.newNamedElement).toBeTruthy();
 		expect(entry.newNamedElement.element).toBeTruthy();
-		expect(entry.newHiddenBy.element).toBeTruthy();
+		expect(entry.hiddenBy.element).toBeTruthy();
 	});
 
 	test('more-hidden: captures multiple hidden scenarios and toggles undiscoverables', async ({
@@ -383,8 +382,13 @@ test.describe('Capture Basic', () => {
 		await expect(hideUndiscoverable).toBeChecked();
 
 		const visibleDetailsBeforeToggle = chamberFrame.locator('.content > details:visible');
-		await expect(visibleDetailsBeforeToggle).toHaveCount(1);
-		await expect(visibleDetailsBeforeToggle.first().locator('summary')).toHaveText('Group old-hidden');
+		await expect(visibleDetailsBeforeToggle).toHaveCount(2);
+		await expect(visibleDetailsBeforeToggle.first().locator('summary')).toHaveText(
+			'Group old-hidden'
+		);
+		await expect(visibleDetailsBeforeToggle.nth(1).locator('summary')).toHaveText(
+			'Group old-b-1'
+		);
 		await visibleDetailsBeforeToggle.first().locator('summary').click();
 		await expect(visibleDetailsBeforeToggle.first()).toContainText(
 			'Old image element: #trigger-more-hidden > span'
@@ -393,7 +397,7 @@ test.describe('Capture Basic', () => {
 		await chamberFrame.locator('#flat-capture-list summary').click();
 
 		const hiddenEntriesBeforeToggle = chamberFrame.locator('#flat-capture-list span.hidden');
-		await expect(hiddenEntriesBeforeToggle).toHaveCount(9);
+		await expect(hiddenEntriesBeforeToggle).toHaveCount(8);
 		await expect(hiddenEntriesBeforeToggle.first()).not.toBeVisible();
 
 		await chamberFrame.locator('label[for="hide-undiscoverable"]').click();
@@ -407,9 +411,9 @@ test.describe('Capture Basic', () => {
 			const isOpen = await detail.evaluate((node) => (node as HTMLDetailsElement).open);
 			if (!isOpen) {
 				await detail.evaluate((node) => {
-					const summary = (node as HTMLDetailsElement).querySelector('summary') as
-						| HTMLElement
-						| null;
+					const summary = (node as HTMLDetailsElement).querySelector(
+						'summary'
+					) as HTMLElement | null;
 					summary?.click();
 				});
 				await expect
@@ -421,7 +425,6 @@ test.describe('Capture Basic', () => {
 
 		const detailTexts = await chamberFrame.locator('.content > details').allInnerTexts();
 		expect(detailTexts.length).toBe(10);
-		console.log('Detail Texts:', detailTexts);
 		let detailText = detailTexts[0].replace(/\s+/g, ' ').trim();
 		expect(detailText).toMatch(/Group old-hidden/i);
 		expect(detailText).toMatch(/Old image element: #trigger-more-hidden > span/i);
@@ -435,7 +438,7 @@ test.describe('Capture Basic', () => {
 		expect(detailText).toMatch(/Old image element: #element-a > p/i);
 
 		detailText = detailTexts[3].replace(/\s+/g, ' ').trim();
-		expect(detailText).toMatch(/Group old-b-1, discovery blocked by #element-b/i);
+		expect(detailText).toMatch(/Group old-b-1/i);
 		expect(detailText).toMatch(/Old image element: #element-b/i);
 
 		detailText = detailTexts[4].replace(/\s+/g, ' ').trim();
@@ -467,8 +470,9 @@ test.describe('Capture Basic', () => {
 		await expect(flatList.locator('summary')).toContainText('Flat, alphabetic list');
 
 		const flatListText = await flatList.innerText();
-		expect(flatListText).toBe("Flat, alphabetic list\nnew-a,new-a,new-b,new-hidden,new-hidden,old-a,old-a,old-b-1,old-b-2,old-hidden");
-
+		expect(flatListText).toBe(
+			'Flat, alphabetic list\nnew-a,new-a,new-b,new-hidden,new-hidden,old-a,old-a,old-b-1,old-b-2,old-hidden'
+		);
 
 		const flatListEntries = await chamberFrame
 			.locator('#flat-capture-list span[data-link]')
@@ -478,7 +482,7 @@ test.describe('Capture Basic', () => {
 		expect(normalizedEntries).toEqual(alphabeticEntries);
 
 		const hiddenEntriesAfterToggle = chamberFrame.locator('#flat-capture-list span.hidden');
-		await expect(hiddenEntriesAfterToggle).toHaveCount(9);
+		await expect(hiddenEntriesAfterToggle).toHaveCount(8);
 		await expect(hiddenEntriesAfterToggle.first()).toBeVisible();
 
 		const { consoleHandler, getCapturedData } = createConsoleHandler();
@@ -499,71 +503,61 @@ test.describe('Capture Basic', () => {
 		expect(entry.name).toBe('old-hidden');
 		expect(entry.oldNamedElement).toBeTruthy();
 		expect(entry.newNamedElement).toBeFalsy();
-		expect(entry.oldHiddenBy).toBeFalsy();
-		expect(entry.newHiddenBy).toBeFalsy();
+		expect(entry.hiddenBy).toBeFalsy();
 
 		entry = capturedData[1];
 		expect(entry.name).toBe('old-a');
 		expect(entry.oldNamedElement).toBeTruthy();
 		expect(entry.newNamedElement).toBeFalsy();
-		expect(entry.oldHiddenBy).toBeTruthy();
-		expect(entry.newHiddenBy).toBeFalsy();
+		expect(entry.hiddenBy).toBeTruthy();
 
 		entry = capturedData[2];
 		expect(entry.name).toBe('old-a');
 		expect(entry.oldNamedElement).toBeTruthy();
 		expect(entry.newNamedElement).toBeFalsy();
-		expect(entry.oldHiddenBy).toBeTruthy();
-		expect(entry.newHiddenBy).toBeFalsy();
+		expect(entry.hiddenBy).toBeTruthy();
 
 		entry = capturedData[3];
 		expect(entry.name).toBe('old-b-1');
 		expect(entry.oldNamedElement).toBeTruthy();
 		expect(entry.newNamedElement).toBeFalsy();
-		expect(entry.oldHiddenBy).toBeTruthy();
-		expect(entry.newHiddenBy).toBeFalsy();
+		expect(entry.hiddenBy).toBeFalsy();
 
 		entry = capturedData[4];
 		expect(entry.name).toBe('old-b-2');
 		expect(entry.oldNamedElement).toBeTruthy();
 		expect(entry.newNamedElement).toBeFalsy();
-		expect(entry.oldHiddenBy).toBeTruthy();
-		expect(entry.newHiddenBy).toBeFalsy();
+		expect(entry.hiddenBy).toBeTruthy();
 
 		entry = capturedData[5];
 		expect(entry.name).toBe('new-hidden');
 		expect(entry.oldNamedElement).toBeFalsy();
 		expect(entry.newNamedElement).toBeTruthy();
-		expect(entry.oldHiddenBy).toBeFalsy();
-		expect(entry.newHiddenBy).toBeTruthy();
+		expect(entry.hiddenBy).toBeTruthy();
 
 		entry = capturedData[6];
 		expect(entry.name).toBe('new-hidden');
 		expect(entry.oldNamedElement).toBeFalsy();
 		expect(entry.newNamedElement).toBeTruthy();
-		expect(entry.oldHiddenBy).toBeFalsy();
-		expect(entry.newHiddenBy).toBeTruthy();
+		expect(entry.hiddenBy).toBeTruthy();
 
 		entry = capturedData[7];
 		expect(entry.name).toBe('new-a');
 		expect(entry.oldNamedElement).toBeFalsy();
 		expect(entry.newNamedElement).toBeTruthy();
-		expect(entry.oldHiddenBy).toBeFalsy();
-		expect(entry.newHiddenBy).toBeTruthy();
+		expect(entry.hiddenBy).toBeTruthy();
 
 		entry = capturedData[8];
 		expect(entry.name).toBe('new-a');
 		expect(entry.oldNamedElement).toBeFalsy();
 		expect(entry.newNamedElement).toBeTruthy();
-		expect(entry.oldHiddenBy).toBeFalsy();
-		expect(entry.newHiddenBy).toBeTruthy();
+		expect(entry.hiddenBy).toBeTruthy();
 
 		entry = capturedData[9];
 		expect(entry.name).toBe('new-b');
 		expect(entry.oldNamedElement).toBeFalsy();
 		expect(entry.newNamedElement).toBeTruthy();
-		expect(entry.oldHiddenBy).toBeFalsy();
-		expect(entry.newHiddenBy).toBeTruthy();
+		expect(entry.hiddenBy).toBeTruthy();
 	});
 
 	test('new-only: captures group with new but no old element', async ({ page }) => {

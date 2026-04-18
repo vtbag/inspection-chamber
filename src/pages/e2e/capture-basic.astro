@@ -262,7 +262,7 @@
 			document
 				.getElementById('trigger-hidden')
 				?.addEventListener('click', () => triggerTransition(['hidden']));
-			document.getElementById('trigger-more-hidden')?.addEventListener('click', (e) => {
+			document.getElementById('trigger-more-hidden')?.addEventListener('click', () => {
 				(document.querySelector('#trigger-hidden ') as HTMLElement).setAttribute('hidden', '');
 				triggerTransition(['more-hidden']).ready.then(() => {
 					(document.querySelector('#trigger-hidden ') as HTMLElement).removeAttribute('hidden');

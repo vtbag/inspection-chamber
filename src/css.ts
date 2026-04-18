@@ -2,13 +2,14 @@ import { type Selector, type SelectorList, parse, generate } from 'css-tree';
 import { deriveCSSSelector } from './components/ic/element-selector';
 
 const animations = new Set<string>();
-const elements: {
-	element: HTMLElement;
-	pseudoElement: string;
-	selector: string;
-	property: string;
-	value: string;
-}[] = [];
+const elements: Map<
+	HTMLElement,
+	{
+		element: HTMLElement;
+		pseudoElement: string;
+		selector: string;
+	}
+> = new Map();
 const pseudoElements = new Set<string>();
 let root: HTMLElement;
 
@@ -16,56 +17,28 @@ export const allRoots: Set<HTMLElement> = new Set();
 
 export function namedElements(viewTransitionRoot: HTMLElement = document.documentElement) {
 	root = viewTransitionRoot;
-	elements.length = 0;
+	elements.clear();
 
 	allRoots.forEach(
 		(r) =>
 			root.contains(r) &&
-			elements.push({
+			!elements.has(r) &&
+			elements.set(r, {
 				element: r,
 				pseudoElement: undefined!,
 				selector: 'transitionRoot',
-				property: 'view-transition-name',
-				value: 'root',
 			})
 	);
 	root.querySelectorAll<HTMLElement>('[style*=view-transition-]').forEach((el) => {
 		const element = el as HTMLElement;
 		const viewTransitionName = element.style.viewTransitionName;
-		const viewTransitionClass = element.style.viewTransitionClass;
-		const viewTransitionGroup = element.style.viewTransitionGroup;
-		const viewTransitionScope = element.style.viewTransitionScope;
-		viewTransitionName !== 'none' &&
-			elements.push({
+		viewTransitionName &&
+			viewTransitionName !== 'none' &&
+			!elements.has(el) &&
+			elements.set(el, {
 				element: el,
 				pseudoElement: undefined!,
 				selector: 'element.style',
-				property: 'view-transition-name',
-				value: viewTransitionName,
-			});
-		viewTransitionClass &&
-			elements.push({
-				element: el,
-				pseudoElement: undefined!,
-				selector: 'element.style',
-				property: 'view-transition-class',
-				value: viewTransitionClass,
-			});
-		viewTransitionGroup &&
-			elements.push({
-				element: el,
-				pseudoElement: undefined!,
-				selector: 'element.style',
-				property: 'view-transition-group',
-				value: viewTransitionGroup,
-			});
-		viewTransitionScope &&
-			elements.push({
-				element: el,
-				pseudoElement: undefined!,
-				selector: 'element.style',
-				property: 'view-transition-scope',
-				value: viewTransitionScope,
 			});
 	});
 	animations.clear();
@@ -135,12 +108,11 @@ function frameNamedElements(style: CSSStyleDeclaration, keyframeName: string) {
 
 function declNamedElements(style: CSSStyleDeclaration) {
 	for (let i = 0; i < style.length; ++i) {
-		if (style.item(i).startsWith('view-transition-'))
-			return styledElements(style.parentRule, style.item(i), style[style.item(i) as any]);
+		if (style.item(i) === 'view-transition-name') return selectedElements(style.parentRule);
 	}
 }
 
-function styledElements(parent: CSSRule | null, property: string, value: string) {
+function selectedElements(parent: CSSRule | null) {
 	let selectors: string[] = ['&'];
 
 	for (;;) {
@@ -169,8 +141,10 @@ function styledElements(parent: CSSRule | null, property: string, value: string)
 			pseudoElement = original.slice(sel.length).trim();
 			[...root.ownerDocument.querySelectorAll<HTMLElement>(sel)]
 				.filter((el) => root.contains(el))
-				.forEach((element) =>
-					elements.push({ element, pseudoElement, selector: original, property, value })
+				.forEach(
+					(element) =>
+						elements.has(element) ||
+						elements.set(element, { element, pseudoElement, selector: original })
 				);
 		});
 		break;
