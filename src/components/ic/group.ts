@@ -93,11 +93,12 @@ export function nestGroups(
 		group[oldOrNew] = node;
 		hidden && (group.hiddenBy = hider);
 
-		if (hidden) {
-			const root = groups.get('@')!;
-			root.children.push(group);
-			group.parent = root;
-		} else if (node.viewTransitionGroup === 'nearest') {
+		// if (hidden) {
+		// 	const root = groups.get('@')!;
+		// 	root.children.push(group);
+		// 	group.parent = root;
+		// } else 
+			if (node.viewTransitionGroup === 'nearest') {
 			parent.children.push(group);
 			group.parent = parent;
 			console.log('Added to parent group', displayName(parent));
@@ -141,9 +142,11 @@ export function print(group: Group, depth = 0) {
 	group.children.forEach((child) => print(child, depth + 1));
 }
 
-export function linear(group: Group, arr: Group[] = []): Group[] {
-	arr.push(group);
-	group.children?.forEach((child) => linear(child, arr));
+export function linear(group: Group, arr: Group[] = [], withHidden = false): Group[] {
+	if (!group.hiddenBy || withHidden) {
+		arr.push(group);
+	}
+	group.children?.forEach((child) => linear(child, arr, withHidden));
 	return arr;
 }
 

@@ -81,7 +81,7 @@
 			const oldOnly = parent.__vtbag.ic2?.captureOldOnly;
 
 			const group: Group | undefined = moduleGroupMaps.get(this.featuresKey!)?.get('@')!;
-			const hasUndiscoverables = linear(group).some((g) => g.hiddenBy);
+			const hasUndiscoverables = linear(group, [], true).some((g) => g.hiddenBy);
 
 			this.insertAdjacentHTML(
 				'beforeend',
@@ -96,8 +96,8 @@
 									[...(features?.newTypes ?? [])].join(', ') || 'none'
 								}</strong></p>`
 					}
-				<div id="animation-scope"><details open><summary>Tree of named elements <span class="devtools" title="Show in browser console">[🖶]</span></summary><div class=content></div></details>
-				<details id="flat-capture-list"><summary>Flat, alphabetic list</summary>${linear(group)
+				<div id="animation-scope"><details open><summary>Group tree<span class="devtools" title="Show in browser console">[🖶]</span></summary><div class=content></div></details>
+				<details id="flat-capture-list"><summary>Flat, alphabetic list</summary>${linear(group, [], true)
 					.splice(1)
 					.sort((a, b) => displayName(a).localeCompare(displayName(b)))
 					.map(
