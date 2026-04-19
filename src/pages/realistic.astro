@@ -389,11 +389,13 @@
 									img2.style.display = 'none';
 									img1.style.display = 'inline';
 									if (expand) expand.textContent = 'Expand the small image';
+									document.querySelector('kbd')!.style.display = 'inline';
 								} else {
 									h1.innerText = 'Welcome';
 									img1.style.display = 'none';
 									img2.style.display = 'inline';
 									if (expand) expand.textContent = 'Shrink image';
+									document.querySelector('kbd')!.style.display = 'none';
 								}
 								document.body.classList.toggle('expanded', !isExpanded);
 
