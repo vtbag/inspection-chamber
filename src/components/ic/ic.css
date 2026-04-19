@@ -341,7 +341,7 @@
 
 	vtbag-ic-group-list {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
 		gap: 8px;
 		padding: 4px;
 		/* contain: paint; */

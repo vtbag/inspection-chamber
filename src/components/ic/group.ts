@@ -93,12 +93,8 @@ export function nestGroups(
 		group[oldOrNew] = node;
 		hidden && (group.hiddenBy = hider);
 
-		// if (hidden) {
-		// 	const root = groups.get('@')!;
-		// 	root.children.push(group);
-		// 	group.parent = root;
-		// } else 
-			if (node.viewTransitionGroup === 'nearest') {
+		
+		if (node.viewTransitionGroup === 'nearest') {
 			parent.children.push(group);
 			group.parent = parent;
 			console.log('Added to parent group', displayName(parent));

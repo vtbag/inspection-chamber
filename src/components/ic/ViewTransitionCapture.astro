@@ -194,19 +194,18 @@
 				classP?: string,
 				groupP?: string
 			) {
-				function label(element: Element, name: string, pseudoElement?: string) {
-					return `<div>${name}: <span class="highlight ${name.toLowerCase()}">${deriveCSSSelector(element).replaceAll('>', ' > ') + (pseudoElement ? pseudoElement : '')}</span>${element.ownerDocument !== specimenDoc ? ` (gone)` : ''}</div>`;
+				function label(node: SparseDOMNode | undefined, name: string) {
+					return `<div><span class="usn">${name}</span>: ${printNode(node, name)}</div>`;
 				}
 				function printNode(
 					node: SparseDOMNode | undefined,
-					oldNew: string,
-					below?: Element | undefined
+					oldNew: string
 				): string {
 					if (!node || !node.element) return 'unknown element';
-					return `<span class="highlight ${oldNew}">${deriveCSSSelector(node.element, true, below).replaceAll('>', ' > ') + (node.pseudoElement ?? '')}</span>`;
+					return `<span title="print to console" class="highlight ${oldNew.toLowerCase()}">${deriveCSSSelector(node.element).replaceAll('>', ' > ') + (node.pseudoElement ?? '')}</span>${node.element.ownerDocument !== specimenDoc ? ` (gone)` : ''}`;
 				}
 				function hidden(group: Group): string {
-					let oldOrNew = group.old ? 'old hiddenBy' : 'new hiddenBy';
+					let oldOrNew = group.old ? 'old hidden-by' : 'new hidden-by';
 					if (!group.hiddenBy) return '';
 
 					return `, discovery blocked by ${printNode(group.hiddenBy, oldOrNew)}`;
@@ -215,11 +214,11 @@
 				container.insertAdjacentHTML(
 					'beforeend',
 					`<details data-paint-order="${group.preOrder}" style="view-transition-name: G${group.preOrder}; view-transition-class: sorted-item">
-							<summary id="id${group.preOrder}">Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <i>${groupP}</i>${hiddenText ? ' (ignored)' : ''}]` : ''}${hiddenText}</summary> 
-							${group.old ? label(group.old.element, 'Old image element', group.old.pseudoElement) : ''}
-							${group.new ? label(group.new.element, 'New image element', group.new.pseudoElement) : ''}
-							${group.oldDuplicates?.map((d) => label(d.element, 'Duplicate old image element', d.pseudoElement)).join('') || ''}
-							${group.newDuplicates?.map((d) => label(d.element, 'Duplicate new image element', d.pseudoElement)).join('') || ''}
+							<summary id="id${group.preOrder}">Group <strong>${displayName(group)}</strong>${classP ? ` [classes: <b>${classP}</b>]` : ''}${groupP ? ` [grouping: <i>${groupP}</i>]` : ''}${hiddenText}</summary> 
+							${group.old ? label(group.old, 'Old image element') : ''}
+							${group.new ? label(group.new, 'New image element') : ''}
+							${group.oldDuplicates?.map((d) => label(d, 'Duplicate old image element')).join('') || ''}
+							${group.newDuplicates?.map((d) => label(d, 'Duplicate new image element')).join('') || ''}
 						</details>`
 				);
 				const classList = container.lastElementChild!.querySelector('summary strong')?.classList;
@@ -250,10 +249,10 @@
 						highlight(group.old?.element, group.old?.pseudoElement)
 					);
 				container
-					.lastElementChild!.querySelector('.highlight.old')
+					.lastElementChild!.querySelector('.highlight.old.image')
 					?.addEventListener('click', () => console.dir(group.old?.element));
 				container
-					.lastElementChild!.querySelector('.highlight.new')
+					.lastElementChild!.querySelector('.highlight.new.image')
 					?.addEventListener('pointerenter', () =>
 						highlight(group.new?.element, group.new?.pseudoElement)
 					);
@@ -262,11 +261,11 @@
 					?.addEventListener('click', () => console.dir(group.new?.element));
 
 				container
-					.lastElementChild!.querySelector('.highlight.hiddenBy')
+					.lastElementChild!.querySelector('.highlight.hidden-by')
 					?.addEventListener('pointerenter', () => highlight(group.hiddenBy?.element, ''));
 
 				container
-					.lastElementChild!.querySelector('.highlight.hiddenBy')
+					.lastElementChild!.querySelector('.highlight.hidden-by')
 					?.addEventListener('click', () => console.dir(group.hiddenBy?.element));
 
 				container
@@ -359,6 +358,9 @@
 				margin: 4px;
 				padding: 4px;
 				font-size: 0.9rem;
+			}
+			.usn {
+				user-select: none;
 			}
 			.print {
 				cursor: pointer;
