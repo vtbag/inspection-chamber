@@ -503,25 +503,4 @@ import Scope from './Scope.astro';
 	if (!customElements.get('vtbag-ic-animations'))
 		customElements.define('vtbag-ic-animations', ICAnimations);
 
-	self.addEventListener('ic-before-capture-new', (e) => {
-		const head = (e as CustomEvent).detail.root.ownerDocument.head;
-		head.querySelector('#vtbag-ic-persistent-style') ||
-			head.insertAdjacentHTML(
-				'beforeend',
-				`
-<style id="vtbag-ic-persistent-style">
-	::view-transition-image-pair(*),
-	::view-transition-old(*),
-	::view-transition-new(*) {
-	--vtbag-ic-only-child: initial;
-}
-::view-transition-image-pair(*):only-child,
-::view-transition-old(*):only-child,
-::view-transition-new(*):only-child {
-	--vtbag-ic-only-child: "1";
-}
-</style>
-`
-			);
-	});
 </script>
