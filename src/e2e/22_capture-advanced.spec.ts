@@ -147,30 +147,15 @@ test.describe('Capture Mode: Advanced Tests (Chrome-only)', () => {
 		await expect(level2Group).toContainText('Group level3');
 	});
 
-	test.skip('3.6: view-transition-scope: auto (hides descendants)', async ({ page }) => {
-		page.on('console', (msg) => {
-			console.log('Console message:', msg.text());
-		});
+	test('3.6: view-transition-scope: auto (hides descendants)', async ({ page }) => {
 		const { captureView } = await openCaptureView(page, 'test-3-6', '/e2e/capture-advanced/');
 
 		await expect(captureView).toContainText(/Same-document call/i);
 
 		const summaries = await getGroupSummaries(captureView);
-
-		expect(summaries.length).toBe(2);
-		expect(summaries.some((s) => s.includes('root'))).toBe(true);
-		expect(summaries.some((s) => s.includes('hero'))).toBe(true);
-
-		// Verify hidden-by-scope is NOT in the summaries (hidden by scope boundary)
-		expect(
-			summaries.some((s) => s.includes('hidden-by-scope, hidden by view-transition-scope'))
-		).toBe(true);
-
-		const root = captureView
-			.locator('summary')
-			.filter({ hasText: /^Group root/ })
-			.locator('..');
-		await root.click();
-		await expect(root).toContainText('Group hidden-by-scope');
+		expect(summaries[0]).toBe('Group root');
+		expect(summaries[1]).toBe('Group hero');
+		expect(summaries[2]).toBe('Group hidden-by-scope, discovery blocked by #scope-root-6');
+		expect(summaries[3]).toBe('Group hidden-by-scope, discovery blocked by #scope-root-6');
 	});
 });

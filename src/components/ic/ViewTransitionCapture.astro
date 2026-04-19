@@ -44,6 +44,7 @@
 			const captures: CaptureRecord = [];
 			let current: CaptureRecord[] = [];
 			const sortOrder = sessionStorage.getItem('vtbag-ic-capture-sort') || 'paint-order';
+
 			const dump = (elem: HTMLElement, group?: Group, level = 0) => {
 				if (!group) return;
 				let record: CaptureRecord;
@@ -84,7 +85,7 @@
 
 			this.insertAdjacentHTML(
 				'beforeend',
-				`<h3>${this.featuresKey ? 'Same-document call on ' + deriveCSSSelector(this.featuresKey).replaceAll('>', ' > ') : 'Cross-document navigation'}, started at ${localeTime} ${hasUndiscoverables ? `<span class="weak">(<input id="hide-undiscoverable" type="checkbox" ${hideUndiscoverable ? 'checked' : ''}></input><label for="hide-undiscoverable">hide skipped elements</label>)</span>` : ''}</h3>
+				`<h3>${this.featuresKey ? 'Same-document call on ' + deriveCSSSelector(this.featuresKey).replaceAll('>', ' > ') : 'Cross-document navigation'}, started at ${localeTime} ${hasUndiscoverables ? `<span class="weak">(<input id="hide-undiscoverable" type="checkbox" ${hideUndiscoverable ? 'checked' : ''}></input><label for="hide-undiscoverable">hide undiscoverable elements</label>)</span>` : ''}</h3>
 				<p>Active view transition types during capture of <strong>old</strong> images: <strong>${
 					[...(features?.oldTypes ?? [])].join(', ') || 'none'
 				}</strong></p>				
@@ -300,9 +301,9 @@
 					);
 			}
 
-			function entryForDevtools(group: Group) {
+			function entryForDevtools(group: Group): CaptureEntry {
 				const entry = Object.create(null);
-				entry.children = Object.create(null);
+				entry.children = [];
 				entry.name = group.name;
 				if (group.old)
 					entry.oldNamedElement = {

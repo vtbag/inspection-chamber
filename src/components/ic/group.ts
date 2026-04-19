@@ -1,5 +1,5 @@
 import { deriveCSSSelector } from './element-selector';
-import { hiddenChild, type SparseDOMNode } from './sparse-dom';
+import { isHidden, type SparseDOMNode } from './sparse-dom';
 
 export type Group = {
 	parent?: Group;
@@ -39,31 +39,21 @@ export function nestGroups(
 	oldOrNew: 'old' | 'new',
 	capture: boolean,
 	hiddenBy?: SparseDOMNode | undefined,
-	originalHiddenBy?: SparseDOMNode | undefined,
 	depth = 0
 ): boolean {
 	let hasDuplicates = false;
+	const { hidden, hider } = isHidden(node, hiddenBy);
+	console.log('hidden', hidden, 'node', node);
 	if (node.viewTransitionName === 'none') {
 		node.children.forEach((child) => {
-			let { childHidden, inherit } = hiddenChild(child, originalHiddenBy);
 			hasDuplicates =
-				((!childHidden || capture) &&
-					nestGroups(
-						child,
-						parent,
-						container,
-						groups,
-						oldOrNew,
-						capture,
-						childHidden,
-						inherit,
-						depth + 1
-					)) ||
+				nestGroups(child, parent, container, groups, oldOrNew, capture, hider, depth + 1) ||
 				hasDuplicates;
 		});
 	} else {
-		let group = hiddenBy ? undefined : groups.get(node.viewTransitionName);
+		let group = hidden ? undefined : groups.get(node.viewTransitionName);
 		if (group) {
+			console.log(`Found group ${displayName(group)} for node`, node);
 			if (group[oldOrNew] === undefined) {
 				group[oldOrNew] = node;
 			} else {
@@ -72,31 +62,28 @@ export function nestGroups(
 				hasDuplicates = true;
 			}
 		} else {
-			group = newGroup();
-			hiddenBy || groups.set(node.viewTransitionName, group);
+			group = newGroup(hidden, hider);
+			console.log(`created group ${displayName(group)} for node`, node);
+			hidden || groups.set(node.viewTransitionName, group);
 		}
 		node.children.forEach((child) => {
-			let { childHidden, inherit } = hiddenChild(child, originalHiddenBy);
 			hasDuplicates =
-				((!childHidden || capture) &&
-					nestGroups(
-						child,
-						group,
-						node.viewTransitionGroup !== 'normal' ? group : container,
-						groups,
-						oldOrNew,
-						capture,
-						childHidden,
-						inherit,
-						depth + 1
-					)) ||
-				hasDuplicates;
+				nestGroups(
+					child,
+					group,
+					node.viewTransitionGroup !== 'normal' ? group : container,
+					groups,
+					oldOrNew,
+					capture,
+					hider,
+					depth + 1
+				) || hasDuplicates;
 		});
 		group.ancestor = false;
 	}
 	return hasDuplicates;
 
-	function newGroup() {
+	function newGroup(hidden: boolean, hider: SparseDOMNode | undefined): Group {
 		const group: Group = {
 			children: [],
 			name: node.viewTransitionName,
@@ -104,9 +91,9 @@ export function nestGroups(
 			ancestor: true,
 		};
 		group[oldOrNew] = node;
-		hiddenBy && (group.hiddenBy = hiddenBy);
+		hidden && (group.hiddenBy = hider);
 
-		if (hiddenBy) {
+		if (hidden) {
 			const root = groups.get('@')!;
 			root.children.push(group);
 			group.parent = root;

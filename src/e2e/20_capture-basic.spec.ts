@@ -386,9 +386,7 @@ test.describe('Capture Basic', () => {
 		await expect(visibleDetailsBeforeToggle.first().locator('summary')).toHaveText(
 			'Group old-hidden'
 		);
-		await expect(visibleDetailsBeforeToggle.nth(1).locator('summary')).toHaveText(
-			'Group old-b-1'
-		);
+		await expect(visibleDetailsBeforeToggle.nth(1).locator('summary')).toHaveText('Group old-b-1');
 		await visibleDetailsBeforeToggle.first().locator('summary').click();
 		await expect(visibleDetailsBeforeToggle.first()).toContainText(
 			'Old image element: #trigger-more-hidden > span'

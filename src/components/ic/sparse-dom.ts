@@ -15,6 +15,7 @@ export type SparseDOMNode = {
 	children: SparseDOMNode[];
 	hiddenBy?: SparseDOMNode;
 	hiddenBecause?: Set<string>;
+	hidingParent?: SparseDOMNode;
 };
 
 export function sparseDomNode(element: Element, style?: CSSStyleDeclaration): SparseDOMNode {
@@ -49,48 +50,59 @@ export function sparseDomNode(element: Element, style?: CSSStyleDeclaration): Sp
 	return node;
 }
 
-export function hiddenChild(child: SparseDOMNode, hiddenBy: SparseDOMNode | undefined) {
+function checkHidden(node: SparseDOMNode, hider: SparseDOMNode | undefined): boolean {
+	if (!hider) return false;
+	if (hider.hiddenBecause?.has('displayNone')) return true;
+	if (hider.hiddenBecause?.has('viewTransitionScope')) return true;
+	if (
+		hider.hiddenBecause?.has('contentVisibilityHidden') &&
+		hider.hiddenBecause.has('displayContents')
+	)
+		return true;
+	if (hider.hiddenBecause?.has('contentVisibilityHidden'))
+		return hider === node ? checkHidden(node, hider.hidingParent!) : true;
+	if (hider.hiddenBecause?.has('displayContents'))
+		return hider === node ? true : checkHidden(node, hider.hidingParent!);
+
+	console.error(
+		'[Inspection Chmber] Unhandled hidden case for',
+		deriveCSSSelector(node.element),
+		'hidden by',
+		deriveCSSSelector(hider.element),
+		'with hiddenBecause',
+		hider.hiddenBecause
+	);
+	return true;
+}
+
+export function isHidden(node: SparseDOMNode, hiddenBy: SparseDOMNode | undefined) {
 	console.log(
-		`Checking if ${deriveCSSSelector(child.element) + (child.pseudoElement ?? '')} is hidden by ${deriveCSSSelector(hiddenBy?.element) + (hiddenBy?.pseudoElement ?? '')}`
+		`Checking if ${deriveCSSSelector(node.element) + (node.pseudoElement ?? '')} is hidden by ${deriveCSSSelector(hiddenBy?.element) + (hiddenBy?.pseudoElement ?? '')}`
 	);
 	console.log(
 		'from',
-		'child.hiddenBy',
-		child?.hiddenBy,
+		'node',
+		node,
+		'node.hiddenBy',
+		node?.hiddenBy,
 		'because',
-		child?.hiddenBecause,
+		node?.hiddenBecause,
 		'hiddenBy',
 		hiddenBy,
 		'because',
 		hiddenBy?.hiddenBecause
 	);
-	const computed = new Set([
-		...(hiddenBy?.hiddenBecause || []),
-		...(child.hiddenBy?.hiddenBecause || []),
-	]);
-	let inherit = child.hiddenBy || hiddenBy;
 
-	let childHidden = inherit;
-	if (inherit) {
-		inherit.hiddenBecause = new Set(computed);
-		if (child !== inherit && computed?.has('displayContents')) computed.delete('displayContents'); // hides the element itself, but not its children
-		if (child === inherit && computed?.has('contentVisibilityHidden')) {
-			computed.delete('contentVisibilityHidden'); // hides the children, but not the element itself
-		}
-		computed.size === 0 && (childHidden = undefined);
-		console.log(
-			'to',
-			'childHidden',
-			childHidden,
-			'because',
-			childHidden?.hiddenBecause,
-			'inherit',
-			inherit,
-			'because',
-			inherit?.hiddenBecause
-		);
+	if (node.hiddenBy && hiddenBy) {
+		node.hidingParent = hiddenBy;
 	}
-	return { childHidden, inherit };
+	const hider = node.hiddenBy || hiddenBy;
+	const hidden = checkHidden(node, hider);
+	node.hiddenBy = hider;
+
+	console.log('to', 'hidden', hidden, 'hider', hider);
+
+	return { hidden, hider };
 }
 
 export function addParentLinks(
