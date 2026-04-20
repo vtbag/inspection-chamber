@@ -133,7 +133,7 @@ export async function verifyCaptureHeader(
 export async function verifyCapturedGroups(captureView: Locator, expectedGroups: string[]) {
 	await expect(
 		captureView.locator(CHAMBER_CONFIG.selectors.captureView.summary).first()
-	).toHaveText(/Named elements/i);
+	).toHaveText(/Group tree\[🖶\]/i);
 
 	const capturedGroups = captureView.locator(CHAMBER_CONFIG.selectors.captureView.groupsContainer);
 	await expect(capturedGroups.first()).toBeVisible();

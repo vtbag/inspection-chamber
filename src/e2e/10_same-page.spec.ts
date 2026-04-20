@@ -326,7 +326,7 @@ test('analyze capturing shows captured elements and captured groups', async ({ p
 
 	const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
 	await expect(captureView).toBeVisible();
-	await expect(captureView.locator('summary').first()).toHaveText(/Named elements/i);
+	await expect(captureView.locator('summary').first()).toHaveText(/Group tree\[🖶\]/i);
 
 	const capturedGroups = captureView.locator('.content > details');
 	await expect(capturedGroups.first().locator('summary')).toHaveText(/Group/i);
