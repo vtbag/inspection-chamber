@@ -558,6 +558,103 @@ test.describe('Capture Basic', () => {
 		expect(entry.hiddenBy).toBeTruthy();
 	});
 
+		test('more-hidden, old-only: captures only old images and excludes new images', async ({
+			page,
+		}) => {
+			await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
+			await switchToDockedView(page);
+
+			const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
+			const testFrame = page.locator('iframe').nth(1).contentFrame()!;
+
+			const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
+			(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
+
+			const captureToggle = chamberFrame.locator('#capture').first();
+			await expect(captureToggle).toBeVisible();
+			(await captureToggle.isChecked()) ||
+				(await chamberFrame.locator('label[for="capture"]').first().click());
+			await expect(captureToggle).toBeChecked();
+
+			const oldOnlyToggle = chamberFrame.locator('#old-only').first();
+			await expect(oldOnlyToggle).toBeVisible();
+			(await oldOnlyToggle.isChecked()) ||
+				(await chamberFrame.locator('label[for="old-only"]').first().click());
+			await expect(oldOnlyToggle).toBeChecked();
+
+			await testFrame.locator('#trigger-more-hidden').click();
+
+			const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+			await expect(captureView).toBeVisible();
+			const headerText = await captureView.locator('h3').innerText();
+			expect(headerText).toMatch(/Same-document call on :root, started at \d{2}:\d{2}:\d{2}\.\d{3}/);
+
+			const oldTypesText = await captureView.locator('p').first().innerText();
+			expect(oldTypesText).toMatch(
+				/Active view transition types during capture of old images: more-hidden/i
+			);
+
+			await chamberFrame.locator('#flat-capture-list summary').click();
+			await page.waitForTimeout(300);
+
+			const flatList = chamberFrame.locator('vtbag-ic-view-transition-capture #flat-capture-list');
+			await expect(flatList).toBeVisible();
+			await expect(flatList.locator('summary')).toContainText('Flat, alphabetic list');
+
+			const flatListText = await flatList.innerText();
+			expect(flatListText).toContain('old-hidden');
+			expect(flatListText).toContain('old-b-1');
+			expect(flatListText).not.toContain('new-hidden');
+			expect(flatListText).not.toContain('new-a');
+			expect(flatListText).not.toContain('new-b');
+
+			const allDetails = chamberFrame.locator('.content > details');
+			const detailCount = await allDetails.count();
+			for (let i = 0; i < detailCount; i++) {
+				const detail = allDetails.nth(i);
+				const isOpen = await detail.evaluate((node) => (node as HTMLDetailsElement).open);
+				if (!isOpen) {
+					await detail.evaluate((node) => {
+						const summary = (node as HTMLDetailsElement).querySelector(
+							'summary'
+						) as HTMLElement | null;
+						summary?.click();
+					});
+					await expect
+						.poll(async () => detail.evaluate((node) => (node as HTMLDetailsElement).open))
+						.toBe(true);
+				}
+			}
+
+			const detailTexts = await chamberFrame.locator('.content > details').allInnerTexts();
+			expect(detailTexts.length).toBeGreaterThan(0);
+			for (const text of detailTexts) {
+				expect(text).toMatch(/Old image element:/i);
+				expect(text).not.toMatch(/New image element:/i);
+			}
+
+			const { consoleHandler, getCapturedData } = createConsoleHandler();
+			page.on('console', consoleHandler);
+			const devtoolsBtn = chamberFrame.locator('span.devtools').first();
+			await expect(devtoolsBtn).toBeVisible();
+			await devtoolsBtn.click();
+
+			await page.waitForTimeout(500);
+			page.off('console', consoleHandler);
+
+			const capturedData = getCapturedData();
+			expect(capturedData).toBeTruthy();
+			expect(Array.isArray(capturedData)).toBe(true);
+			expect(capturedData.length).toBeGreaterThan(0);
+
+			const names = capturedData.map((entry: any) => entry.name as string);
+			expect(names.every((name:any) => name.startsWith('old-'))).toBe(true);
+			for (const entry of capturedData) {
+				expect(entry.oldNamedElement).toBeTruthy();
+				expect(entry.newNamedElement).toBeFalsy();
+			}
+		});
+
 	test('new-only: captures group with new but no old element', async ({ page }) => {
 		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
 		await switchToDockedView(page);
