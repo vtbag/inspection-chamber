@@ -93,7 +93,6 @@ export function nestGroups(
 		group[oldOrNew] = node;
 		hidden && (group.hiddenBy = hider);
 
-		
 		if (node.viewTransitionGroup === 'nearest') {
 			parent.children.push(group);
 			group.parent = parent;
