@@ -59,6 +59,13 @@
 				border-radius: 0.5rem;
 			}
 
+			#huf {
+				margin-top: 1rem;
+				padding: 1rem;
+				background: light-dark(#eeed78, #665c00);
+				border-radius: 0.5rem;
+			}
+
 			/* --- none: nothing to capture because no view transition names are defined --- */
 
 			html:active-view-transition-type(none) {
@@ -221,12 +228,15 @@
 			<button id="trigger-test-1-8">Test 1.8</button>
 		</div>
 
-		<div id="element-a" data-test-element="a">
+		<div id="element-a">
 			<p>Element A</p>
 		</div>
 
-		<div id="element-b" data-test-element="b">
+		<div id="element-b">
 			<p>Element B</p>
+		</div>
+		<div id="huf" style="display:flex">
+			<p style="flex: 1;visibility: collapse; view-transition-nam: huf">Hidden until found</p>
 		</div>
 
 		<script>

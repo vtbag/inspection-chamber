@@ -13,7 +13,7 @@ function createConsoleHandler() {
 						capturedData = value;
 					}
 				})
-				.catch(() => {});
+				.catch(() => { });
 		}
 	};
 	return { consoleHandler, getCapturedData: () => capturedData };
@@ -558,102 +558,181 @@ test.describe('Capture Basic', () => {
 		expect(entry.hiddenBy).toBeTruthy();
 	});
 
-		test('more-hidden, old-only: captures only old images and excludes new images', async ({
-			page,
-		}) => {
-			await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
-			await switchToDockedView(page);
+	test('more-hidden, old-only: check that only old images are captured', async ({
+		page,
+	}) => {
+		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
+		await switchToDockedView(page);
 
-			const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
-			const testFrame = page.locator('iframe').nth(1).contentFrame()!;
+		const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
+		const testFrame = page.locator('iframe').nth(1).contentFrame()!;
 
-			const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
-			(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
+		const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
+		(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
 
-			const captureToggle = chamberFrame.locator('#capture').first();
-			await expect(captureToggle).toBeVisible();
-			(await captureToggle.isChecked()) ||
-				(await chamberFrame.locator('label[for="capture"]').first().click());
-			await expect(captureToggle).toBeChecked();
+		const captureToggle = chamberFrame.locator('#capture').first();
+		await expect(captureToggle).toBeVisible();
+		(await captureToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="capture"]').first().click());
+		await expect(captureToggle).toBeChecked();
 
-			const oldOnlyToggle = chamberFrame.locator('#old-only').first();
-			await expect(oldOnlyToggle).toBeVisible();
-			(await oldOnlyToggle.isChecked()) ||
-				(await chamberFrame.locator('label[for="old-only"]').first().click());
-			await expect(oldOnlyToggle).toBeChecked();
+		const oldOnlyToggle = chamberFrame.locator('#old-only').first();
+		await expect(oldOnlyToggle).toBeVisible();
+		(await oldOnlyToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="old-only"]').first().click());
+		await expect(oldOnlyToggle).toBeChecked();
 
-			await testFrame.locator('#trigger-more-hidden').click();
+		await testFrame.locator('#trigger-more-hidden').click();
 
-			const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
-			await expect(captureView).toBeVisible();
-			const headerText = await captureView.locator('h3').innerText();
-			expect(headerText).toMatch(/Same-document call on :root, started at \d{2}:\d{2}:\d{2}\.\d{3}/);
+		const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+		await expect(captureView).toBeVisible();
 
-			const oldTypesText = await captureView.locator('p').first().innerText();
-			expect(oldTypesText).toMatch(
-				/Active view transition types during capture of old images: more-hidden/i
-			);
+		const captures = captureView.locator('p');
+		expect(captures).toHaveCount(1);
+		const oldTypesText = await captures.first().innerText();
+		expect(oldTypesText).toMatch(
+			/Active view transition types during capture of old images: more-hidden/i
+		);
 
-			await chamberFrame.locator('#flat-capture-list summary').click();
-			await page.waitForTimeout(300);
+		const hideUndiscoverable = captureView.locator('#hide-undiscoverable');
+		await expect(hideUndiscoverable).toBeVisible();
+		await expect(hideUndiscoverable).toBeChecked();
+		await chamberFrame.locator('label[for="hide-undiscoverable"]').click();
+		await expect(hideUndiscoverable).not.toBeChecked();
+		await page.waitForTimeout(100);
 
-			const flatList = chamberFrame.locator('vtbag-ic-view-transition-capture #flat-capture-list');
-			await expect(flatList).toBeVisible();
-			await expect(flatList.locator('summary')).toContainText('Flat, alphabetic list');
-
-			const flatListText = await flatList.innerText();
-			expect(flatListText).toContain('old-hidden');
-			expect(flatListText).toContain('old-b-1');
-			expect(flatListText).not.toContain('new-hidden');
-			expect(flatListText).not.toContain('new-a');
-			expect(flatListText).not.toContain('new-b');
-
-			const allDetails = chamberFrame.locator('.content > details');
-			const detailCount = await allDetails.count();
-			for (let i = 0; i < detailCount; i++) {
-				const detail = allDetails.nth(i);
-				const isOpen = await detail.evaluate((node) => (node as HTMLDetailsElement).open);
-				if (!isOpen) {
-					await detail.evaluate((node) => {
-						const summary = (node as HTMLDetailsElement).querySelector(
-							'summary'
-						) as HTMLElement | null;
-						summary?.click();
-					});
-					await expect
-						.poll(async () => detail.evaluate((node) => (node as HTMLDetailsElement).open))
-						.toBe(true);
-				}
+		const allDetails = chamberFrame.locator('.content > details');
+		const detailCount = await allDetails.count();
+		for (let i = 0; i < detailCount; i++) {
+			const detail = allDetails.nth(i);
+			const isOpen = await detail.evaluate((node) => (node as HTMLDetailsElement).open);
+			if (!isOpen) {
+				await detail.evaluate((node) => {
+					const summary = (node as HTMLDetailsElement).querySelector(
+						'summary'
+					) as HTMLElement | null;
+					summary?.click();
+				});
+				await expect
+					.poll(async () => detail.evaluate((node) => (node as HTMLDetailsElement).open))
+					.toBe(true);
 			}
+		}
+		await chamberFrame.locator('#flat-capture-list summary').click();
 
-			const detailTexts = await chamberFrame.locator('.content > details').allInnerTexts();
-			expect(detailTexts.length).toBeGreaterThan(0);
-			for (const text of detailTexts) {
-				expect(text).toMatch(/Old image element:/i);
-				expect(text).not.toMatch(/New image element:/i);
-			}
+		await page.waitForTimeout(500);
 
-			const { consoleHandler, getCapturedData } = createConsoleHandler();
-			page.on('console', consoleHandler);
-			const devtoolsBtn = chamberFrame.locator('span.devtools').first();
-			await expect(devtoolsBtn).toBeVisible();
-			await devtoolsBtn.click();
+		const detailTexts = await chamberFrame.locator('.content > details').allInnerTexts();
+		expect(detailTexts.length).toBe(5);
+		let detailText = detailTexts[0].replace(/\s+/g, ' ').trim();
+		expect(detailText).toMatch(/Group old-hidden/i);
+		expect(detailText).toMatch(/Old image element: #trigger-more-hidden > span/i);
 
-			await page.waitForTimeout(500);
-			page.off('console', consoleHandler);
+		detailText = detailTexts[1].replace(/\s+/g, ' ').trim();
+		expect(detailText).toMatch(/Group old-a, discovery blocked by #element-a/i);
+		expect(detailText).toMatch(/Old image element: #element-a/i);
 
-			const capturedData = getCapturedData();
-			expect(capturedData).toBeTruthy();
-			expect(Array.isArray(capturedData)).toBe(true);
-			expect(capturedData.length).toBeGreaterThan(0);
+		detailText = detailTexts[2].replace(/\s+/g, ' ').trim();
+		expect(detailText).toMatch(/Group old-a, discovery blocked by #element-a/i);
+		expect(detailText).toMatch(/Old image element: #element-a > p/i);
 
-			const names = capturedData.map((entry: any) => entry.name as string);
-			expect(names.every((name:any) => name.startsWith('old-'))).toBe(true);
-			for (const entry of capturedData) {
-				expect(entry.oldNamedElement).toBeTruthy();
-				expect(entry.newNamedElement).toBeFalsy();
-			}
-		});
+		detailText = detailTexts[3].replace(/\s+/g, ' ').trim();
+		expect(detailText).toMatch(/Group old-b-1/i);
+		expect(detailText).toMatch(/Old image element: #element-b/i);
+
+		detailText = detailTexts[4].replace(/\s+/g, ' ').trim();
+		expect(detailText).toMatch(/Group old-b-2, discovery blocked by #element-b/i);
+		expect(detailText).toMatch(/Old image element: #element-b > p/i);
+
+		const flatList = chamberFrame.locator('vtbag-ic-view-transition-capture #flat-capture-list');
+		await expect(flatList).toBeVisible();
+		const flatListText = await flatList.innerText();
+		expect(flatListText).toBe(
+			'Flat, alphabetic list\nold-a,old-a,old-b-1,old-b-2,old-hidden'
+		);
+
+		const hiddenEntriesAfterToggle = chamberFrame.locator('#flat-capture-list span.hidden');
+		await expect(hiddenEntriesAfterToggle).toHaveCount(3);
+
+		const { consoleHandler, getCapturedData } = createConsoleHandler();
+		page.on('console', consoleHandler);
+		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
+		await expect(devtoolsBtn).toBeVisible();
+		await devtoolsBtn.click();
+
+		await page.waitForTimeout(500);
+		page.off('console', consoleHandler);
+
+		const capturedData = getCapturedData();
+		expect(capturedData).toBeTruthy();
+		expect(Array.isArray(capturedData)).toBe(true);
+		expect(capturedData.length).toBe(5);
+
+		let entry = capturedData[0];
+		expect(entry.name).toBe('old-hidden');
+		expect(entry.oldNamedElement).toBeTruthy();
+		expect(entry.newNamedElement).toBeFalsy();
+		expect(entry.hiddenBy).toBeFalsy();
+
+		entry = capturedData[1];
+		expect(entry.name).toBe('old-a');
+		expect(entry.oldNamedElement).toBeTruthy();
+		expect(entry.newNamedElement).toBeFalsy();
+		expect(entry.hiddenBy).toBeTruthy();
+
+		entry = capturedData[2];
+		expect(entry.name).toBe('old-a');
+		expect(entry.oldNamedElement).toBeTruthy();
+		expect(entry.newNamedElement).toBeFalsy();
+		expect(entry.hiddenBy).toBeTruthy();
+
+		entry = capturedData[3];
+		expect(entry.name).toBe('old-b-1');
+		expect(entry.oldNamedElement).toBeTruthy();
+		expect(entry.newNamedElement).toBeFalsy();
+		expect(entry.hiddenBy).toBeFalsy();
+
+		entry = capturedData[4];
+		expect(entry.name).toBe('old-b-2');
+		expect(entry.oldNamedElement).toBeTruthy();
+		expect(entry.newNamedElement).toBeFalsy();
+		expect(entry.hiddenBy).toBeTruthy();
+	});
+
+	test('more-hidden, frozen: check the view transitions pseudos are available', async ({
+		page,
+	}) => {
+		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
+		await switchToDockedView(page);
+
+		const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
+		const testFrame = page.locator('iframe').nth(1).contentFrame()!;
+
+		const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
+		(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
+
+		const captureToggle = chamberFrame.locator('#capture').first();
+		await expect(captureToggle).toBeVisible();
+		(await captureToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="capture"]').first().click());
+		await expect(captureToggle).toBeChecked();
+
+		const freezeToggle = chamberFrame.locator('#freeze-types').first();
+		await expect(freezeToggle).toBeVisible();
+		(await freezeToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="freeze-types"]').first().click());
+		await expect(freezeToggle).toBeChecked();
+
+		await testFrame.locator('#trigger-more-hidden').click();
+		await page.waitForTimeout(500); // wait for view transitions beeing paused
+		expect(await testFrame.locator(':root').evaluate((el) =>
+			[...el.ownerDocument.getAnimations()].filter((a) => a.effect?.pseudoElement?.startsWith("::view-transition")).length)).toBeGreaterThan(0);
+
+		(await chamberFrame.locator('label[for="freeze-types"]').first().click());
+		await expect(freezeToggle).not.toBeChecked();
+		expect(await testFrame.locator(':root').evaluate((el) =>
+			[...el.ownerDocument.getAnimations()].filter((a) => a.effect?.pseudoElement?.startsWith("::view-transition")).length)).toBe(0);
+	});
 
 	test('new-only: captures group with new but no old element', async ({ page }) => {
 		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
