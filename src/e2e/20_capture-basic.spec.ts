@@ -559,8 +559,9 @@ test.describe('Capture Basic', () => {
 	});
 
 	test('more-hidden, old-only: check that only old images are captured', async ({
-		page,
+		page, browserName
 	}) => {
+		test.skip(browserName === "firefox", "See https://bugzilla.mozilla.org/show_bug.cgi?id=2030776");
 		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
 		await switchToDockedView(page);
 
@@ -583,6 +584,7 @@ test.describe('Capture Basic', () => {
 		await expect(oldOnlyToggle).toBeChecked();
 
 		await testFrame.locator('#trigger-more-hidden').click();
+		await page.waitForTimeout(100);
 
 		const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
 		await expect(captureView).toBeVisible();
