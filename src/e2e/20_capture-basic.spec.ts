@@ -166,6 +166,7 @@ test.describe('Capture Basic', () => {
 		expect(rootEntry.oldNamedElement.element).toBeTruthy();
 		expect(rootEntry.newNamedElement.element).toBeTruthy();
 	});
+	
 
 	test('old-only: captures group with old but no new element', async ({ page }) => {
 		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
@@ -808,5 +809,79 @@ test.describe('Capture Basic', () => {
 		expect(newOnlyEntry.oldNamedElement).toBeFalsy();
 		expect(newOnlyEntry.newNamedElement).toBeTruthy();
 		expect(newOnlyEntry.newNamedElement.element).toBeTruthy();
+	});
+
+		test('different: captures group with different old and new element', async ({ page }) => {
+		await page.goto('/e2e/capture-basic/', { waitUntil: 'commit' });
+		await switchToDockedView(page);
+
+		const chamberFrame = page.locator('iframe').nth(0).contentFrame()!;
+		const testFrame = page.locator('iframe').nth(1).contentFrame()!;
+
+		const welcomeSummary = chamberFrame.locator('vtbag-ic-welcome details summary').first();
+		(await welcomeSummary.isVisible()) && (await welcomeSummary.click());
+
+		const captureToggle = chamberFrame.locator('#capture').first();
+		await expect(captureToggle).toBeVisible();
+		(await captureToggle.isChecked()) ||
+			(await chamberFrame.locator('label[for="capture"]').first().click());
+		await expect(captureToggle).toBeChecked();
+
+		await testFrame.locator('#trigger-different').click();
+
+		const captureView = chamberFrame.locator('vtbag-ic-view-transition-capture');
+		await expect(captureView).toBeVisible();
+		const headerText = await captureView.locator('h3').innerText();
+		expect(headerText).toMatch(/Same-document call on :root, started at \d{2}:\d{2}:\d{2}\.\d{3}/);
+
+		const oldTypesText = await captureView.locator('p').first().innerText();
+		expect(oldTypesText).toMatch(
+			/Active view transition types during capture of old images: different/i
+		);
+
+		const newTypesText = await captureView.locator('p').nth(1).innerText();
+		expect(newTypesText).toMatch(
+			/Active view transition types during capture of new images: different/i
+		);
+
+		const nestedDetails = chamberFrame.locator(
+			'vtbag-ic-view-transition-capture .content > details'
+		);
+		await expect(nestedDetails.first()).toBeVisible();
+		await nestedDetails.first().locator('summary').click();
+
+		const nestedDetailsText = (await nestedDetails.allInnerTexts()).join('\n');
+		expect(nestedDetailsText).toMatch(/Group\s+shared-element/i);
+		expect(nestedDetailsText).toMatch(/Old image element:\s*#element-a/i);
+		expect(nestedDetailsText).toMatch(/New image element:\s*#element-b/i);
+
+		const flatList = chamberFrame.locator('vtbag-ic-view-transition-capture #flat-capture-list');
+		await expect(flatList).toBeVisible();
+		await expect(flatList.locator('summary')).toContainText('Flat, alphabetic list');
+		await flatList.locator('summary').click();
+		await page.waitForTimeout(300);
+		const flatListText = await flatList.innerText();
+		expect(flatListText).toMatch(/shared-element/i);
+
+		const { consoleHandler, getCapturedData } = createConsoleHandler();
+		page.on('console', consoleHandler);
+		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
+		await expect(devtoolsBtn).toBeVisible();
+		await devtoolsBtn.click();
+
+		await page.waitForTimeout(500);
+		page.off('console', consoleHandler);
+
+		const capturedData = getCapturedData();
+		expect(capturedData).toBeTruthy();
+		expect(Array.isArray(capturedData)).toBe(true);
+		expect(capturedData.length).toBe(1);
+
+		const rootEntry = capturedData[0];
+		expect(rootEntry.name).toBe('shared-element');
+		expect(rootEntry.oldNamedElement).toBeTruthy();
+		expect(rootEntry.newNamedElement).toBeTruthy();
+		expect(rootEntry.oldNamedElement.element).toBeTruthy();
+		expect(rootEntry.newNamedElement.element).toBeTruthy();
 	});
 });
