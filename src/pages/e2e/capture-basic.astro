@@ -59,13 +59,7 @@
 				border-radius: 0.5rem;
 			}
 
-			#huf {
-				margin-top: 1rem;
-				padding: 1rem;
-				background: light-dark(#eeed78, #665c00);
-				border-radius: 0.5rem;
-			}
-
+			
 			/* --- none: nothing to capture because no view transition names are defined --- */
 
 			html:active-view-transition-type(none) {
@@ -168,21 +162,21 @@
 				}
 			}
 
-			/* --- test-1-5: pseudo-element ::before with view-transition-name --- */
+			/* --- before: ::before with view-transition-name --- */
 
-			html:active-view-transition-type(test-1-5) {
+			html:active-view-transition-type(before) {
 				body.old #element-a::before {
 					content: 'Before';
 					view-transition-name: before-pseudo;
 				}
-				body.new #element-b:before {
+				body.new #element-b::before {
 					view-transition-name: before-pseudo;
 				}
 			}
 
-			/* --- test-1-6: pseudo-element ::before and ::after with view-transition-name --- */
+			/* --- after: ::before and ::after with view-transition-name --- */
 
-			html:active-view-transition-type(test-1-6) {
+			html:active-view-transition-type(after) {
 				#element-b::after {
 					content: 'After';
 					view-transition-name: after-pseudo;
@@ -193,9 +187,9 @@
 				}
 			}
 
-			/* --- test-1-7: duplicate view-transition-name detection --- */
+			/* --- duplicate: duplicate view-transition-name detection --- */
 
-			html:active-view-transition-type(test-1-7) {
+			html:active-view-transition-type(duplicate) {
 				#hero,
 				#element-a,
 				#element-b {
@@ -203,9 +197,9 @@
 				}
 			}
 
-			/* --- test-1-8: CSS escape sequences in view-transition-name --- */
+			/* --- escape: CSS escape sequences in view-transition-name --- */
 
-			html:active-view-transition-type(test-1-8) {
+			html:active-view-transition-type(escape) {
 				#element-a {
 					view-transition-name: \!important;
 				}
@@ -222,10 +216,10 @@
 			<button id="trigger-more-hidden"><span>more-hidden</span></button>
 			<button id="trigger-new-only">new-only</button>
 			<button id="trigger-different">different</button>
-			<button id="trigger-test-1-5">Test 1.5</button>
-			<button id="trigger-test-1-6">Test 1.6</button>
-			<button id="trigger-test-1-7">Test 1.7</button>
-			<button id="trigger-test-1-8">Test 1.8</button>
+			<button id="trigger-before">before</button>
+			<button id="trigger-after">after</button>
+			<button id="trigger-duplicate">duplicate</button>
+			<button id="trigger-escape">escape</button>
 		</div>
 
 		<div id="element-a">
@@ -234,9 +228,6 @@
 
 		<div id="element-b">
 			<p>Element B</p>
-		</div>
-		<div id="huf" style="display:flex">
-			<p style="flex: 1;visibility: collapse; view-transition-nam: huf">Hidden until found</p>
 		</div>
 
 		<script>
