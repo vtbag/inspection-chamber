@@ -171,10 +171,10 @@
 			this.insertAdjacentHTML(
 				'afterbegin',
 				`<span class="pseudo-head"><span class="name">${this.getAttribute('name') || '::view-transition'}</span>
-					<label class="toggle frame ${this.getAttribute('name')}"><input type="checkbox" ${framed ? 'checked' : ''}>🖽</label><label class="toggle visibility"><input type="checkbox" checked>◎</label
+					<label title="show frame"class="toggle frame ${this.getAttribute('name')}"><input type="checkbox" ${framed ? 'checked' : ''}>🖽</label><label title="hide" class="toggle visibility"><input type="checkbox" checked>◎</label
 						>${
 							this.getAttribute('name') === 'group'
-								? `<label class="toggle solo"><input type="checkbox">s</label>`
+								? `<label title="hide all others" class="toggle solo"><input type="checkbox">s</label>`
 								: ''
 						}</span>`
 			);
