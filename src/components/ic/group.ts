@@ -43,7 +43,6 @@ export function nestGroups(
 ): boolean {
 	let hasDuplicates = false;
 	const { hidden, hider } = isHidden(node, hiddenBy);
-	console.log('hidden', hidden, 'node', node);
 	if (node.viewTransitionName === 'none') {
 		node.children.forEach((child) => {
 			hasDuplicates =
@@ -53,7 +52,6 @@ export function nestGroups(
 	} else {
 		let group = hidden ? undefined : groups.get(node.viewTransitionName);
 		if (group) {
-			console.log(`Found group ${displayName(group)} for node`, node);
 			if (group[oldOrNew] === undefined) {
 				group[oldOrNew] = node;
 			} else {
@@ -63,7 +61,6 @@ export function nestGroups(
 			}
 		} else {
 			group = newGroup(hidden, hider);
-			console.log(`created group ${displayName(group)} for node`, node);
 			hidden || groups.set(node.viewTransitionName, group);
 		}
 		node.children.forEach((child) => {
@@ -96,7 +93,6 @@ export function nestGroups(
 		if (node.viewTransitionGroup === 'nearest') {
 			parent.children.push(group);
 			group.parent = parent;
-			console.log('Added to parent group', displayName(parent));
 		} else if (node.viewTransitionGroup === 'normal' || node.viewTransitionGroup === 'contain') {
 			container.children.push(group);
 			group.parent = container;
