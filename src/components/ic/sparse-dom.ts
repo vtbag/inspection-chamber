@@ -18,16 +18,19 @@ export type SparseDOMNode = {
 	hidingParent?: SparseDOMNode;
 };
 
-export function sparseDomNode(element: Element, style?: CSSStyleDeclaration): SparseDOMNode {
-	style ??= getComputedStyle(element);
+export function sparseDomNode(
+	element: Element,
+	pseudoElement?: string,
+	style?: CSSStyleDeclaration
+): SparseDOMNode {
+	style ??= getComputedStyle(element, pseudoElement);
 	const node = {
 		children: [],
-		element: element,
+		element,
+		pseudoElement,
 		style,
 		viewTransitionName: 'none',
 	} as SparseDOMNode;
-
-	// hard to do correctly cross-browser: check visibility using the size of the bounding rect, which should be zero for elements that are effectively hidden
 
 	const hiddenBecause = new Set<string>();
 	style.display === 'none' && hiddenBecause.add('displayNone');
@@ -36,17 +39,14 @@ export function sparseDomNode(element: Element, style?: CSSStyleDeclaration): Sp
 	style.viewTransitionScope &&
 		style.viewTransitionScope !== 'none' &&
 		hiddenBecause.add('viewTransitionScope');
+	pseudoElement &&
+		style.getPropertyValue('content') === 'none' &&
+		hiddenBecause.add('emptyPseudoElement');
 
 	if (hiddenBecause.size) {
 		node.hiddenBy = node;
 		node.hiddenBecause = hiddenBecause;
 	}
-	console.log(
-		'new',
-		node.hiddenBecause,
-		deriveCSSSelector(node.element),
-		deriveCSSSelector(node.hiddenBy?.element)
-	);
 	return node;
 }
 
@@ -54,6 +54,7 @@ function checkHidden(node: SparseDOMNode, hider: SparseDOMNode | undefined): boo
 	if (!hider) return false;
 	if (hider.hiddenBecause?.has('displayNone')) return true;
 	if (hider.hiddenBecause?.has('viewTransitionScope')) return true;
+	if (hider.hiddenBecause?.has('emptyPseudoElement')) return true;
 	if (
 		hider.hiddenBecause?.has('contentVisibilityHidden') &&
 		hider.hiddenBecause.has('displayContents')
@@ -76,31 +77,12 @@ function checkHidden(node: SparseDOMNode, hider: SparseDOMNode | undefined): boo
 }
 
 export function isHidden(node: SparseDOMNode, hiddenBy: SparseDOMNode | undefined) {
-	console.log(
-		`Checking if ${deriveCSSSelector(node.element) + (node.pseudoElement ?? '')} is hidden by ${deriveCSSSelector(hiddenBy?.element) + (hiddenBy?.pseudoElement ?? '')}`
-	);
-	console.log(
-		'from',
-		'node',
-		node,
-		'node.hiddenBy',
-		node?.hiddenBy,
-		'because',
-		node?.hiddenBecause,
-		'hiddenBy',
-		hiddenBy,
-		'because',
-		hiddenBy?.hiddenBecause
-	);
-
 	if (node.hiddenBy && hiddenBy) {
 		node.hidingParent = hiddenBy;
 	}
 	const hider = node.hiddenBy || hiddenBy;
 	const hidden = checkHidden(node, hider);
 	node.hiddenBy = hider;
-
-	console.log('to', 'hidden', hidden, 'hider', hider);
 
 	return { hidden, hider };
 }

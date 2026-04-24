@@ -2,14 +2,11 @@ import { type Selector, type SelectorList, parse, generate } from 'css-tree';
 import { deriveCSSSelector } from './components/ic/element-selector';
 
 const animations = new Set<string>();
-const elements: Map<
-	HTMLElement,
-	{
-		element: HTMLElement;
-		pseudoElement: string;
-		selector: string;
-	}
-> = new Map();
+const elements: {
+	element: HTMLElement;
+	pseudoElement: string;
+	selector: string;
+}[] = [];
 const pseudoElements = new Set<string>();
 let root: HTMLElement;
 
@@ -17,13 +14,12 @@ export const allRoots: Set<HTMLElement> = new Set();
 
 export function namedElements(viewTransitionRoot: HTMLElement = document.documentElement) {
 	root = viewTransitionRoot;
-	elements.clear();
+	elements.length = 0;
 
 	allRoots.forEach(
 		(r) =>
 			root.contains(r) &&
-			!elements.has(r) &&
-			elements.set(r, {
+			elements.push({
 				element: r,
 				pseudoElement: undefined!,
 				selector: 'transitionRoot',
@@ -34,8 +30,7 @@ export function namedElements(viewTransitionRoot: HTMLElement = document.documen
 		const viewTransitionName = element.style.viewTransitionName;
 		viewTransitionName &&
 			viewTransitionName !== 'none' &&
-			!elements.has(el) &&
-			elements.set(el, {
+			elements.push({
 				element: el,
 				pseudoElement: undefined!,
 				selector: 'element.style',
@@ -108,7 +103,9 @@ function frameNamedElements(style: CSSStyleDeclaration, keyframeName: string) {
 
 function declNamedElements(style: CSSStyleDeclaration) {
 	for (let i = 0; i < style.length; ++i) {
-		if (style.item(i) === 'view-transition-name') return selectedElements(style.parentRule);
+		if (style.item(i) === 'view-transition-name') {
+			return selectedElements(style.parentRule);
+		}
 	}
 }
 
@@ -141,11 +138,7 @@ function selectedElements(parent: CSSRule | null) {
 			pseudoElement = original.slice(sel.length).trim();
 			[...root.ownerDocument.querySelectorAll<HTMLElement>(sel)]
 				.filter((el) => root.contains(el))
-				.forEach(
-					(element) =>
-						elements.has(element) ||
-						elements.set(element, { element, pseudoElement, selector: original })
-				);
+				.forEach((element) => elements.push({ element, pseudoElement, selector: original }));
 		});
 		break;
 	}
