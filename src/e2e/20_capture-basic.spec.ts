@@ -19,6 +19,30 @@ function createConsoleHandler() {
 	return { consoleHandler, getCapturedData: () => capturedData };
 }
 
+function createConsoleNodeHandler() {
+	let capturedNode: any = null;
+	const consoleHandler = (msg: any) => {
+		if (msg.type() === 'log' && msg.args().length > 0) {
+			msg
+				.args()
+				.at(-1)
+				?.evaluate((value: any) => {
+					if (value && typeof value === 'object' && 'nodeType' in value) {
+						return { nodeType: value.nodeType, nodeName: value.nodeName };
+					}
+					return null;
+				})
+				.then((value: any) => {
+					if (value?.nodeType) {
+						capturedNode = value;
+					}
+				})
+				.catch(() => { });
+		}
+	};
+	return { consoleHandler, getCapturedNode: () => capturedNode };
+}
+
 async function switchToDockedView(page: Page) {
 	const southResizeHandle = page.locator('div.resize-handle.edge.s').first();
 	await expect(southResizeHandle).toBeVisible();
@@ -1124,14 +1148,35 @@ test.describe('Capture Basic', () => {
 
 		// Error messages: VT failure + duplicate names warning
 		const messageComponent = chamberFrame.locator('vtbag-ic-message');
-		await expect(messageComponent).toContainText(/duplicate/i);
+		const messages = messageComponent.locator('.message');
+		await expect(messages).toHaveCount(2);
+		await expect(messages.first()).toContainText(/Same-document view transition on document/i);
+		await expect(messages.first()).toContainText(/InvalidStateError:/i);
+		await expect(messages.nth(1)).toContainText(
+			/Duplicate view transition names detected during capture of old images/i
+		);
+		await expect(messages.first().locator('span.devtools')).toHaveCount(1);
+		await expect(messages.nth(1).locator('span.devtools')).toHaveCount(0);
+
+		const { consoleHandler: messageConsoleHandler, getCapturedNode } = createConsoleNodeHandler();
+		page.on('console', messageConsoleHandler);
+		const messageDevtoolsBtn = messages.first().locator('span.devtools').first();
+		await expect(messageDevtoolsBtn).toBeVisible();
+		await messageDevtoolsBtn.click();
+
+		await page.waitForTimeout(500);
+		page.off('console', messageConsoleHandler);
+
+		const capturedNode = getCapturedNode();
+		expect(capturedNode).toEqual({ nodeType: 9, nodeName: '#document' });
 
 		const nestedDetails = chamberFrame.locator(
 			'vtbag-ic-view-transition-capture .content > details'
 		);
 		await expect(nestedDetails.first()).toBeVisible();
 		await nestedDetails.first().locator('summary').click();
-
+		await page.waitForTimeout(300);
+		
 		const nestedDetailsText = (await nestedDetails.allInnerTexts()).join('\n');
 		expect(nestedDetailsText).toMatch(/Group\s+duplicate/i);
 		expect(nestedDetailsText).toMatch(/Old image element: #hero/i);
@@ -1222,7 +1267,9 @@ test.describe('Capture Basic', () => {
 
 		const { consoleHandler, getCapturedData } = createConsoleHandler();
 		page.on('console', consoleHandler);
-		const devtoolsBtn = chamberFrame.locator('span.devtools').first();
+		const devtoolsBtn = chamberFrame
+			.locator('vtbag-ic-view-transition-capture span.devtools')
+			.first();
 		await expect(devtoolsBtn).toBeVisible();
 		await devtoolsBtn.click();
 
