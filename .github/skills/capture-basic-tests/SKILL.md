@@ -5,70 +5,47 @@ description: 'Create and extend simple Playwright tests. Use for extending  src/
 
 # Capture Basic Tests
 
-## What This Skill Produces
-Creates or extends focused tests in `src/e2e/20_capture-basic.spec.ts` that:
-- Run one capture case per test.
-- Avoid shared helper abstractions.
-- Validate UI output (header, tree details, flat list).
-- Validate devtools console payload for the same case.
-
 ## Procedure
 1. Confirm case wiring in `src/pages/e2e/capture-basic.astro`.
-2. Duplicate the closest existing test in `src/e2e/20_capture-basic.spec.ts`.
-3. Keep setup direct and local in the test body:
-- `goto('/e2e/capture-basic/')`
-- Long-press `div.resize-handle.edge.s`
-- Close welcome panel if visible
-- Enable capture mode (`#capture`, via label click)
-4. Trigger the case with the case-specific button (`#trigger-...`).
-5. Assert header output above `.content`:
-- Same-document call on `:root` (ignore timestamp using regex)
-- old types line contains case type
-- new types line contains case type
-6. Assert tree output (`.content > details`):
-- Open the relevant details summary before visible-text checks.
-- Verify only the important case-specific lines.
-7. Assert flat list output (`#flat-capture-list`):
-- Ensure section exists
-- Open summary
-- Verify case name appears
-8. Assert devtools payload:
-- Click `span.devtools`
-- Capture console payload from the last console argument
-- Verify case-specific shape (`name`, old/new element presence, hidden metadata)
-9. Run only this spec after changes:
-- `npx playwright test src/e2e/20_capture-basic.spec.ts --project=chromium`
-
-
-## Future Case Expansion
-- For any new capture case, duplicate the closest existing case and only change:
-- Trigger selector
-- Expected active type text in header lines
-- Tree group names and old/new element expectations
-- Flat-list expected entries
-- Devtools expected object shape
-- Keep all existing setup and docking steps unchanged unless the new case explicitly requires otherwise.
-- Add one test per case and avoid combining multiple features in one test.
+2. Duplicate the closest existing test in `src/e2e/20_capture-basic.spec.ts`. Change only: trigger selector, expected type text, tree/flat-list/devtools expectations.
+3. Setup (keep verbatim): `goto('/e2e/capture-basic/')` → long-press `div.resize-handle.edge.s` → close welcome panel if visible → enable `#capture` via `label[for="capture"]` click.
+4. Trigger: `testFrame.locator('#trigger-<case>').click()`.
+5. Assert header: timestamp regex; old-types and new-types lines contain case name.
+6. Assert tree (`.content > details`): open relevant `<details>` first; check group name, old/new element lines.
+7. Assert flat list (`#flat-capture-list`): open summary; verify case name present.
+8. Assert capture devtools: `page.on('console', consoleHandler)` → click `chamberFrame.locator('vtbag-ic-view-transition-capture span.devtools').first()` → verify array shape.
+9. Run: `npx playwright test src/e2e/20_capture-basic.spec.ts --project=chromium`
 
 ## Decision Points
-- If clicks on input controls are intercepted, click their labels (`label[for="..."]`) instead of input nodes.
-- If details content seems missing, check whether relevant `<details>` are collapsed.
-- When opening many `<details>`, do not blindly click all summaries in a loop. This can close items that were already open and hide expected nested lines. For deterministic expansion and assertions, inspect each `<details>` `open` state and click only when closed. When validating tree output with many details blocks, prefer asserting ordered details blocks by index rather than aggregated regex patterns to remain robust across summary expansion order changes.
-- WebKit reliability: when expanding many `.content > details` blocks, Playwright action clicks on `summary` in a long loop can intermittently time out on later items. Prefer toggling closed details via in-page evaluation (`details.querySelector('summary')?.click()`) and then assert each details is opened.
-- Expansion completeness: `details.open === true` alone is not always enough across engines. After expansion, also assert a stable body line (for example `Old image element:` or `New image element:`) before collecting `allInnerTexts()` for indexed checks.
-- For devtools payload checks, use strict exact-object checks for the expected case output.
-- If `hide-undiscoverable` is enabled, hidden entries may still exist in DOM/flat list but be visually hidden. Prefer visibility assertions (`toBeVisible` / `not.toBeVisible`) over assuming zero count. When testing cases with toggle-able visibility, verify that hidden entries change visibility state when the toggle is clicked.
-- Do not assume one payload entry per group name. A single name can appear multiple times (for example when both element and nested element are named). For devtools payload validation, use `toContain` or presence checks for required names across the payload, then validate representative entry object fields (such as `oldNamedElement`, `newNamedElement`, `oldHiddenBy`, `newHiddenBy`) to confirm correct shape, rather than relying on fixed array length or brittle ordering.
-- Avoid brittle selector-path expectations in UI text (for example including `body.old >` prefixes). Prefer matching stable fragments: group name, discovery-blocked marker, and core element selector fragment.
-- When cases produce error messages (e.g. duplicate names, aborted transitions), `vtbag-ic-message` renders its own `span.devtools` elements (one per `[🖶]` in the message text) that appear before the capture view's devtools icon in DOM order. Always scope the devtools button selector to the capture component: `chamberFrame.locator('vtbag-ic-view-transition-capture span.devtools').first()`. Using the unscoped `chamberFrame.locator('span.devtools').first()` will click the message icon instead and the console payload will never be the expected captures array.
-- To assert message content in `vtbag-ic-message`, locate individual rows with `messageComponent.locator('.message')` and use `toHaveCount(n)` to verify the expected number of messages. Each row may or may not have a `span.devtools` icon; assert its count per row with `messages.nth(i).locator('span.devtools')` before clicking.
-- Message devtools icons log a raw DOM node (not a serializable array), so `jsonValue()` alone cannot capture them. Use `jsHandle.evaluate()` in-page to extract safe properties: `{ nodeType: value.nodeType, nodeName: value.nodeName }`. The failed-transition message logs the transition root — `nodeType: 9` (`#document`) for a document-scoped transition. Use a dedicated handler (separate from the array-capture handler) to avoid false positives from other console events.
+
+**Selectors**
+- Input controls: click `label[for="..."]`, not the input — nested span content intercepts direct clicks.
+- Capture devtools button: always scope to `vtbag-ic-view-transition-capture span.devtools`. Error messages add their own `span.devtools` earlier in DOM order; unscoped `.first()` hits the wrong button and the console payload is never the captures array.
+
+**`<details>` expansion**
+- Never blindly click all summaries in a loop — clicking an already-open item closes it. Check `.open` first; expand only when closed.
+- WebKit: use in-page `details.querySelector('summary')?.click()` instead of Playwright action clicks for loops over many items.
+- After expanding, assert a stable body line (`Old image element:`, `New image element:`) before calling `allInnerTexts()` for indexed checks.
+- Assert ordered `details` blocks by index rather than one joined regex string — robust to expansion-order changes.
+
+**Devtools console payloads**
+- Capture-view payload: `jsonValue()` on the last arg; it returns a serializable array — use `createConsoleHandler()`.
+- Message-row payload: logs a live DOM node, which `jsonValue()` cannot serialize. Use `jsHandle.evaluate()` in-page: `{ nodeType: value.nodeType, nodeName: value.nodeName }`. The failed-transition message logs the transition root (`nodeType: 9, nodeName: '#document'` for a document-scoped transition). Use a separate `createConsoleNodeHandler()` to avoid cross-contamination.
+
+**`vtbag-ic-message` assertions**
+- Locate rows with `.locator('.message')`; use `toHaveCount(n)` to verify count.
+- Assert `span.devtools` count per row before clicking — not every message has a devtools icon (e.g. the duplicate-names warning has none, the failure message has one).
+
+**Visibility / undiscoverables**
+- With `hide-undiscoverable` enabled, hidden entries exist in DOM but are not visible. Use `toBeVisible` / `not.toBeVisible`, not count checks.
+- Verify visibility toggles when the checkbox is clicked.
+
+**Payload shape**
+- A group name can appear multiple times (element + nested element both named). Use presence checks for required names; validate representative fields (`oldNamedElement`, `newNamedElement`, `hiddenBy`) rather than fixed array length.
+- Avoid brittle full selector paths in UI text (e.g. `body.old > …`). Match stable fragments: group name, discovery-blocked marker, core element selector.
 
 ## Quality Checks
-- Each test verifies one case and keeps assertions focused.
-- Test body remains short and explicit; no new helper layer added.
-- Assertions cover both UI and devtools payload for the same case.
-- Tree assertions remain deterministic if summary expansion order changes (for example by asserting ordered details blocks directly).
-- Cross-browser robustness: details expansion checks should validate both open state and stable details-body content, especially for WebKit.
-- Devtools assertions use strict exact-object expectations for the case under test.
-- The focused spec run passes on Chromium.
+- One case per test; no shared helper layer.
+- UI and devtools payload both covered.
+- Tree assertions deterministic regardless of summary expansion order.
+- Focused spec run passes on Chromium.
