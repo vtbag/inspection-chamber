@@ -242,7 +242,7 @@
 						)
 					);
 				container
-					.lastElementChild!.querySelector('.highlight.old')
+					.lastElementChild!.querySelector('.highlight.old.image')
 					?.addEventListener('pointerenter', () =>
 						highlight(group.old?.element, group.old?.pseudoElement)
 					);
@@ -255,7 +255,7 @@
 						highlight(group.new?.element, group.new?.pseudoElement)
 					);
 				container
-					.lastElementChild!.querySelector('.highlight.new')
+					.lastElementChild!.querySelector('.highlight.new.image')
 					?.addEventListener('click', () => console.dir(group.new?.element));
 
 				container
