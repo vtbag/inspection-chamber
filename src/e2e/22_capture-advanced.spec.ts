@@ -12,7 +12,6 @@ async function getGroupSummaries(captureView: any): Promise<string[]> {
 		.evaluateAll((elements: Element[]) => {
 			return elements.map((el) => {
 				const text = el.textContent || '';
-				console.log('Summary textContent:', text);
 				const after = window.getComputedStyle(el, '::after').content;
 				const afterText = after === 'none' ? '' : after.replace(/^["']|["']$/g, '');
 				// Also get ::after from strong element inside (for "(with children)" text)

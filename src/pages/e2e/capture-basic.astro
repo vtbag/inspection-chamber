@@ -166,10 +166,10 @@
 
 			html:active-view-transition-type(before) {
 				body.old #element-a::before {
-					content: 'Before';
 					view-transition-name: before-pseudo;
 				}
 				body.new #element-b::before {
+					content: 'Before';
 					view-transition-name: before-pseudo;
 				}
 			}
@@ -177,6 +177,7 @@
 			/* --- after: ::before and ::after with view-transition-name --- */
 
 			html:active-view-transition-type(after) {
+				
 				#element-b::after {
 					content: 'After';
 					view-transition-name: after-pseudo;
@@ -273,17 +274,17 @@
 				.getElementById('trigger-different')
 				?.addEventListener('click', () => triggerTransition(['different']));
 			document
-				.getElementById('trigger-test-1-5')
-				?.addEventListener('click', () => triggerTransition(['test-1-5']));
+				.getElementById('trigger-before')
+				?.addEventListener('click', () => triggerTransition(['before']));
 			document
-				.getElementById('trigger-test-1-6')
-				?.addEventListener('click', () => triggerTransition(['test-1-6']));
+				.getElementById('trigger-after')
+				?.addEventListener('click', () => triggerTransition(['after']));
 			document
-				.getElementById('trigger-test-1-7')
-				?.addEventListener('click', () => triggerTransition(['test-1-7']));
+				.getElementById('trigger-duplicate')
+				?.addEventListener('click', () => triggerTransition(['duplicate']));
 			document
-				.getElementById('trigger-test-1-8')
-				?.addEventListener('click', () => triggerTransition(['test-1-8']));
+				.getElementById('trigger-escape')
+				?.addEventListener('click', () => triggerTransition(['escape']));
 		</script>
 	</body>
 </html>
