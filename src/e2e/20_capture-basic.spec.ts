@@ -13,7 +13,7 @@ function createConsoleHandler() {
 						capturedData = value;
 					}
 				})
-				.catch(() => { });
+				.catch(() => {});
 		}
 	};
 	return { consoleHandler, getCapturedData: () => capturedData };
@@ -37,7 +37,7 @@ function createConsoleNodeHandler() {
 						capturedNode = value;
 					}
 				})
-				.catch(() => { });
+				.catch(() => {});
 		}
 	};
 	return { consoleHandler, getCapturedNode: () => capturedNode };
@@ -1060,7 +1060,7 @@ test.describe('Capture Basic', () => {
 		await nestedDetails.first().locator('summary').click();
 		await nestedDetails.nth(1).locator('summary').click();
 
-		const nestedDetailsText = (await nestedDetails.allInnerTexts())
+		const nestedDetailsText = await nestedDetails.allInnerTexts();
 		expect(nestedDetailsText[0]).toMatch(/Group\s+before-pseudo/i);
 		expect(nestedDetailsText[0]).toMatch(/Old image element:\s*#element-b::before/i);
 		expect(nestedDetailsText[0]).toMatch(/New image element:\s*#element-b::before/i);
@@ -1176,7 +1176,7 @@ test.describe('Capture Basic', () => {
 		await expect(nestedDetails.first()).toBeVisible();
 		await nestedDetails.first().locator('summary').click();
 		await page.waitForTimeout(300);
-		
+
 		const nestedDetailsText = (await nestedDetails.allInnerTexts()).join('\n');
 		expect(nestedDetailsText).toMatch(/Group\s+duplicate/i);
 		expect(nestedDetailsText).toMatch(/Old image element: #hero/i);
@@ -1193,7 +1193,9 @@ test.describe('Capture Basic', () => {
 
 		const { consoleHandler, getCapturedData } = createConsoleHandler();
 		page.on('console', consoleHandler);
-		const devtoolsBtn = chamberFrame.locator('vtbag-ic-view-transition-capture span.devtools').first();
+		const devtoolsBtn = chamberFrame
+			.locator('vtbag-ic-view-transition-capture span.devtools')
+			.first();
 		await expect(devtoolsBtn).toBeVisible();
 		await devtoolsBtn.click();
 
