@@ -1,14 +1,14 @@
-import { namedElements, allRoots } from '@/css';
+import { allRoots, namedElements } from '@/css';
 import { deriveCSSSelector } from './element-selector';
-import { gid, nestGroups, numberGroupsDFS, type Group, print as printGroup } from './group';
+import { gid, nestGroups, numberGroupsDFS, print as printGroup, type Group } from './group';
+import { message } from './message';
 import {
 	addParentLinks,
+	print as printSparseDOM,
 	sort,
-	type SparseDOMNode,
-	print as printSparseNode,
 	sparseDomNode,
+	type SparseDOMNode,
 } from './sparse-dom';
-import { message } from './message';
 
 let idCount = 0;
 
@@ -77,9 +77,8 @@ function capture(
 	rootNode.paintGroup = rootNode.zIndex = 0;
 
 	addParentLinks(sparseDOM, elementMap, transitionRoot);
-	printSparseNode(rootNode);
+	false && printSparseDOM(rootNode);
 	sort(rootNode);
-	printSparseNode(rootNode);
 
 	const groupRoot = groups.get('@')!;
 	groupRoot[oldOrNew] = rootNode;
@@ -96,7 +95,7 @@ function capture(
 	}
 
 	numberGroupsDFS(groupRoot);
-	printGroup(groupRoot);
+	false && printGroup(groupRoot);
 	return sheet;
 }
 
