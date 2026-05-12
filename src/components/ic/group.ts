@@ -245,7 +245,7 @@ export function displayName(group: Group | string, verbose = false): string {
 	}
 
 	if (name.startsWith('-vtbag-auto-'))
-		name = 'auto' + '<span>(' + name.substring(name.lastIndexOf('-') + 1) + ')</span>';
+		name = 'auto' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
 	if (name.startsWith('-vtbag-match-element-'))
 		name = 'match-element' + '<sup>(' + name.substring(name.lastIndexOf('-') + 1) + ')</sup>';
 	if (typeof group !== 'string' && verbose) {

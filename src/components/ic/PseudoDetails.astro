@@ -6,7 +6,7 @@
 	import { mayStartViewTransition } from '@vtbag/utensil-drawer/may-start-view-transition';
 	import { createTimingBar } from './bars';
 	import { shorthands } from './shorthand';
-	import { gid, type Group } from './group';
+	import { displayName, gid, type Group } from './group';
 
 	class ICPseudoDetails extends ICElement {
 		pseudoName?: string;
@@ -115,7 +115,7 @@
 				//			this.style.display = 'none';
 				return;
 			}
-			this.querySelector<HTMLElement>('summary')!.textContent = 'Details for ' + this.pseudoName;
+			this.querySelector<HTMLElement>('summary')!.innerHTML = 'Details for ' + displayName(this.pseudoName);
 
 			const content = this.querySelector('.content') as HTMLElement;
 
@@ -181,7 +181,7 @@
 			};
 
 			const short = (pseudoElement: string) =>
-				pseudoElement.replace(/^::view-transition-(.*)\(([^)]*)\)$/, '$1($2)');
+				displayName(pseudoElement).replace(/^::view-transition-(.*)\((.*)\)$/, '$1($2)');
 
 			const reversed = this.animations.toReversed().filter((a) => !(a as any).dead); // chrome bug workaround
 			const timings = reversed.map((a) => a.effect?.getComputedTiming());

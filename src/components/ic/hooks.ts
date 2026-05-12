@@ -46,8 +46,8 @@ function pageswap(event: PageSwapEvent) {
 		features.readyErrorOccurred = true;
 		readyError(root, transition, features, e);
 	});
+	beforeCaptureOld(root, transition!, features);
 	requestAnimationFrame(() => {
-		beforeCaptureOld(root, transition!, features);
 		parent.__vtbag.ic2!.captureOldOnly || afterCaptureOld(root, transition!, features);
 	});
 }
@@ -103,9 +103,11 @@ async function pagereveal(event: PageRevealEvent) {
 
 	if (captureMode) fastForward(transition, root);
 
-	transition.updateCallbackDone.catch((e) => updateError(root, transition, features, e));
+	transition.updateCallbackDone.then(
+		() => captureOldOnly || beforeCaptureNew(root, transition, features),
+		(e) => updateError(root, transition, features, e)
+	);
 	transition.ready.then(() => {
-		captureOldOnly || beforeCaptureNew(root, transition, features);
 		captureOldOnly || afterCaptureNew(root, transition, features);
 	});
 	transition.finished.finally(() => animationsWillFinish(root, transition, features));
