@@ -816,6 +816,7 @@ test.describe('Capture Basic', () => {
 		);
 		await expect(nestedDetails.first()).toBeVisible();
 		await nestedDetails.first().locator('summary').click();
+		await page.waitForTimeout(300);
 
 		const nestedDetailsText = (await nestedDetails.allInnerTexts()).join('\n');
 		expect(nestedDetailsText).toMatch(/Group\s+new-only/i);
@@ -1059,6 +1060,7 @@ test.describe('Capture Basic', () => {
 		await expect(nestedDetails.first()).toBeVisible();
 		await nestedDetails.first().locator('summary').click();
 		await nestedDetails.nth(1).locator('summary').click();
+		await page.waitForTimeout(300);
 
 		const nestedDetailsText = await nestedDetails.allInnerTexts();
 		expect(nestedDetailsText[0]).toMatch(/Group\s+before-pseudo/i);
@@ -1253,6 +1255,7 @@ test.describe('Capture Basic', () => {
 		);
 		await expect(nestedDetails.first()).toBeVisible();
 		await nestedDetails.first().locator('summary').click();
+		await page.waitForTimeout(300);
 
 		const nestedDetailsText = (await nestedDetails.allInnerTexts()).join('\n');
 		expect(nestedDetailsText).toMatch(/Group\s+!important/i);

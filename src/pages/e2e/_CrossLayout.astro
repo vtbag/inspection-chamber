@@ -64,6 +64,7 @@ const { title, pageId, cardText, linkId, linkHref, linkLabel } = Astro.props;
 			.actions {
 				display: flex;
 				gap: 0.5rem;
+				view-transition-name: auto;
 			}
 
 			a {
@@ -72,6 +73,10 @@ const { title, pageId, cardText, linkId, linkHref, linkLabel } = Astro.props;
 				border: 1px solid #8888;
 				text-decoration: none;
 				color: inherit;
+				view-transition-name: auto;
+			}
+			#status {
+				view-transition-name: match-element;
 			}
 
 			html:active-view-transition-type(forwards) ::view-transition-group(page-card) {

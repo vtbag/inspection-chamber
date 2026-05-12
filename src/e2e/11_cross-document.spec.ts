@@ -35,7 +35,7 @@ test('cross-document demo navigates forward and back with view transition types'
 });
 
 test('cross-document capture: verifies root, page-title, and page-card groups', async ({
-	page,
+	page, browserName
 }) => {
 	const { testFrame, chamberFrame } = await setupFrames(page, {
 		url: '/e2e/cross-a/',
@@ -49,12 +49,13 @@ test('cross-document capture: verifies root, page-title, and page-card groups', 
 	await expect(captureView).toContainText(
 		/Cross-document navigation, started at \d{2}:\d{2}:\d{2}\.\d{3}/
 	);
-	await verifyCapturedGroups(captureView, ['root', 'page-title', 'page-card']);
+	const groups = browserName === 'chromium' ? ['root', 'page-title', 'page-card', 'match-element(1)', 'match-element(1)'] : ['root', 'page-title', 'page-card', 'auto(1)', '-ua-id-go-next', 'match-element(2)', 'auto(1)', '-ua-id-go-prev', 'match-element(2)'];
+	await verifyCapturedGroups(captureView, groups);
 	await expect(testFrame.locator('#page-id')).toHaveText('Page B');
 });
 
 test('old-only cross-document capture: verifies root, page-title, and page-card groups', async ({
-	page,
+	page, browserName
 }) => {
 	const { testFrame, chamberFrame } = await setupFrames(page, {
 		url: '/e2e/cross-a/',
@@ -69,12 +70,14 @@ test('old-only cross-document capture: verifies root, page-title, and page-card 
 	await expect(captureView).toContainText(
 		/Cross-document navigation, started at \d{2}:\d{2}:\d{2}\.\d{3}/
 	);
-	await verifyCapturedGroups(captureView, ['root', 'page-title', 'page-card']);
+	const groups = browserName === 'chromium' ? ['root', 'page-title', 'page-card', 'match-element(1)'] : ['root', 'page-title', 'page-card', 'auto(1)', '-ua-id-go-next', 'match-element(2)'];
+
+	await verifyCapturedGroups(captureView, groups);
 	await expect(testFrame.locator('#page-id')).toHaveText('Page A');
 });
 
 test('frozen cross-document capture: verifies root, page-title, and page-card groups', async ({
-	page,
+	page,browserName
 }) => {
 	const { testFrame, chamberFrame } = await setupFrames(page, {
 		url: '/e2e/cross-a/',
@@ -90,7 +93,9 @@ test('frozen cross-document capture: verifies root, page-title, and page-card gr
 	await expect(captureView).toContainText(
 		/Cross-document navigation, started at \d{2}:\d{2}:\d{2}\.\d{3}/
 	);
-	await verifyCapturedGroups(captureView, ['root', 'page-title', 'page-card']);
+	const groups = browserName === 'chromium' ? ['root', 'page-title', 'page-card', 'match-element(1)', 'match-element(1)'] : ['root', 'page-title', 'page-card', 'auto(1)', '-ua-id-go-next', 'match-element(2)', 'auto(1)', '-ua-id-go-prev', 'match-element(2)'];
+
+	await verifyCapturedGroups(captureView, groups);
 	await expect(testFrame.locator('#page-id')).toHaveText('Page B');
 
 	const viewTransition = await testFrame
@@ -100,7 +105,7 @@ test('frozen cross-document capture: verifies root, page-title, and page-card gr
 });
 
 test('frozen, old-only cross-document capture: verifies root, page-title, and page-card groups', async ({
-	page,
+	page, browserName
 }) => {
 	const { testFrame, chamberFrame } = await setupFrames(page, {
 		url: '/e2e/cross-a/',
@@ -119,7 +124,9 @@ test('frozen, old-only cross-document capture: verifies root, page-title, and pa
 	await expect(captureView).toContainText(
 		/Cross-document navigation, started at \d{2}:\d{2}:\d{2}\.\d{3}/
 	);
-	await verifyCapturedGroups(captureView, ['root', 'page-title', 'page-card']);
+	const groups = browserName === 'chromium' ? ['root', 'page-title', 'page-card', 'match-element(1)'] : ['root', 'page-title', 'page-card', 'auto(1)', '-ua-id-go-next', 'match-element(2)'];
+
+	await verifyCapturedGroups(captureView, groups);
 	await expect(testFrame.locator('#page-id')).toHaveText('Page A');
 
 	const viewTransition = await testFrame
